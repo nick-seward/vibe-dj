@@ -10,3 +10,6 @@ clean:
 install:
 	@echo "Installing Dependencies"
 	uv sync --all-groups
+
+test:
+	uv run pytest tests/unit/ -v
