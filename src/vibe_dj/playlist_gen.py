@@ -1,10 +1,11 @@
 import sqlite3
 import json
+import random
 import faiss
 import numpy as np
 from .config import DATABASE_PATH, FAISS_INDEX_PATH, PLAYLIST_OUTPUT
 
-def generate_playlist(seeds: list[str], length: int = 20, output_path: str = PLAYLIST_OUTPUT):
+def generate_playlist(seeds: list[str], length: int = 5, output_path: str = PLAYLIST_OUTPUT, bpm_jitter_percent: float = 5.0):
     conn = sqlite3.connect(DATABASE_PATH)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
@@ -49,8 +50,8 @@ def generate_playlist(seeds: list[str], length: int = 20, output_path: str = PLA
                 "bpm": row["bpm"]
             })
 
-    # Simple flow: sort by BPM ascending
-    playlist.sort(key=lambda x: x["bpm"])
+    # Sort by BPM with gentle jitter to avoid identical ordering
+    playlist.sort(key=lambda x: x["bpm"] * (1 + random.uniform(-bpm_jitter_percent/100, bpm_jitter_percent/100)))
 
     # Write extended M3U
     with open(output_path, "w", encoding="utf-8") as f:
