@@ -36,9 +36,10 @@ The codebase follows **Object-Oriented Programming (OOP) best practices** with c
 
 - **`LibraryIndexer`**: Music library scanning and indexing
   - Multi-phase processing (metadata → features → database)
-  - Parallel processing with multiprocessing
+  - Parallel processing with threading (adaptive worker count)
   - Incremental updates (only processes new/modified files)
   - Progress tracking with tqdm
+  - Timeout handling for problematic files
 
 ### Services (`src/vibe_dj/services/`)
 
