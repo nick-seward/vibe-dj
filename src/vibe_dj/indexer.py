@@ -11,9 +11,8 @@ from .utils import get_duration
 from .config import FAISS_INDEX_PATH
 import faiss
 import numpy as np
-import logging
+from loguru import logger
 
-log = logging.getLogger(__name__)
 
 musicbrainzngs.set_useragent("MusicDJ", "0.1", "nick@homeslice.ca")
 
@@ -115,7 +114,7 @@ def index_library(library_path: str):
                         conn.commit()
                 else:
                     failed_count += 1
-                    log.warning(f"Failed to extract features: {filename}")
+                    logger.warning(f"Failed to extract features: {filename}")
             
             pbar.close()
 

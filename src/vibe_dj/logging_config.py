@@ -1,7 +1,9 @@
-import logging
+import sys
+from loguru import logger
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%H:%M:%S"
+logger.remove()
+logger.add(
+    sys.stdout,
+    format="{time:HH:mm:ss} [{level}] {message}",
+    level="INFO"
 )
