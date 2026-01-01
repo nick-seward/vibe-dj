@@ -1,2 +1,4 @@
+from .main import cli
+
 def main() -> None:
-    print("Hello from vibe-dj!")
+    cli()
