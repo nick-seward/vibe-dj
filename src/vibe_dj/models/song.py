@@ -1,0 +1,20 @@
+from dataclasses import dataclass
+from typing import Optional
+
+
+@dataclass
+class Song:
+    id: int
+    file_path: str
+    title: str
+    artist: str
+    genre: str
+    mbid: Optional[str]
+    last_modified: float
+    duration: Optional[int]
+
+    def __str__(self) -> str:
+        return f"{self.artist} - {self.title}"
+
+    def __repr__(self) -> str:
+        return f"Song(id={self.id}, title='{self.title}', artist='{self.artist}')"
