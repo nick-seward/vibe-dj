@@ -697,7 +697,6 @@ dependencies = [
     { name = "musicbrainzngs" },
     { name = "mutagen" },
     { name = "numpy" },
-    { name = "requests" },
     { name = "soundfile" },
     { name = "tqdm" },
 ]
@@ -711,7 +710,6 @@ requires-dist = [
     { name = "musicbrainzngs", specifier = ">=0.7.1" },
     { name = "mutagen", specifier = ">=1.47.0" },
     { name = "numpy", specifier = ">=2.3.5" },
-    { name = "requests", specifier = ">=2.32.5" },
     { name = "soundfile", specifier = ">=0.13.1" },
     { name = "tqdm", specifier = ">=4.67.1" },
 ]
