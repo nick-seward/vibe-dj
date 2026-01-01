@@ -1,5 +1,6 @@
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 import json
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -14,7 +15,7 @@ class Config:
     max_duration: int = 180
     n_mfcc: int = 13
     
-    parallel_workers: int = 4
+    parallel_workers: int = field(default_factory=lambda: os.cpu_count() or 4)
     batch_size: int = 10
     processing_timeout: int = 30
 

@@ -1,6 +1,5 @@
 import numpy as np
 import librosa
-import signal
 import math
 from typing import Optional, Tuple
 from mutagen import File as MutagenFile
@@ -54,29 +53,6 @@ class AudioAnalyzer:
             logger.error(f"Failed to extract features from {file_path}: {e}")
             return None
 
-    def extract_features_with_timeout(self, file_path: str, timeout: int = None) -> Optional[Features]:
-        if timeout is None:
-            timeout = self.config.processing_timeout
-
-        def timeout_handler(signum, frame):
-            raise TimeoutError("Processing timeout")
-
-        try:
-            signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(timeout)
-            
-            features = self.extract_features(file_path)
-            
-            signal.alarm(0)
-            return features
-        except TimeoutError:
-            signal.alarm(0)
-            logger.warning(f"Timeout processing {file_path}")
-            return None
-        except Exception as e:
-            signal.alarm(0)
-            logger.error(f"Error processing {file_path}: {e}")
-            return None
 
     def extract_metadata(self, file_path: str) -> Tuple[str, str, str, Optional[str]]:
         try:

@@ -1,6 +1,6 @@
 import os
-from typing import List, Dict, Tuple
-from multiprocessing import Pool
+from typing import List, Dict, Tuple, Optional
+from concurrent.futures import ThreadPoolExecutor, TimeoutError, as_completed
 from tqdm import tqdm
 import numpy as np
 from loguru import logger
@@ -10,10 +10,9 @@ from .analyzer import AudioAnalyzer
 from .similarity import SimilarityIndex
 
 
-def _worker_process_file(args: Tuple[str, Config]) -> Tuple[str, Features, float]:
-    file_path, config = args
-    analyzer = AudioAnalyzer(config)
-    features = analyzer.extract_features_with_timeout(file_path)
+def _worker_thread_file(args: Tuple[str, AudioAnalyzer]) -> Tuple[str, Optional[Features], Optional[float]]:
+    file_path, analyzer = args
+    features = analyzer.extract_features(file_path)
     
     if features:
         return (file_path, features, features.bpm)
@@ -75,38 +74,35 @@ class LibraryIndexer:
         logger.info(f"=== Phase 2: Processing with librosa ({len(files)} songs) ===")
         
         features_results = {}
-        pool = Pool(processes=self.config.parallel_workers)
+        timeout_seconds = self.config.processing_timeout
         
-        try:
-            args_list = [(f, self.config) for f in files]
-            results_iter = pool.imap_unordered(_worker_process_file, args_list, chunksize=1)
+        with ThreadPoolExecutor(max_workers=self.config.parallel_workers) as executor:
+            args_list = [(f, self.analyzer) for f in files]
+            future_to_file = {executor.submit(_worker_thread_file, args): args[0] for args in args_list}
             
-            for file_path, features, bpm in tqdm(
-                results_iter,
-                total=len(files),
-                desc="Librosa analysis",
-                unit="song"
-            ):
-                if features is not None:
-                    features_results[file_path] = (features, bpm)
-                else:
-                    logger.warning(f"Failed to process: {file_path}")
-            
-            logger.info("All librosa processing complete, closing pool...")
-        except KeyboardInterrupt:
-            logger.info("Interrupted by user, terminating workers...")
-            pool.terminate()
-            pool.join()
-            raise
-        except Exception as e:
-            logger.error(f"Error during librosa processing: {e}")
-            pool.terminate()
-            pool.join()
-            raise
-        else:
-            pool.close()
-            pool.join()
-            logger.info("Pool closed successfully")
+            try:
+                with tqdm(total=len(files), desc="Librosa analysis", unit="song") as pbar:
+                    for future in as_completed(future_to_file):
+                        file_path = future_to_file[future]
+                        try:
+                            result_file_path, features, bpm = future.result(timeout=timeout_seconds)
+                            
+                            if features is not None:
+                                features_results[result_file_path] = (features, bpm)
+                            else:
+                                logger.warning(f"Failed to process: {result_file_path}")
+                        except TimeoutError:
+                            logger.warning(f"Timeout ({timeout_seconds}s) processing: {file_path}")
+                        except Exception as e:
+                            logger.error(f"Error processing {file_path}: {e}")
+                        finally:
+                            pbar.update(1)
+                
+                logger.info("All librosa processing complete")
+            except KeyboardInterrupt:
+                logger.info("Interrupted by user, shutting down executor...")
+                executor.shutdown(wait=False, cancel_futures=True)
+                raise
         
         return features_results
 

@@ -1,6 +1,7 @@
 import unittest
 import tempfile
 import json
+import os
 from pathlib import Path
 from vibe_dj.models.config import Config
 
@@ -15,7 +16,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(config.sample_rate, 22050)
         self.assertEqual(config.max_duration, 180)
         self.assertEqual(config.n_mfcc, 13)
-        self.assertEqual(config.parallel_workers, 4)
+        self.assertEqual(config.parallel_workers, os.cpu_count() or 4)
         self.assertEqual(config.batch_size, 10)
 
     def test_config_custom_values(self):
