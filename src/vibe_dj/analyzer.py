@@ -46,6 +46,12 @@ def fetch_acousticbrainz_features(mbid: str | None):
     return _parse_features(ll_data, hl_data)
 
 def _fetch_from_api(mbid: str, cur):
+    """Fetch from API with database cursor for caching (single-threaded use)."""
+    ll_data, hl_data = _fetch_from_api_no_db(mbid)
+    return ll_data, hl_data
+
+def _fetch_from_api_no_db(mbid: str):
+    """Fetch from API without database access - thread-safe for concurrent calls."""
     ll_url = f"https://acousticbrainz.org/api/v1/{mbid}/low-level?n=0"
     hl_url = f"https://acousticbrainz.org/api/v1/{mbid}/high-level?n=0"
 
@@ -117,7 +123,6 @@ def _parse_features(ll_data: dict, hl_data: dict):
         return None, None
 
 def librosa_fallback_features(file_path: str):
-    logger.info(f"Using local audio analysis for {os.path.basename(file_path)}")
     try:
         # Load with duration limit to prevent excessive memory usage on very long files
         y, sr = librosa.load(file_path, sr=22050, mono=True, duration=180)
@@ -143,8 +148,6 @@ def librosa_fallback_features(file_path: str):
             mfcc, chroma, [tempo, loudness, centroid, danceability, acousticness]
         ]).astype(np.float32)
 
-        logger.info(f"Extracted features from {os.path.basename(file_path)} (BPM: {tempo:.1f})")
         return features, float(tempo)
     except Exception as e:
-        logger.error(f"Audio analysis failed for {os.path.basename(file_path)}: {e}")
         return None, None
