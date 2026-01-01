@@ -124,13 +124,17 @@ def librosa_fallback_features(file_path: str):
         
         # Extract all features while audio is in memory
         mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13).mean(axis=1)
-        chroma = librosa.feature.chroma_cqt(y=y, sr=sr).mean(axis=1)[:32]
+        chroma = librosa.feature.chroma_cqt(y=y, sr=sr).mean(axis=1)
+        chroma = np.pad(chroma, (0, 32 - len(chroma)), mode='constant')
+        
         tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
-        loudness = librosa.feature.rms(y=y).mean()
-        centroid = librosa.feature.spectral_centroid(y=y, sr=sr).mean()
-        onset_strength = librosa.onset.onset_strength(y=y, sr=sr).mean()
-        danceability = onset_strength / 10.0
-        acousticness = 1.0 - (loudness + centroid / sr)
+        tempo = float(tempo) if np.isscalar(tempo) else float(tempo[0])
+        
+        loudness = float(librosa.feature.rms(y=y).mean())
+        centroid = float(librosa.feature.spectral_centroid(y=y, sr=sr).mean())
+        onset_strength = float(librosa.onset.onset_strength(y=y, sr=sr).mean())
+        danceability = float(onset_strength / 10.0)
+        acousticness = float(1.0 - (loudness + centroid / sr))
 
         # Explicitly delete audio array to free memory immediately
         del y

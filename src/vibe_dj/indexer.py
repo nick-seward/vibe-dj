@@ -73,7 +73,7 @@ def index_library(library_path: str):
         
         # Limit pool size to prevent memory explosion
         # Use at most 4 workers to control concurrent librosa loads
-        num_workers = 1  # Temporarily set to 1 for debugging
+        num_workers = 4
         
         batch_size = 10  # Process and commit in batches to release memory
         processed_count = 0
