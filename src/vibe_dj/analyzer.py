@@ -94,7 +94,8 @@ def _fetch_from_api_no_db(mbid: str):
 def _parse_features(ll_data: dict, hl_data: dict):
     try:
         mfcc = np.array(ll_data['lowlevel']['mfcc']['mean'][:13])
-        hpcp = np.mean(ll_data['tonal']['hpcp']['all'], axis=0)[:32]
+        hpcp_mean = np.array(ll_data['tonal']['hpcp']['mean'])[:32]
+        hpcp = np.pad(hpcp_mean, (0, max(0, 32 - len(hpcp_mean))), mode='constant')
         bpm = ll_data['rhythm']['bpm']
         energy = ll_data['lowlevel']['average_loudness']
         centroid = ll_data['lowlevel']['spectral_centroid']['mean']
