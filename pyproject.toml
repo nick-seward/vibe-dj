@@ -15,7 +15,6 @@ dependencies = [
     "musicbrainzngs>=0.7.1",
     "mutagen>=1.47.0",
     "numpy>=2.3.5",
-    "requests>=2.32.5",
     "soundfile>=0.13.1",
     "tqdm>=4.67.1",
 ]

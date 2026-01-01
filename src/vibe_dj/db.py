@@ -25,11 +25,5 @@ def init_db():
         bpm REAL,
         FOREIGN KEY(song_id) REFERENCES songs(id)
     )''')
-    cur.execute('''CREATE TABLE IF NOT EXISTS acousticbrainz_cache (
-        mbid TEXT PRIMARY KEY,
-        low_level TEXT,
-        high_level TEXT,
-        fetched_at REAL
-    )''')
     conn.commit()
     conn.close()

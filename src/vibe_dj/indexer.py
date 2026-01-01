@@ -1,16 +1,13 @@
 import os
 import time
-import json
 import musicbrainzngs
 from mutagen import File as MutagenFile
 from tqdm import tqdm
 from multiprocessing import Pool
-import multiprocessing
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from .db import get_connection, init_db
-from .analyzer import fetch_acousticbrainz_features, librosa_fallback_features, _fetch_from_api_no_db, _parse_features
+from .analyzer import extract_features_librosa
 from .utils import get_duration
-from .config import FAISS_INDEX_PATH, USE_ACOUSTICBRAINZ
+from .config import FAISS_INDEX_PATH
 import faiss
 import numpy as np
 from loguru import logger
@@ -80,42 +77,7 @@ def extract_metadata(file_path: str):
 
     return title, artist, genre, mbid
 
-def fetch_acousticbrainz_concurrent(mbid_list, max_workers=10):
-    """
-    Fetch AcousticBrainz data concurrently using threads.
-    Args:
-        mbid_list: List of (file_path, mbid) tuples
-        max_workers: Max concurrent API requests
-    Returns:
-        {file_path: (ll_data, hl_data) or None}
-    """
-    results = {}
-    
-    def fetch_single(file_path, mbid):
-        try:
-            ll_data, hl_data = _fetch_from_api_no_db(mbid)
-            return file_path, ll_data, hl_data
-        except Exception as e:
-            logger.warning(f"Error fetching AcousticBrainz for {mbid}: {e}")
-            return file_path, None, None
-    
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {executor.submit(fetch_single, fp, mbid): fp 
-                  for fp, mbid in mbid_list}
-        
-        for future in tqdm(as_completed(futures), 
-                          total=len(futures), 
-                          desc="Fetching AcousticBrainz",
-                          unit="song"):
-            file_path, ll_data, hl_data = future.result()
-            results[file_path] = (ll_data, hl_data)
-    
-    return results
 
-def process_file_librosa_only(file_path: str):
-    """Worker function - only runs librosa analysis, no DB access."""
-    features, bpm = librosa_fallback_features(file_path)
-    return file_path, features, bpm
 
 
 def index_library(library_path: str):
@@ -136,7 +98,7 @@ def index_library(library_path: str):
     if to_process:
         logger.info(f"Indexing {len(to_process)} new/modified songs...")
         
-        # PHASE 1: Extract metadata and check cache
+        # PHASE 1: Extract metadata
         logger.info("=== Phase 1: Extracting metadata ===")
         file_metadata = []
         for file_path in tqdm(to_process, desc="Metadata extraction", unit="song"):
@@ -153,111 +115,48 @@ def index_library(library_path: str):
                 'duration': duration
             })
         
-        # Check which files have cached AcousticBrainz data
-        cached_features = {}
-        needs_api_fetch = []
-        needs_librosa = []
-        
-        for meta in file_metadata:
-            file_path = meta['file_path']
-            mbid = meta['mbid']
-            
-            if mbid and USE_ACOUSTICBRAINZ:
-                cur.execute("SELECT low_level, high_level FROM acousticbrainz_cache WHERE mbid = ?", (mbid,))
-                row = cur.fetchone()
-                if row and row[0]:
-                    ll_data = json.loads(row[0])
-                    hl_data = json.loads(row[1]) if row[1] else {}
-                    features, bpm = _parse_features(ll_data, hl_data)
-                    if features is not None:
-                        cached_features[file_path] = (features, bpm, 'acousticbrainz')
-                    else:
-                        needs_librosa.append(file_path)
-                else:
-                    needs_api_fetch.append((file_path, mbid))
-            else:
-                needs_librosa.append(file_path)
-        
-        logger.info(f"  Cached AcousticBrainz: {len(cached_features)}")
-        logger.info(f"  Need API fetch: {len(needs_api_fetch)}")
-        logger.info(f"  Need librosa: {len(needs_librosa)}")
-        
-        # PHASE 2: Concurrent AcousticBrainz API fetching
-        if needs_api_fetch:
-            logger.info(f"=== Phase 2: Fetching from AcousticBrainz API ===")
-            api_results = fetch_acousticbrainz_concurrent(needs_api_fetch, max_workers=10)
-            
-            for file_path, (ll_data, hl_data) in api_results.items():
-                if ll_data:
-                    mbid = next(m for fp, m in needs_api_fetch if fp == file_path)
-                    
-                    cur.execute("""INSERT OR REPLACE INTO acousticbrainz_cache
-                                   (mbid, low_level, high_level, fetched_at)
-                                   VALUES (?, ?, ?, ?)""",
-                               (mbid, json.dumps(ll_data), 
-                                json.dumps(hl_data) if hl_data else None, 
-                                time.time()))
-                    
-                    features, bpm = _parse_features(ll_data, hl_data)
-                    if features is not None:
-                        cached_features[file_path] = (features, bpm, 'acousticbrainz')
-                    else:
-                        needs_librosa.append(file_path)
-                else:
-                    needs_librosa.append(file_path)
-            
-            conn.commit()
-            logger.info(f"  Successfully fetched: {len([1 for fp, (ll, hl) in api_results.items() if ll])}")
-            logger.info(f"  Failed/unavailable: {len([1 for fp, (ll, hl) in api_results.items() if not ll])}")
-        
-        # PHASE 3: Parallel librosa processing
+        # PHASE 2: Parallel librosa processing
+        logger.info(f"=== Phase 2: Processing with librosa ({len(to_process)} songs) ===")
         librosa_results = {}
-        if needs_librosa:
-            logger.info(f"=== Phase 3: Processing with librosa ({len(needs_librosa)} songs) ===")
-            pool = Pool(processes=4)
-            try:
-                # Use imap_unordered for better performance (order doesn't matter)
-                results_iter = pool.imap_unordered(_worker_process_file, needs_librosa, chunksize=1)
-                for file_path, features, bpm in tqdm(
-                    results_iter,
-                    total=len(needs_librosa),
-                    desc="Librosa analysis",
-                    unit="song"):
-                    if features is not None:
-                        librosa_results[file_path] = (features, bpm, 'librosa')
-                    else:
-                        logger.warning(f"Failed to process: {file_path}")
-                logger.info("  All librosa processing complete, closing pool...")
-            except KeyboardInterrupt:
-                logger.info("Interrupted by user, terminating workers...")
-                pool.terminate()
-                pool.join()
-                raise
-            except Exception as e:
-                logger.error(f"Error during librosa processing: {e}")
-                pool.terminate()
-                pool.join()
-                raise
-            else:
-                pool.close()
-                pool.join()
-                logger.info("  Pool closed successfully")
+        pool = Pool(processes=4)
+        try:
+            results_iter = pool.imap_unordered(_worker_process_file, to_process, chunksize=1)
+            for file_path, features, bpm in tqdm(
+                results_iter,
+                total=len(to_process),
+                desc="Librosa analysis",
+                unit="song"):
+                if features is not None:
+                    librosa_results[file_path] = (features, bpm)
+                else:
+                    logger.warning(f"Failed to process: {file_path}")
+            logger.info("  All librosa processing complete, closing pool...")
+        except KeyboardInterrupt:
+            logger.info("Interrupted by user, terminating workers...")
+            pool.terminate()
+            pool.join()
+            raise
+        except Exception as e:
+            logger.error(f"Error during librosa processing: {e}")
+            pool.terminate()
+            pool.join()
+            raise
+        else:
+            pool.close()
+            pool.join()
+            logger.info("  Pool closed successfully")
         
         # Write all results to database
         logger.info("=== Writing results to database ===")
         processed_count = 0
         failed_count = 0
-        acousticbrainz_count = 0
-        librosa_count = 0
         batch_size = 10
-        
-        all_results = {**cached_features, **librosa_results}
         
         for meta in tqdm(file_metadata, desc="Database writes", unit="song"):
             file_path = meta['file_path']
             
-            if file_path in all_results:
-                features, bpm, method = all_results[file_path]
+            if file_path in librosa_results:
+                features, bpm = librosa_results[file_path]
                 
                 cur.execute("""INSERT OR REPLACE INTO songs
                                (file_path, title, artist, genre, mbid, last_modified, duration)
@@ -271,10 +170,6 @@ def index_library(library_path: str):
                             (song_id, features.tobytes(), bpm))
                 
                 processed_count += 1
-                if method == "acousticbrainz":
-                    acousticbrainz_count += 1
-                else:
-                    librosa_count += 1
                 
                 if processed_count % batch_size == 0:
                     conn.commit()
@@ -298,8 +193,6 @@ def index_library(library_path: str):
         logger.info("Indexing Summary:")
         logger.info(f"  Successfully processed: {processed_count}/{len(to_process)} songs")
         logger.info(f"  Failed: {failed_count}")
-        logger.info(f"  AcousticBrainz: {acousticbrainz_count}")
-        logger.info(f"  Librosa (local): {librosa_count}")
         logger.info("="*60)
 
         # Rebuild FAISS index
