@@ -6,6 +6,7 @@ from .config import DATABASE_PATH, FAISS_INDEX_PATH, PLAYLIST_OUTPUT
 
 def generate_playlist(seeds: list[str], length: int = 20, output_path: str = PLAYLIST_OUTPUT):
     conn = sqlite3.connect(DATABASE_PATH)
+    conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
     # Find seed songs
@@ -30,12 +31,12 @@ def generate_playlist(seeds: list[str], length: int = 20, output_path: str = PLA
 
     playlist = []
     used_ids = set(seed_ids)
-    for idx in I[0]:
+    for song_id in I[0]:
         if len(playlist) >= length:
             break
         cur.execute("""SELECT songs.id, title, artist, duration, file_path, bpm
                        FROM songs JOIN features ON songs.id = features.song_id
-                       WHERE songs.id = ?""", (idx,))
+                       WHERE songs.id = ?""", (int(song_id),))
         row = cur.fetchone()
         if row and row["id"] not in used_ids:
             used_ids.add(row["id"])

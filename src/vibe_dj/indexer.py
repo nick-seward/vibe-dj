@@ -197,12 +197,15 @@ def index_library(library_path: str):
 
         # Rebuild FAISS index
         logger.info("Building similarity index...")
-        cur.execute("SELECT feature_vector FROM features")
-        vectors = [np.frombuffer(row["feature_vector"], dtype=np.float32) for row in cur.fetchall()]
+        cur.execute("SELECT songs.id, feature_vector FROM songs JOIN features ON songs.id = features.song_id ORDER BY songs.id")
+        rows = cur.fetchall()
+        vectors = [np.frombuffer(row["feature_vector"], dtype=np.float32) for row in rows]
+        song_ids = np.array([row["id"] for row in rows], dtype=np.int64)
         if vectors:
             dim = len(vectors[0])
-            index = faiss.IndexFlatL2(dim)
-            index.add(np.array(vectors))
+            base_index = faiss.IndexFlatL2(dim)
+            index = faiss.IndexIDMap(base_index)
+            index.add_with_ids(np.array(vectors), song_ids)
             faiss.write_index(index, FAISS_INDEX_PATH)
             logger.info(f"Index built with {len(vectors)} songs.")
     else:
