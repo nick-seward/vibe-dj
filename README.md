@@ -56,6 +56,8 @@ The codebase follows **Object-Oriented Programming (OOP) best practices** with c
 
 ## Installation
 
+### Local Installation
+
 ```bash
 # Clone the repository
 git clone <repository-url>
@@ -68,7 +70,138 @@ uv sync
 pip install -e .
 ```
 
+### Docker Installation
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd vibe-dj
+
+# Build the Docker image
+docker build -t vibe-dj .
+
+# Or use docker-compose
+docker-compose build
+```
+
 ## Usage
+
+### Using Docker
+
+The Docker container is designed to run the CLI with your music library mounted as an external volume. All persistent data (database, FAISS index, playlists) is stored in a `/data` directory that should be mounted as a volume.
+
+#### Quick Start (Docker)
+
+```bash
+# 1. Build the image
+docker build -t vibe-dj .
+
+# 2. Create a data directory
+mkdir -p data
+
+# 3. Index your music library
+docker run --rm \
+  -v /path/to/your/music:/music:ro \
+  -v $(pwd)/data:/data \
+  vibe-dj index /music
+
+# 4. Create seeds.json in the data directory
+cat > data/seeds.json << 'EOF'
+{
+  "seeds": ["Your Song Title", "Another Song"]
+}
+EOF
+
+# 5. Generate a playlist
+docker run --rm \
+  -v $(pwd)/data:/data \
+  vibe-dj playlist --seeds-json /data/seeds.json --output /data/playlist.m3u
+```
+
+#### Basic Docker Usage
+
+**Index your music library:**
+```bash
+docker run --rm \
+  -v /path/to/your/music:/music:ro \
+  -v $(pwd)/data:/data \
+  vibe-dj index /music
+```
+
+**Generate a playlist:**
+
+First, create a `seeds.json` file in your `data` directory:
+```json
+{
+  "seeds": ["Song Title 1", "Song Title 2"]
+}
+```
+
+Then run:
+```bash
+docker run --rm \
+  -v /path/to/your/music:/music:ro \
+  -v $(pwd)/data:/data \
+  vibe-dj playlist --seeds-json /data/seeds.json --output /data/playlist.m3u
+```
+
+#### Using Docker Compose
+
+Edit `docker-compose.yml` to set your music library path:
+```yaml
+volumes:
+  - /path/to/your/music:/music:ro
+  - ./data:/data
+```
+
+Then run commands:
+```bash
+# Index library
+docker-compose run --rm vibe-dj index /music
+
+# Generate playlist (with seeds.json in ./data/)
+docker-compose run --rm vibe-dj playlist --seeds-json /data/seeds.json --output /data/playlist.m3u
+```
+
+#### Docker Volume Mapping
+
+- **`/music`**: Mount your music library here (read-only recommended with `:ro`)
+- **`/data`**: Mount a local directory for persistent data:
+  - `music.db` - SQLite database
+  - `faiss_index.bin` - FAISS similarity index
+  - `playlist.m3u` - Generated playlists
+  - `seeds.json` - Seed songs configuration
+  - `config.json` - Optional custom configuration
+
+#### Docker Configuration
+
+To use a custom config with Docker, place `config.json` in your data directory:
+```bash
+docker run --rm \
+  -v /path/to/your/music:/music:ro \
+  -v $(pwd)/data:/data \
+  vibe-dj index /music --config /data/config.json
+```
+
+#### Using Makefile Targets (Docker)
+
+For convenience, you can use the provided Makefile targets:
+
+```bash
+# Build the Docker image
+make docker-build
+
+# Index your music library
+make docker-index MUSIC_PATH=/path/to/your/music
+
+# Generate a playlist (requires data/seeds.json)
+make docker-playlist
+
+# Open a shell in the container for debugging
+make docker-shell
+```
+
+### Using Locally
 
 ### Index Your Music Library
 
@@ -144,6 +277,13 @@ vibe-dj/
 │   └── main.py          # CLI entry point
 ├── tests/
 │   └── unit/            # Unit tests mirroring src structure
+├── data/                # Docker data directory (gitignored)
+├── Dockerfile           # Docker image definition
+├── docker-compose.yml   # Docker Compose configuration
+├── .dockerignore        # Docker build exclusions
+├── config.example.json  # Example configuration file
+├── seeds.example.json   # Example seeds file
+├── Makefile             # Build and Docker targets
 ├── pyproject.toml       # Project configuration
 └── README.md
 ```
@@ -205,3 +345,18 @@ See LICENSE file for details.
 - Check that the FAISS index was built successfully
 - Verify seed song titles match database entries
 - Try different seed songs
+
+### Docker: Permission denied errors
+- Ensure the `data` directory has proper permissions
+- On Linux, you may need to run: `chmod -R 777 data/`
+- Or run the container with your user ID: `docker run --user $(id -u):$(id -g) ...`
+
+### Docker: Cannot find music files
+- Verify the music path is correctly mounted: `-v /absolute/path/to/music:/music:ro`
+- Check that the path inside the container is `/music` in your commands
+- Ensure the music directory contains supported audio files
+
+### Docker: Database or index not persisting
+- Ensure the data directory is mounted: `-v $(pwd)/data:/data`
+- Check that files are being created in the mounted `data/` directory
+- Verify the container has write permissions to the data directory
