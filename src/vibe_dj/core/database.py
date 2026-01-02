@@ -39,7 +39,6 @@ class MusicDatabase:
             title TEXT,
             artist TEXT,
             genre TEXT,
-            mbid TEXT,
             last_modified REAL,
             duration INTEGER
         )''')
@@ -54,10 +53,10 @@ class MusicDatabase:
     def add_song(self, song: Song, features: Optional[Features] = None) -> int:
         cur = self.connection.cursor()
         cur.execute("""INSERT OR REPLACE INTO songs
-                       (file_path, title, artist, genre, mbid, last_modified, duration)
-                       VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                       (file_path, title, artist, genre, last_modified, duration)
+                       VALUES (?, ?, ?, ?, ?, ?)""",
                     (song.file_path, song.title, song.artist, song.genre,
-                     song.mbid, song.last_modified, song.duration))
+                     song.last_modified, song.duration))
         song_id = cur.lastrowid
         
         if features:
@@ -81,7 +80,6 @@ class MusicDatabase:
                 title=row["title"],
                 artist=row["artist"],
                 genre=row["genre"],
-                mbid=row["mbid"],
                 last_modified=row["last_modified"],
                 duration=row["duration"]
             )
@@ -99,7 +97,6 @@ class MusicDatabase:
                 title=row["title"],
                 artist=row["artist"],
                 genre=row["genre"],
-                mbid=row["mbid"],
                 last_modified=row["last_modified"],
                 duration=row["duration"]
             )
@@ -116,7 +113,6 @@ class MusicDatabase:
             title=row["title"],
             artist=row["artist"],
             genre=row["genre"],
-            mbid=row["mbid"],
             last_modified=row["last_modified"],
             duration=row["duration"]
         ) for row in rows]
@@ -149,7 +145,6 @@ class MusicDatabase:
                 title=row["title"],
                 artist=row["artist"],
                 genre=row["genre"],
-                mbid=row["mbid"],
                 last_modified=row["last_modified"],
                 duration=row["duration"]
             )
@@ -177,7 +172,6 @@ class MusicDatabase:
                 title=row["title"],
                 artist=row["artist"],
                 genre=row["genre"],
-                mbid=row["mbid"],
                 last_modified=row["last_modified"],
                 duration=row["duration"]
             )
@@ -216,7 +210,6 @@ class MusicDatabase:
             title=row["title"],
             artist=row["artist"],
             genre=row["genre"],
-            mbid=row["mbid"],
             last_modified=row["last_modified"],
             duration=row["duration"]
         ) for row in rows]

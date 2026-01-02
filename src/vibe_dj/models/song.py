@@ -9,7 +9,6 @@ class Song:
     title: str
     artist: str
     genre: str
-    mbid: Optional[str]
     last_modified: float
     duration: Optional[int]
 

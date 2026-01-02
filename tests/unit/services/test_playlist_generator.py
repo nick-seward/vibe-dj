@@ -21,11 +21,11 @@ class TestPlaylistGenerator(unittest.TestCase):
         
         self.test_song1 = Song(
             id=1, file_path="/test/1.mp3", title="Test Song 1", artist="Artist 1",
-            genre="Rock", mbid=None, last_modified=0.0, duration=180
+            genre="Rock", last_modified=0.0, duration=180
         )
         self.test_song2 = Song(
             id=2, file_path="/test/2.mp3", title="Test Song 2", artist="Artist 2",
-            genre="Pop", mbid=None, last_modified=0.0, duration=200
+            genre="Pop", last_modified=0.0, duration=200
         )
         self.test_features1 = Features(
             song_id=1,
@@ -83,8 +83,8 @@ class TestPlaylistGenerator(unittest.TestCase):
         )
         self.mock_db.get_song_with_features.side_effect = [
             (self.test_song2, self.test_features2),
-            (Song(id=3, file_path="/test/3.mp3", title="Song 3", artist="Artist 3",
-                  genre="Rock", mbid=None, last_modified=0.0, duration=190),
+(Song(id=3, file_path="/test/3.mp3", title="Song 3", artist="Artist 3",
+                  genre="Rock", last_modified=0.0, duration=190),
              Features(song_id=3, feature_vector=np.array([7.0, 8.0, 9.0], dtype=np.float32), bpm=125.0))
         ]
         
@@ -97,11 +97,11 @@ class TestPlaylistGenerator(unittest.TestCase):
     def test_sort_by_bpm(self):
         song_low_bpm = Song(
             id=1, file_path="/test/1.mp3", title="Low BPM", artist="Artist 1",
-            genre="Rock", mbid=None, last_modified=0.0, duration=180
+            genre="Rock", last_modified=0.0, duration=180
         )
         song_high_bpm = Song(
             id=2, file_path="/test/2.mp3", title="High BPM", artist="Artist 2",
-            genre="Rock", mbid=None, last_modified=0.0, duration=180
+            genre="Rock", last_modified=0.0, duration=180
         )
         
         features_low = Features(
@@ -132,8 +132,8 @@ class TestPlaylistGenerator(unittest.TestCase):
         )
         self.mock_db.get_song_with_features.side_effect = [
             (self.test_song2, self.test_features2),
-            (Song(id=3, file_path="/test/3.mp3", title="Song 3", artist="Artist 3",
-                  genre="Rock", mbid=None, last_modified=0.0, duration=190),
+(Song(id=3, file_path="/test/3.mp3", title="Song 3", artist="Artist 3",
+                  genre="Rock", last_modified=0.0, duration=190),
              Features(song_id=3, feature_vector=np.array([7.0, 8.0, 9.0], dtype=np.float32), bpm=125.0))
         ]
         

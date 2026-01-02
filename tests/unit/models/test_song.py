@@ -10,7 +10,6 @@ class TestSong(unittest.TestCase):
             title="Test Song",
             artist="Test Artist",
             genre="Rock",
-            mbid="abc123",
             last_modified=1234567890.0,
             duration=180
         )
@@ -27,7 +26,6 @@ class TestSong(unittest.TestCase):
             title="Test Song",
             artist="Test Artist",
             genre="Rock",
-            mbid=None,
             last_modified=1234567890.0,
             duration=180
         )
@@ -41,12 +39,10 @@ class TestSong(unittest.TestCase):
             title="Test Song",
             artist="Test Artist",
             genre="Unknown",
-            mbid=None,
             last_modified=1234567890.0,
             duration=None
         )
         
-        self.assertIsNone(song.mbid)
         self.assertIsNone(song.duration)
 
 

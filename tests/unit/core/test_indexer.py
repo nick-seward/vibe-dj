@@ -60,7 +60,7 @@ class TestLibraryIndexer(unittest.TestCase):
             self.assertEqual(len(to_process), 1)
 
     def test_extract_metadata_phase(self):
-        self.mock_analyzer.extract_metadata.return_value = ("Title", "Artist", "Rock", None)
+        self.mock_analyzer.extract_metadata.return_value = ("Title", "Artist", "Rock")
         self.mock_analyzer.get_duration.return_value = 180
         
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -81,7 +81,6 @@ class TestLibraryIndexer(unittest.TestCase):
                 'title': "Test Song",
                 'artist': "Test Artist",
                 'genre': "Rock",
-                'mbid': None,
                 'mtime': 1234567890.0,
                 'duration': 180
             }
@@ -106,9 +105,9 @@ class TestLibraryIndexer(unittest.TestCase):
     def test_write_to_database_with_failures(self):
         file_metadata = {
             "/test/song1.mp3": {'title': "Song 1", 'artist': "Artist 1", 'genre': "Rock", 
-                               'mbid': None, 'mtime': 0.0, 'duration': 180},
+                               'mtime': 0.0, 'duration': 180},
             "/test/song2.mp3": {'title': "Song 2", 'artist': "Artist 2", 'genre': "Pop", 
-                               'mbid': None, 'mtime': 0.0, 'duration': 200}
+                               'mtime': 0.0, 'duration': 200}
         }
         
         features = Features(
@@ -143,7 +142,7 @@ class TestLibraryIndexer(unittest.TestCase):
     def test_rebuild_similarity_index(self):
         song1 = Song(
             id=1, file_path="/test/1.mp3", title="Song 1", artist="Artist 1",
-            genre="Rock", mbid=None, last_modified=0.0, duration=180
+            genre="Rock", last_modified=0.0, duration=180
         )
         features1 = Features(
             song_id=1,
@@ -153,7 +152,7 @@ class TestLibraryIndexer(unittest.TestCase):
         
         song2 = Song(
             id=2, file_path="/test/2.mp3", title="Song 2", artist="Artist 2",
-            genre="Pop", mbid=None, last_modified=0.0, duration=200
+            genre="Pop", last_modified=0.0, duration=200
         )
         features2 = Features(
             song_id=2,

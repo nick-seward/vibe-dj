@@ -55,7 +55,7 @@ class LibraryIndexer:
         
         file_metadata = {}
         for file_path in tqdm(files, desc="Metadata extraction", unit="song"):
-            title, artist, genre, mbid = self.analyzer.extract_metadata(file_path)
+            title, artist, genre = self.analyzer.extract_metadata(file_path)
             duration = self.analyzer.get_duration(file_path)
             mtime = os.path.getmtime(file_path)
             
@@ -63,7 +63,6 @@ class LibraryIndexer:
                 'title': title,
                 'artist': artist,
                 'genre': genre,
-                'mbid': mbid,
                 'mtime': mtime,
                 'duration': duration
             }
@@ -123,7 +122,6 @@ class LibraryIndexer:
                     title=meta['title'],
                     artist=meta['artist'],
                     genre=meta['genre'],
-                    mbid=meta['mbid'],
                     last_modified=meta['mtime'],
                     duration=meta['duration']
                 )

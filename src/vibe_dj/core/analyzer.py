@@ -3,13 +3,8 @@ import librosa
 import math
 from typing import Optional, Tuple
 from mutagen import File as MutagenFile
-import musicbrainzngs
-import time
 from loguru import logger
 from ..models import Song, Features, Config
-
-
-musicbrainzngs.set_useragent("MusicDJ", "0.1", "nick@homeslice.ca")
 
 
 class AudioAnalyzer:
@@ -54,7 +49,7 @@ class AudioAnalyzer:
             return None
 
 
-    def extract_metadata(self, file_path: str) -> Tuple[str, str, str, Optional[str]]:
+    def extract_metadata(self, file_path: str) -> Tuple[str, str, str]:
         try:
             audio = MutagenFile(file_path, easy=True)
             title = (audio.get("title", [None]) or [None])[0]
@@ -65,30 +60,11 @@ class AudioAnalyzer:
             artist = (audio.get("artist", ["Unknown"]) or ["Unknown"])[0]
             genre = (audio.get("genre", ["Unknown"]) or ["Unknown"])[0]
 
-            mbid = None
-            if audio:
-                mbid = audio.get("musicbrainz_recordingid") or audio.get("musicbrainz_trackid")
-                if mbid:
-                    mbid = mbid[0]
-
-            if not mbid:
-                try:
-                    results = musicbrainzngs.search_recordings(
-                        recording=title,
-                        artist=artist,
-                        limit=1
-                    )
-                    if results.get("recording-list"):
-                        mbid = results["recording-list"][0]["id"]
-                    time.sleep(1)
-                except Exception:
-                    pass
-
-            return title, artist, genre, mbid
+            return title, artist, genre
         except Exception as e:
             logger.error(f"Failed to extract metadata from {file_path}: {e}")
             import os
-            return os.path.basename(file_path), "Unknown", "Unknown", None
+            return os.path.basename(file_path), "Unknown", "Unknown"
 
     def get_duration(self, file_path: str) -> Optional[int]:
         try:
@@ -100,7 +76,7 @@ class AudioAnalyzer:
         return None
 
     def analyze_file(self, file_path: str, last_modified: float) -> Optional[Tuple[Song, Features]]:
-        title, artist, genre, mbid = self.extract_metadata(file_path)
+        title, artist, genre = self.extract_metadata(file_path)
         duration = self.get_duration(file_path)
         features = self.extract_features(file_path)
         
@@ -113,7 +89,6 @@ class AudioAnalyzer:
             title=title,
             artist=artist,
             genre=genre,
-            mbid=mbid,
             last_modified=last_modified,
             duration=duration
         )

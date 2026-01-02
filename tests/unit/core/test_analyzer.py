@@ -50,7 +50,7 @@ class TestAudioAnalyzer(unittest.TestCase):
         mock_audio.get = mock_get
         mock_mutagen.return_value = mock_audio
         
-        title, artist, genre, mbid = self.analyzer.extract_metadata("/test/song.mp3")
+        title, artist, genre = self.analyzer.extract_metadata("/test/song.mp3")
         
         self.assertEqual(title, "Test Song")
         self.assertEqual(artist, "Test Artist")
@@ -62,7 +62,7 @@ class TestAudioAnalyzer(unittest.TestCase):
         mock_audio.get.return_value = None
         mock_mutagen.return_value = mock_audio
         
-        title, artist, genre, mbid = self.analyzer.extract_metadata("/test/song.mp3")
+        title, artist, genre = self.analyzer.extract_metadata("/test/song.mp3")
         
         self.assertEqual(title, "song.mp3")
         self.assertEqual(artist, "Unknown")
@@ -90,7 +90,7 @@ class TestAudioAnalyzer(unittest.TestCase):
     @patch.object(AudioAnalyzer, 'get_duration')
     @patch.object(AudioAnalyzer, 'extract_features')
     def test_analyze_file_success(self, mock_extract_features, mock_get_duration, mock_extract_metadata):
-        mock_extract_metadata.return_value = ("Test Song", "Test Artist", "Rock", None)
+        mock_extract_metadata.return_value = ("Test Song", "Test Artist", "Rock")
         mock_get_duration.return_value = 180
         mock_extract_features.return_value = Features(
             song_id=0,

@@ -14,11 +14,11 @@ class TestPlaylistExporter(unittest.TestCase):
         
         self.song1 = Song(
             id=1, file_path="/music/song1.mp3", title="Song 1", artist="Artist 1",
-            genre="Rock", mbid=None, last_modified=0.0, duration=180
+            genre="Rock", last_modified=0.0, duration=180
         )
         self.song2 = Song(
             id=2, file_path="/music/song2.mp3", title="Song 2", artist="Artist 2",
-            genre="Pop", mbid=None, last_modified=0.0, duration=200
+            genre="Pop", last_modified=0.0, duration=200
         )
         
         self.playlist = Playlist(
@@ -49,7 +49,7 @@ class TestPlaylistExporter(unittest.TestCase):
     def test_export_m3u_with_none_duration(self):
         song_no_duration = Song(
             id=3, file_path="/music/song3.mp3", title="Song 3", artist="Artist 3",
-            genre="Rock", mbid=None, last_modified=0.0, duration=None
+            genre="Rock", last_modified=0.0, duration=None
         )
         playlist = Playlist(songs=[song_no_duration])
         

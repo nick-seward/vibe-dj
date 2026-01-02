@@ -8,11 +8,11 @@ class TestPlaylist(unittest.TestCase):
     def setUp(self):
         self.song1 = Song(
             id=1, file_path="/path/1.mp3", title="Song 1", artist="Artist 1",
-            genre="Rock", mbid=None, last_modified=0.0, duration=180
+            genre="Rock", last_modified=0.0, duration=180
         )
         self.song2 = Song(
             id=2, file_path="/path/2.mp3", title="Song 2", artist="Artist 2",
-            genre="Pop", mbid=None, last_modified=0.0, duration=200
+            genre="Pop", last_modified=0.0, duration=200
         )
 
     def test_playlist_creation(self):

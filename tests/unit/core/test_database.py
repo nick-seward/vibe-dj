@@ -23,7 +23,6 @@ class TestMusicDatabase(unittest.TestCase):
             title="Test Song",
             artist="Test Artist",
             genre="Rock",
-            mbid="abc123",
             last_modified=1234567890.0,
             duration=180
         )
@@ -87,15 +86,15 @@ class TestMusicDatabase(unittest.TestCase):
     def test_find_songs_by_title(self):
         song1 = Song(
             id=0, file_path="/test/1.mp3", title="Rock Song", artist="Artist 1",
-            genre="Rock", mbid=None, last_modified=0.0, duration=180
+            genre="Rock", last_modified=0.0, duration=180
         )
         song2 = Song(
             id=0, file_path="/test/2.mp3", title="Another Rock Track", artist="Artist 2",
-            genre="Rock", mbid=None, last_modified=0.0, duration=200
+            genre="Rock", last_modified=0.0, duration=200
         )
         song3 = Song(
             id=0, file_path="/test/3.mp3", title="Pop Song", artist="Artist 3",
-            genre="Pop", mbid=None, last_modified=0.0, duration=190
+            genre="Pop", last_modified=0.0, duration=190
         )
         
         self.db.add_song(song1)
@@ -122,7 +121,7 @@ class TestMusicDatabase(unittest.TestCase):
     def test_get_all_songs_with_features(self):
         song1 = Song(
             id=0, file_path="/test/1.mp3", title="Song 1", artist="Artist 1",
-            genre="Rock", mbid=None, last_modified=0.0, duration=180
+            genre="Rock", last_modified=0.0, duration=180
         )
         features1 = Features(
             song_id=0,
@@ -132,7 +131,7 @@ class TestMusicDatabase(unittest.TestCase):
         
         song2 = Song(
             id=0, file_path="/test/2.mp3", title="Song 2", artist="Artist 2",
-            genre="Pop", mbid=None, last_modified=0.0, duration=200
+            genre="Pop", last_modified=0.0, duration=200
         )
         features2 = Features(
             song_id=0,
@@ -165,11 +164,11 @@ class TestMusicDatabase(unittest.TestCase):
     def test_get_songs_by_ids(self):
         song1 = Song(
             id=0, file_path="/test/1.mp3", title="Song 1", artist="Artist 1",
-            genre="Rock", mbid=None, last_modified=0.0, duration=180
+            genre="Rock", last_modified=0.0, duration=180
         )
         song2 = Song(
             id=0, file_path="/test/2.mp3", title="Song 2", artist="Artist 2",
-            genre="Pop", mbid=None, last_modified=0.0, duration=200
+            genre="Pop", last_modified=0.0, duration=200
         )
         
         id1 = self.db.add_song(song1)
