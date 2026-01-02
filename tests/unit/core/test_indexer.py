@@ -67,24 +67,23 @@ class TestLibraryIndexer(unittest.TestCase):
             test_file = Path(tmpdir, "song.mp3")
             test_file.touch()
             
-            metadata = self.indexer.extract_metadata_phase([str(test_file)])
+            count = self.indexer.extract_metadata_phase([str(test_file)])
             
-            self.assertIn(str(test_file), metadata)
-            self.assertEqual(metadata[str(test_file)]['title'], "Title")
-            self.assertEqual(metadata[str(test_file)]['artist'], "Artist")
+            self.assertEqual(count, 1)
+            self.mock_db.add_song.assert_called()
+            self.mock_db.commit.assert_called()
 
-    def test_write_to_database(self):
-        file_path = "/test/song.mp3"
+    def test_extract_features_phase(self):
+        song1 = Song(
+            id=1, file_path="/test/1.mp3", title="Song 1", artist="Artist 1",
+            genre="Rock", last_modified=0.0, duration=180
+        )
+        song2 = Song(
+            id=2, file_path="/test/2.mp3", title="Song 2", artist="Artist 2",
+            genre="Pop", last_modified=0.0, duration=200
+        )
         
-        file_metadata = {
-            file_path: {
-                'title': "Test Song",
-                'artist': "Test Artist",
-                'genre': "Rock",
-                'mtime': 1234567890.0,
-                'duration': 180
-            }
-        }
+        self.mock_db.get_songs_without_features.return_value = [song1, song2]
         
         features = Features(
             song_id=0,
@@ -92,38 +91,20 @@ class TestLibraryIndexer(unittest.TestCase):
             bpm=120.0
         )
         
-        features_results = {
-            file_path: (features, 120.0)
-        }
+        self.mock_analyzer.extract_features.return_value = features
+        self.mock_db.get_song_by_path.return_value = song1
         
-        processed, failed = self.indexer.write_to_database(file_metadata, features_results)
+        count = self.indexer.extract_features_phase()
         
-        self.assertEqual(processed, 1)
-        self.assertEqual(failed, 0)
-        self.mock_db.add_song.assert_called_once()
+        self.assertEqual(count, 2)
+        self.mock_db.get_songs_without_features.assert_called_once()
 
-    def test_write_to_database_with_failures(self):
-        file_metadata = {
-            "/test/song1.mp3": {'title': "Song 1", 'artist': "Artist 1", 'genre': "Rock", 
-                               'mtime': 0.0, 'duration': 180},
-            "/test/song2.mp3": {'title': "Song 2", 'artist': "Artist 2", 'genre': "Pop", 
-                               'mtime': 0.0, 'duration': 200}
-        }
+    def test_extract_features_phase_no_songs(self):
+        self.mock_db.get_songs_without_features.return_value = []
         
-        features = Features(
-            song_id=0,
-            feature_vector=np.array([1.0, 2.0, 3.0], dtype=np.float32),
-            bpm=120.0
-        )
+        count = self.indexer.extract_features_phase()
         
-        features_results = {
-            "/test/song1.mp3": (features, 120.0)
-        }
-        
-        processed, failed = self.indexer.write_to_database(file_metadata, features_results)
-        
-        self.assertEqual(processed, 1)
-        self.assertEqual(failed, 1)
+        self.assertEqual(count, 0)
 
     def test_clean_deleted_files(self):
         self.mock_db.get_all_file_paths_with_mtime.return_value = {
@@ -176,6 +157,62 @@ class TestLibraryIndexer(unittest.TestCase):
         self.indexer.rebuild_similarity_index()
         
         self.mock_similarity.build_index.assert_not_called()
+
+    def test_update_similarity_index_incremental_no_index(self):
+        self.mock_db.get_indexing_stats.return_value = {
+            'total_songs': 10,
+            'songs_with_features': 10,
+            'songs_without_features': 0
+        }
+        
+        with patch('os.path.exists', return_value=False):
+            self.indexer.update_similarity_index_incremental(5)
+        
+        self.mock_db.get_all_songs_with_features.assert_called()
+        self.mock_similarity.build_index.assert_called()
+
+    def test_update_similarity_index_incremental_small_update(self):
+        self.mock_db.get_indexing_stats.return_value = {
+            'total_songs': 105,
+            'songs_with_features': 105,
+            'songs_without_features': 0
+        }
+        
+        self.mock_similarity.size = 100
+        
+        song = Song(
+            id=101, file_path="/test/101.mp3", title="Song 101", artist="Artist",
+            genre="Rock", last_modified=0.0, duration=180
+        )
+        features = Features(
+            song_id=101,
+            feature_vector=np.array([1.0, 2.0, 3.0], dtype=np.float32),
+            bpm=120.0
+        )
+        
+        self.mock_db.get_all_songs_with_features.return_value = [(song, features)]
+        
+        with patch('os.path.exists', return_value=True):
+            self.indexer.update_similarity_index_incremental(5)
+        
+        self.mock_similarity.load.assert_called()
+        self.mock_similarity.add_vectors.assert_called()
+
+    def test_update_similarity_index_incremental_large_update(self):
+        self.mock_db.get_indexing_stats.return_value = {
+            'total_songs': 120,
+            'songs_with_features': 120,
+            'songs_without_features': 0
+        }
+        
+        self.mock_similarity.size = 100
+        
+        with patch('os.path.exists', return_value=True):
+            self.indexer.update_similarity_index_incremental(20)
+        
+        self.mock_similarity.load.assert_called()
+        self.mock_db.get_all_songs_with_features.assert_called()
+        self.mock_similarity.build_index.assert_called()
 
 
 if __name__ == "__main__":

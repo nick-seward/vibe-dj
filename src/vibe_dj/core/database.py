@@ -216,3 +216,49 @@ class MusicDatabase:
 
     def commit(self) -> None:
         self.connection.commit()
+
+    def get_songs_without_features(self, file_paths: List[str] = None) -> List[Song]:
+        """Get songs that exist in DB but don't have features yet."""
+        cur = self.connection.cursor()
+        
+        if file_paths:
+            placeholders = ','.join('?' * len(file_paths))
+            query = f"""SELECT songs.* FROM songs 
+                       LEFT JOIN features ON songs.id = features.song_id 
+                       WHERE features.song_id IS NULL 
+                       AND songs.file_path IN ({placeholders})"""
+            cur.execute(query, file_paths)
+        else:
+            query = """SELECT songs.* FROM songs 
+                       LEFT JOIN features ON songs.id = features.song_id 
+                       WHERE features.song_id IS NULL"""
+            cur.execute(query)
+        
+        rows = cur.fetchall()
+        return [Song(
+            id=row["id"],
+            file_path=row["file_path"],
+            title=row["title"],
+            artist=row["artist"],
+            genre=row["genre"],
+            last_modified=row["last_modified"],
+            duration=row["duration"]
+        ) for row in rows]
+
+    def get_indexing_stats(self) -> dict:
+        """Get statistics about indexing progress."""
+        cur = self.connection.cursor()
+        
+        cur.execute("SELECT COUNT(*) FROM songs")
+        total_songs = cur.fetchone()[0]
+        
+        cur.execute("SELECT COUNT(*) FROM features")
+        songs_with_features = cur.fetchone()[0]
+        
+        songs_without_features = total_songs - songs_with_features
+        
+        return {
+            'total_songs': total_songs,
+            'songs_with_features': songs_with_features,
+            'songs_without_features': songs_without_features
+        }

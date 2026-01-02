@@ -189,6 +189,91 @@ class TestMusicDatabase(unittest.TestCase):
         self.assertIn("/test/song.mp3", paths)
         self.assertEqual(paths["/test/song.mp3"], 1234567890.0)
 
+    def test_get_songs_without_features(self):
+        song1 = Song(
+            id=0, file_path="/test/1.mp3", title="Song 1", artist="Artist 1",
+            genre="Rock", last_modified=0.0, duration=180
+        )
+        song2 = Song(
+            id=0, file_path="/test/2.mp3", title="Song 2", artist="Artist 2",
+            genre="Pop", last_modified=0.0, duration=200
+        )
+        features = Features(
+            song_id=0,
+            feature_vector=np.array([1.0, 2.0], dtype=np.float32),
+            bpm=120.0
+        )
+        
+        self.db.add_song(song1, features)
+        self.db.add_song(song2)
+        
+        songs_without = self.db.get_songs_without_features()
+        
+        self.assertEqual(len(songs_without), 1)
+        self.assertEqual(songs_without[0].title, "Song 2")
+
+    def test_get_songs_without_features_filtered(self):
+        song1 = Song(
+            id=0, file_path="/test/1.mp3", title="Song 1", artist="Artist 1",
+            genre="Rock", last_modified=0.0, duration=180
+        )
+        song2 = Song(
+            id=0, file_path="/test/2.mp3", title="Song 2", artist="Artist 2",
+            genre="Pop", last_modified=0.0, duration=200
+        )
+        song3 = Song(
+            id=0, file_path="/test/3.mp3", title="Song 3", artist="Artist 3",
+            genre="Jazz", last_modified=0.0, duration=210
+        )
+        
+        self.db.add_song(song1)
+        self.db.add_song(song2)
+        self.db.add_song(song3)
+        
+        songs_without = self.db.get_songs_without_features(["/test/1.mp3", "/test/2.mp3"])
+        
+        self.assertEqual(len(songs_without), 2)
+        titles = [s.title for s in songs_without]
+        self.assertIn("Song 1", titles)
+        self.assertIn("Song 2", titles)
+        self.assertNotIn("Song 3", titles)
+
+    def test_get_indexing_stats(self):
+        song1 = Song(
+            id=0, file_path="/test/1.mp3", title="Song 1", artist="Artist 1",
+            genre="Rock", last_modified=0.0, duration=180
+        )
+        song2 = Song(
+            id=0, file_path="/test/2.mp3", title="Song 2", artist="Artist 2",
+            genre="Pop", last_modified=0.0, duration=200
+        )
+        song3 = Song(
+            id=0, file_path="/test/3.mp3", title="Song 3", artist="Artist 3",
+            genre="Jazz", last_modified=0.0, duration=210
+        )
+        features = Features(
+            song_id=0,
+            feature_vector=np.array([1.0, 2.0], dtype=np.float32),
+            bpm=120.0
+        )
+        
+        self.db.add_song(song1, features)
+        self.db.add_song(song2, features)
+        self.db.add_song(song3)
+        
+        stats = self.db.get_indexing_stats()
+        
+        self.assertEqual(stats['total_songs'], 3)
+        self.assertEqual(stats['songs_with_features'], 2)
+        self.assertEqual(stats['songs_without_features'], 1)
+
+    def test_get_indexing_stats_empty(self):
+        stats = self.db.get_indexing_stats()
+        
+        self.assertEqual(stats['total_songs'], 0)
+        self.assertEqual(stats['songs_with_features'], 0)
+        self.assertEqual(stats['songs_without_features'], 0)
+
 
 if __name__ == "__main__":
     unittest.main()
