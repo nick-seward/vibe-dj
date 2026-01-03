@@ -148,14 +148,21 @@ If a seed song is not found, you'll see a warning message with the exact values 
 
 ## Docker Users
 
-If using Docker, run the migration script:
+If using Docker, run the migration script by overriding the entrypoint:
 
 ```bash
-# Run migration script
-docker run --rm -v /path/to/music:/music:ro -v $(pwd)/data:/data vibe-dj python scripts/migrate_add_album.py
+# Run migration script (override entrypoint to use python)
+docker run --rm \
+  -v /path/to/music:/music:ro \
+  -v $(pwd)/data:/data \
+  --entrypoint python \
+  vibe-dj /app/scripts/migrate_add_album.py
 
 # Query database to verify
-docker run --rm -v $(pwd)/data:/data vibe-dj /bin/sh -c "sqlite3 /data/music.db 'SELECT title, artist, album FROM songs LIMIT 10;'"
+docker run --rm \
+  -v $(pwd)/data:/data \
+  --entrypoint sqlite3 \
+  vibe-dj /data/music.db "SELECT title, artist, album FROM songs LIMIT 10;"
 ```
 
 **Alternative - Full re-index:**

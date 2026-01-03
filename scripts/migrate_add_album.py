@@ -24,6 +24,10 @@ def migrate_album_field(config: Config):
     db = MusicDatabase(config)
     db.connect()
     
+    # Ensure database schema is up to date (adds album column if missing)
+    print("Ensuring database schema is up to date...")
+    db.init_db()
+    
     analyzer = AudioAnalyzer(config)
     
     # Get all songs
