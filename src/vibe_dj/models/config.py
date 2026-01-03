@@ -18,6 +18,9 @@ class Config:
     parallel_workers: int = field(default_factory=lambda: os.cpu_count() or 4)
     batch_size: int = 10
     processing_timeout: int = 30
+    
+    query_noise_scale: float = 0.1
+    candidate_multiplier: int = 4
 
     @classmethod
     def from_file(cls, path: str) -> "Config":

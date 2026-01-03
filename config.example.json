@@ -7,5 +7,7 @@
   "n_mfcc": 13,
   "parallel_workers": 4,
   "batch_size": 10,
-  "processing_timeout": 30
+  "processing_timeout": 30,
+  "query_noise_scale": 0.1,
+  "candidate_multiplier": 4
 }

@@ -45,26 +45,47 @@ class PlaylistGenerator:
         
         return np.mean(vectors, axis=0)
 
+    def perturb_query_vector(self, query_vector: np.ndarray, noise_scale: float = None) -> np.ndarray:
+        if noise_scale is None:
+            noise_scale = self.config.query_noise_scale
+        
+        if noise_scale <= 0:
+            return query_vector
+        
+        vector_std = np.std(query_vector)
+        noise = np.random.normal(0, vector_std * noise_scale, query_vector.shape)
+        
+        return query_vector + noise
+
     def find_similar_songs(self, query_vector: np.ndarray, count: int, 
-                          exclude_ids: set) -> List[Song]:
+                          exclude_ids: set, candidate_multiplier: int = None) -> List[Song]:
+        if candidate_multiplier is None:
+            candidate_multiplier = self.config.candidate_multiplier
+        
         extra_buffer = 50
+        candidate_count = count * candidate_multiplier
+        
         distances, indices = self.similarity_index.search(
             query_vector, 
-            k=count + len(exclude_ids) + extra_buffer
+            k=candidate_count + len(exclude_ids) + extra_buffer
         )
         
-        similar_songs = []
+        candidate_songs = []
         for song_id in indices:
-            if len(similar_songs) >= count:
-                break
-            
             if int(song_id) not in exclude_ids:
                 song_with_features = self.database.get_song_with_features(int(song_id))
                 if song_with_features:
                     song, _ = song_with_features
-                    similar_songs.append(song)
+                    candidate_songs.append(song)
+                    
+                    if len(candidate_songs) >= candidate_count:
+                        break
         
-        return similar_songs
+        if len(candidate_songs) <= count:
+            return candidate_songs
+        
+        selected_indices = random.sample(range(len(candidate_songs)), count)
+        return [candidate_songs[i] for i in selected_indices]
 
     def sort_by_bpm(self, songs: List[Song], bpm_jitter_percent: float = 5.0) -> List[Song]:
         songs_with_bpm = []
@@ -84,7 +105,8 @@ class PlaylistGenerator:
         return [song for song, _ in songs_with_bpm]
 
     def generate(self, seed_titles: List[str], length: int = 20, 
-                bpm_jitter_percent: float = 5.0) -> Optional[Playlist]:
+                bpm_jitter_percent: float = 5.0, query_noise_scale: float = None,
+                candidate_multiplier: int = None) -> Optional[Playlist]:
         if not seed_titles:
             raise ValueError("At least one seed title is required")
         
@@ -100,8 +122,12 @@ class PlaylistGenerator:
         
         avg_vector = self.compute_average_vector(seed_vectors)
         
+        perturbed_vector = self.perturb_query_vector(avg_vector, query_noise_scale)
+        
         exclude_ids = {song.id for song in seed_songs}
-        similar_songs = self.find_similar_songs(avg_vector, length, exclude_ids)
+        similar_songs = self.find_similar_songs(
+            perturbed_vector, length, exclude_ids, candidate_multiplier
+        )
         
         if not similar_songs:
             logger.warning("No similar songs found")

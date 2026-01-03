@@ -76,23 +76,75 @@ class TestPlaylistGenerator(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.generator.compute_average_vector([])
 
+    def test_perturb_query_vector_with_noise(self):
+        query_vector = np.array([1.0, 2.0, 3.0], dtype=np.float32)
+        
+        perturbed = self.generator.perturb_query_vector(query_vector, noise_scale=0.1)
+        
+        self.assertEqual(perturbed.shape, query_vector.shape)
+        self.assertFalse(np.array_equal(perturbed, query_vector))
+
+    def test_perturb_query_vector_no_noise(self):
+        query_vector = np.array([1.0, 2.0, 3.0], dtype=np.float32)
+        
+        perturbed = self.generator.perturb_query_vector(query_vector, noise_scale=0.0)
+        
+        np.testing.assert_array_equal(perturbed, query_vector)
+
+    def test_perturb_query_vector_uses_config(self):
+        self.config.query_noise_scale = 0.2
+        query_vector = np.array([1.0, 2.0, 3.0], dtype=np.float32)
+        
+        perturbed = self.generator.perturb_query_vector(query_vector)
+        
+        self.assertEqual(perturbed.shape, query_vector.shape)
+
     def test_find_similar_songs(self):
+        song3 = Song(id=3, file_path="/test/3.mp3", title="Song 3", artist="Artist 3",
+                     genre="Rock", last_modified=0.0, duration=190)
+        song4 = Song(id=4, file_path="/test/4.mp3", title="Song 4", artist="Artist 4",
+                     genre="Pop", last_modified=0.0, duration=200)
+        features3 = Features(song_id=3, feature_vector=np.array([7.0, 8.0, 9.0], dtype=np.float32), bpm=125.0)
+        features4 = Features(song_id=4, feature_vector=np.array([10.0, 11.0, 12.0], dtype=np.float32), bpm=135.0)
+        
         self.mock_similarity.search.return_value = (
-            np.array([0.1, 0.2, 0.3]),
-            np.array([2, 3, 4])
+            np.array([0.1, 0.2, 0.3, 0.4]),
+            np.array([2, 3, 4, 5])
         )
         self.mock_db.get_song_with_features.side_effect = [
             (self.test_song2, self.test_features2),
-(Song(id=3, file_path="/test/3.mp3", title="Song 3", artist="Artist 3",
-                  genre="Rock", last_modified=0.0, duration=190),
-             Features(song_id=3, feature_vector=np.array([7.0, 8.0, 9.0], dtype=np.float32), bpm=125.0))
+            (song3, features3),
+            (song4, features4)
         ]
         
         query = np.array([1.0, 2.0, 3.0], dtype=np.float32)
-        similar = self.generator.find_similar_songs(query, count=2, exclude_ids={1})
+        similar = self.generator.find_similar_songs(query, count=2, exclude_ids={1}, candidate_multiplier=1)
         
         self.assertEqual(len(similar), 2)
-        self.assertEqual(similar[0].id, 2)
+
+    def test_find_similar_songs_with_sampling(self):
+        songs = []
+        features = []
+        for i in range(2, 10):
+            song = Song(id=i, file_path=f"/test/{i}.mp3", title=f"Song {i}", 
+                       artist=f"Artist {i}", genre="Rock", last_modified=0.0, duration=180)
+            feat = Features(song_id=i, feature_vector=np.array([float(i), float(i+1), float(i+2)], dtype=np.float32), 
+                          bpm=120.0 + i)
+            songs.append(song)
+            features.append(feat)
+        
+        self.mock_similarity.search.return_value = (
+            np.array([0.1 * i for i in range(len(songs))]),
+            np.array([s.id for s in songs])
+        )
+        self.mock_db.get_song_with_features.side_effect = list(zip(songs, features))
+        
+        query = np.array([1.0, 2.0, 3.0], dtype=np.float32)
+        similar = self.generator.find_similar_songs(query, count=2, exclude_ids={1}, candidate_multiplier=4)
+        
+        self.assertEqual(len(similar), 2)
+        for song in similar:
+            self.assertIn(song.id, [s.id for s in songs])
 
     def test_sort_by_bpm(self):
         song_low_bpm = Song(
@@ -123,6 +175,10 @@ class TestPlaylistGenerator(unittest.TestCase):
         self.assertEqual(sorted_songs[1].id, 2)
 
     def test_generate_playlist(self):
+        song3 = Song(id=3, file_path="/test/3.mp3", title="Song 3", artist="Artist 3",
+                     genre="Rock", last_modified=0.0, duration=190)
+        features3 = Features(song_id=3, feature_vector=np.array([7.0, 8.0, 9.0], dtype=np.float32), bpm=125.0)
+        
         self.mock_db.find_songs_by_title.return_value = [self.test_song1]
         self.mock_db.get_features.return_value = self.test_features1
         
@@ -132,12 +188,34 @@ class TestPlaylistGenerator(unittest.TestCase):
         )
         self.mock_db.get_song_with_features.side_effect = [
             (self.test_song2, self.test_features2),
-(Song(id=3, file_path="/test/3.mp3", title="Song 3", artist="Artist 3",
-                  genre="Rock", last_modified=0.0, duration=190),
-             Features(song_id=3, feature_vector=np.array([7.0, 8.0, 9.0], dtype=np.float32), bpm=125.0))
+            (song3, features3)
         ]
         
-        playlist = self.generator.generate(["Test Song"], length=2)
+        playlist = self.generator.generate(["Test Song"], length=2, candidate_multiplier=1)
+        
+        self.assertIsNotNone(playlist)
+        self.assertEqual(len(playlist.seed_songs), 1)
+        self.assertGreater(len(playlist.songs), 0)
+
+    def test_generate_playlist_with_custom_noise(self):
+        song3 = Song(id=3, file_path="/test/3.mp3", title="Song 3", artist="Artist 3",
+                     genre="Rock", last_modified=0.0, duration=190)
+        features3 = Features(song_id=3, feature_vector=np.array([7.0, 8.0, 9.0], dtype=np.float32), bpm=125.0)
+        
+        self.mock_db.find_songs_by_title.return_value = [self.test_song1]
+        self.mock_db.get_features.return_value = self.test_features1
+        
+        self.mock_similarity.search.return_value = (
+            np.array([0.1, 0.2]),
+            np.array([2, 3])
+        )
+        self.mock_db.get_song_with_features.side_effect = [
+            (self.test_song2, self.test_features2),
+            (song3, features3)
+        ]
+        
+        playlist = self.generator.generate(["Test Song"], length=2, 
+                                          query_noise_scale=0.2, candidate_multiplier=1)
         
         self.assertIsNotNone(playlist)
         self.assertEqual(len(playlist.seed_songs), 1)

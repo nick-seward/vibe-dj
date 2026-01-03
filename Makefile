@@ -1,7 +1,7 @@
 clean:
 	find . -type d -name "__pycache__" -exec rm -r {} +
-	/bin/rm -f ./music.db
-	/bin/rm -f ./faiss_index.bin
+	# /bin/rm -f ./music.db
+	#/bin/rm -f ./faiss_index.bin
 	/bin/rm -rf ./htmlcov
 	/bin/rm -f ./.coverage
 	/bin/rm -f ./*.log

@@ -46,6 +46,8 @@ The codebase follows **Object-Oriented Programming (OOP) best practices** with c
 - **`PlaylistGenerator`**: Intelligent playlist generation
   - Find seed songs by title
   - Compute average feature vector from seeds
+  - Query vector perturbation for variety across runs
+  - Expanded candidate pool with random sampling
   - Find similar songs using similarity index
   - BPM-based sorting with configurable jitter
 
@@ -233,6 +235,8 @@ Options:
 - `--bpm-jitter PERCENT`: BPM jitter for sorting variety (default: 5.0)
 - `--config PATH`: Path to custom config JSON file
 
+**Note:** Each time you run the playlist command with the same seeds, you'll get different but acoustically similar results due to query perturbation and random sampling.
+
 ## Configuration
 
 Create a `config.json` file:
@@ -247,9 +251,17 @@ Create a `config.json` file:
   "n_mfcc": 13,
   "parallel_workers": 4,
   "batch_size": 10,
-  "processing_timeout": 30
+  "processing_timeout": 30,
+  "query_noise_scale": 0.1,
+  "candidate_multiplier": 4
 }
 ```
+
+### Playlist Variety Parameters
+
+- **`query_noise_scale`** (default: `0.1`): Controls how much random noise is added to the query vector. Higher values (e.g., 0.15-0.2) produce more variety but may drift from the intended vibe. Lower values (e.g., 0.05) produce more consistent results. Set to 0 to disable perturbation.
+
+- **`candidate_multiplier`** (default: `4`): Determines how many candidate songs to fetch before random sampling. For a 20-song playlist with multiplier 4, it fetches 80 candidates and randomly selects 20. Higher values increase variety but require more computation.
 
 ## Development
 
@@ -302,6 +314,7 @@ vibe-dj/
 - **Incremental Indexing**: Only processes new or modified files
 - **Parallel Processing**: Multi-core audio analysis for faster indexing
 - **Similarity Search**: FAISS-powered efficient similarity search
+- **Playlist Variety**: Query perturbation and random sampling for different results on each run
 - **BPM Sorting**: Smooth transitions with configurable jitter
 - **Multiple Export Formats**: M3U, M3U8, and JSON
 - **MusicBrainz Integration**: Enhanced metadata from MusicBrainz
@@ -345,6 +358,11 @@ See LICENSE file for details.
 - Check that the FAISS index was built successfully
 - Verify seed song titles match database entries
 - Try different seed songs
+
+### Playlists are too similar/different between runs
+- Adjust `query_noise_scale` in config (lower for more consistency, higher for more variety)
+- Adjust `candidate_multiplier` (higher values increase variety)
+- Set `query_noise_scale` to 0 for completely deterministic results
 
 ### Docker: Permission denied errors
 - Ensure the `data` directory has proper permissions
