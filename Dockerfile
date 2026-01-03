@@ -14,6 +14,7 @@ WORKDIR /app
 # Copy project files
 COPY pyproject.toml uv.lock* ./
 COPY src/ ./src/
+COPY scripts/ ./scripts/
 COPY README.md ./
 
 # Install uv package manager for faster dependency installation
