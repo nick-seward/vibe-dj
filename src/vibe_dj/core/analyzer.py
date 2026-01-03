@@ -49,7 +49,7 @@ class AudioAnalyzer:
             return None
 
 
-    def extract_metadata(self, file_path: str) -> Tuple[str, str, str]:
+    def extract_metadata(self, file_path: str) -> Tuple[str, str, str, str]:
         try:
             audio = MutagenFile(file_path, easy=True)
             title = (audio.get("title", [None]) or [None])[0]
@@ -58,13 +58,14 @@ class AudioAnalyzer:
                 title = os.path.basename(file_path)
             
             artist = (audio.get("artist", ["Unknown"]) or ["Unknown"])[0]
+            album = (audio.get("album", ["Unknown"]) or ["Unknown"])[0]
             genre = (audio.get("genre", ["Unknown"]) or ["Unknown"])[0]
 
-            return title, artist, genre
+            return title, artist, album, genre
         except Exception as e:
             logger.error(f"Failed to extract metadata from {file_path}: {e}")
             import os
-            return os.path.basename(file_path), "Unknown", "Unknown"
+            return os.path.basename(file_path), "Unknown", "Unknown", "Unknown"
 
     def get_duration(self, file_path: str) -> Optional[int]:
         try:
@@ -76,7 +77,7 @@ class AudioAnalyzer:
         return None
 
     def analyze_file(self, file_path: str, last_modified: float) -> Optional[Tuple[Song, Features]]:
-        title, artist, genre = self.extract_metadata(file_path)
+        title, artist, album, genre = self.extract_metadata(file_path)
         duration = self.get_duration(file_path)
         features = self.extract_features(file_path)
         
@@ -88,6 +89,7 @@ class AudioAnalyzer:
             file_path=file_path,
             title=title,
             artist=artist,
+            album=album,
             genre=genre,
             last_modified=last_modified,
             duration=duration

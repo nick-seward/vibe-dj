@@ -30,7 +30,7 @@ def index(library_path, config):
 
 @cli.command()
 @click.option("--seeds-json", type=click.Path(exists=True), required=True,
-              help='JSON file like {"seeds": ["Song Title One", "Another Song"]}')
+              help='JSON file with seeds: {"seeds": [{"title": "...", "artist": "...", "album": "..."}]}')
 @click.option("--output", type=click.Path(), default=None,
               help="Output playlist file path")
 @click.option("--format", type=click.Choice(['m3u', 'm3u8', 'json'], case_sensitive=False),
@@ -40,7 +40,7 @@ def index(library_path, config):
               help="BPM jitter percentage for sorting (default: 5.0)")
 @click.option("--config", type=click.Path(exists=True), help="Path to config JSON file")
 def playlist(seeds_json, output, format, length, bpm_jitter, config):
-    """Generate a playlist from seed titles."""
+    """Generate a playlist from seed songs (requires title, artist, and album for each seed)."""
     if config:
         cfg = Config.from_file(config)
     else:
@@ -51,11 +51,21 @@ def playlist(seeds_json, output, format, length, bpm_jitter, config):
     
     with open(seeds_json) as f:
         data = json.load(f)
-        seeds = data["seeds"]
+        seeds = data.get("seeds", [])
 
     if not seeds:
         click.echo("Error: Provide at least one seed song in the JSON.")
         return
+    
+    for i, seed in enumerate(seeds):
+        if not isinstance(seed, dict):
+            click.echo(f"Error: Seed {i+1} must be a dict with 'title', 'artist', and 'album' fields.")
+            return
+        
+        if not all(k in seed for k in ['title', 'artist', 'album']):
+            click.echo(f"Error: Seed {i+1} missing required fields. Need 'title', 'artist', and 'album'.")
+            click.echo(f"Got: {seed}")
+            return
 
     try:
         with MusicDatabase(cfg) as db:

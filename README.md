@@ -12,7 +12,7 @@ The codebase follows **Object-Oriented Programming (OOP) best practices** with c
 
 ### Data Models (`src/vibe_dj/models/`)
 
-- **`Song`**: Represents a music track with metadata (title, artist, genre, file path, etc.)
+- **`Song`**: Represents a music track with metadata (title, artist, album, genre, file path, etc.)
 - **`Features`**: Audio feature vector and BPM extracted from a song
 - **`Playlist`**: Collection of songs with seed song tracking
 - **`Config`**: Application configuration with sensible defaults
@@ -44,7 +44,7 @@ The codebase follows **Object-Oriented Programming (OOP) best practices** with c
 ### Services (`src/vibe_dj/services/`)
 
 - **`PlaylistGenerator`**: Intelligent playlist generation
-  - Find seed songs by title
+  - Find seed songs by exact match (title, artist, album)
   - Compute average feature vector from seeds
   - Query vector perturbation for variety across runs
   - Expanded candidate pool with random sampling
@@ -135,7 +135,18 @@ docker run --rm \
 First, create a `seeds.json` file in your `data` directory:
 ```json
 {
-  "seeds": ["Song Title 1", "Song Title 2"]
+  "seeds": [
+    {
+      "title": "Song Title 1",
+      "artist": "Artist Name 1",
+      "album": "Album Name 1"
+    },
+    {
+      "title": "Song Title 2",
+      "artist": "Artist Name 2",
+      "album": "Album Name 2"
+    }
+  ]
 }
 ```
 
@@ -219,7 +230,18 @@ Options:
 Create a seeds file (`seeds.json`):
 ```json
 {
-  "seeds": ["Song Title 1", "Song Title 2"]
+  "seeds": [
+    {
+      "title": "Song Title 1",
+      "artist": "Artist Name 1",
+      "album": "Album Name 1"
+    },
+    {
+      "title": "Song Title 2",
+      "artist": "Artist Name 2",
+      "album": "Album Name 2"
+    }
+  ]
 }
 ```
 
@@ -262,6 +284,16 @@ Create a `config.json` file:
 - **`query_noise_scale`** (default: `0.1`): Controls how much random noise is added to the query vector. Higher values (e.g., 0.15-0.2) produce more variety but may drift from the intended vibe. Lower values (e.g., 0.05) produce more consistent results. Set to 0 to disable perturbation.
 
 - **`candidate_multiplier`** (default: `4`): Determines how many candidate songs to fetch before random sampling. For a 20-song playlist with multiplier 4, it fetches 80 candidates and randomly selects 20. Higher values increase variety but require more computation.
+
+## Migration
+
+If you're upgrading from a version without the album field, use the migration script to populate album metadata:
+
+```bash
+python scripts/migrate_add_album.py
+```
+
+This reads metadata from your audio files and updates the database without re-running expensive librosa analysis. See `docs/MIGRATION_GUIDE.md` for details.
 
 ## Development
 
@@ -356,8 +388,9 @@ See LICENSE file for details.
 
 ### No similar songs found
 - Check that the FAISS index was built successfully
-- Verify seed song titles match database entries
+- Verify seed song title, artist, and album match database entries exactly
 - Try different seed songs
+- Use `sqlite3 music.db "SELECT title, artist, album FROM songs LIMIT 10;"` to see available songs
 
 ### Playlists are too similar/different between runs
 - Adjust `query_noise_scale` in config (lower for more consistency, higher for more variety)

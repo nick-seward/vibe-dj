@@ -21,11 +21,11 @@ class TestPlaylistGenerator(unittest.TestCase):
         
         self.test_song1 = Song(
             id=1, file_path="/test/1.mp3", title="Test Song 1", artist="Artist 1",
-            genre="Rock", last_modified=0.0, duration=180
+            album="Album 1", genre="Rock", last_modified=0.0, duration=180
         )
         self.test_song2 = Song(
             id=2, file_path="/test/2.mp3", title="Test Song 2", artist="Artist 2",
-            genre="Pop", last_modified=0.0, duration=200
+            album="Album 2", genre="Pop", last_modified=0.0, duration=200
         )
         self.test_features1 = Features(
             song_id=1,
@@ -39,17 +39,17 @@ class TestPlaylistGenerator(unittest.TestCase):
         )
 
     def test_find_seed_songs(self):
-        self.mock_db.find_songs_by_title.return_value = [self.test_song1]
+        self.mock_db.find_song_exact.return_value = self.test_song1
         
-        seeds = self.generator.find_seed_songs(["Test Song"])
+        seeds = self.generator.find_seed_songs([{"title": "Test Song 1", "artist": "Artist 1", "album": "Album 1"}])
         
         self.assertEqual(len(seeds), 1)
         self.assertEqual(seeds[0], self.test_song1)
 
     def test_find_seed_songs_no_match(self):
-        self.mock_db.find_songs_by_title.return_value = []
+        self.mock_db.find_song_exact.return_value = None
         
-        seeds = self.generator.find_seed_songs(["Nonexistent Song"])
+        seeds = self.generator.find_seed_songs([{"title": "Nonexistent Song", "artist": "Unknown", "album": "Unknown"}])
         
         self.assertEqual(len(seeds), 0)
 
@@ -101,9 +101,9 @@ class TestPlaylistGenerator(unittest.TestCase):
 
     def test_find_similar_songs(self):
         song3 = Song(id=3, file_path="/test/3.mp3", title="Song 3", artist="Artist 3",
-                     genre="Rock", last_modified=0.0, duration=190)
+                     album="Album 3", genre="Rock", last_modified=0.0, duration=190)
         song4 = Song(id=4, file_path="/test/4.mp3", title="Song 4", artist="Artist 4",
-                     genre="Pop", last_modified=0.0, duration=200)
+                     album="Album 4", genre="Pop", last_modified=0.0, duration=200)
         features3 = Features(song_id=3, feature_vector=np.array([7.0, 8.0, 9.0], dtype=np.float32), bpm=125.0)
         features4 = Features(song_id=4, feature_vector=np.array([10.0, 11.0, 12.0], dtype=np.float32), bpm=135.0)
         
@@ -127,7 +127,7 @@ class TestPlaylistGenerator(unittest.TestCase):
         features = []
         for i in range(2, 10):
             song = Song(id=i, file_path=f"/test/{i}.mp3", title=f"Song {i}", 
-                       artist=f"Artist {i}", genre="Rock", last_modified=0.0, duration=180)
+                       artist=f"Artist {i}", album=f"Album {i}", genre="Rock", last_modified=0.0, duration=180)
             feat = Features(song_id=i, feature_vector=np.array([float(i), float(i+1), float(i+2)], dtype=np.float32), 
                           bpm=120.0 + i)
             songs.append(song)
@@ -149,11 +149,11 @@ class TestPlaylistGenerator(unittest.TestCase):
     def test_sort_by_bpm(self):
         song_low_bpm = Song(
             id=1, file_path="/test/1.mp3", title="Low BPM", artist="Artist 1",
-            genre="Rock", last_modified=0.0, duration=180
+            album="Album 1", genre="Rock", last_modified=0.0, duration=180
         )
         song_high_bpm = Song(
             id=2, file_path="/test/2.mp3", title="High BPM", artist="Artist 2",
-            genre="Rock", last_modified=0.0, duration=180
+            album="Album 2", genre="Rock", last_modified=0.0, duration=180
         )
         
         features_low = Features(
@@ -176,10 +176,10 @@ class TestPlaylistGenerator(unittest.TestCase):
 
     def test_generate_playlist(self):
         song3 = Song(id=3, file_path="/test/3.mp3", title="Song 3", artist="Artist 3",
-                     genre="Rock", last_modified=0.0, duration=190)
+                     album="Album 3", genre="Rock", last_modified=0.0, duration=190)
         features3 = Features(song_id=3, feature_vector=np.array([7.0, 8.0, 9.0], dtype=np.float32), bpm=125.0)
         
-        self.mock_db.find_songs_by_title.return_value = [self.test_song1]
+        self.mock_db.find_song_exact.return_value = self.test_song1
         self.mock_db.get_features.return_value = self.test_features1
         
         self.mock_similarity.search.return_value = (
@@ -191,7 +191,7 @@ class TestPlaylistGenerator(unittest.TestCase):
             (song3, features3)
         ]
         
-        playlist = self.generator.generate(["Test Song"], length=2, candidate_multiplier=1)
+        playlist = self.generator.generate([{"title": "Test Song 1", "artist": "Artist 1", "album": "Album 1"}], length=2, candidate_multiplier=1)
         
         self.assertIsNotNone(playlist)
         self.assertEqual(len(playlist.seed_songs), 1)
@@ -199,10 +199,10 @@ class TestPlaylistGenerator(unittest.TestCase):
 
     def test_generate_playlist_with_custom_noise(self):
         song3 = Song(id=3, file_path="/test/3.mp3", title="Song 3", artist="Artist 3",
-                     genre="Rock", last_modified=0.0, duration=190)
+                     album="Album 3", genre="Rock", last_modified=0.0, duration=190)
         features3 = Features(song_id=3, feature_vector=np.array([7.0, 8.0, 9.0], dtype=np.float32), bpm=125.0)
         
-        self.mock_db.find_songs_by_title.return_value = [self.test_song1]
+        self.mock_db.find_song_exact.return_value = self.test_song1
         self.mock_db.get_features.return_value = self.test_features1
         
         self.mock_similarity.search.return_value = (
@@ -214,7 +214,7 @@ class TestPlaylistGenerator(unittest.TestCase):
             (song3, features3)
         ]
         
-        playlist = self.generator.generate(["Test Song"], length=2, 
+        playlist = self.generator.generate([{"title": "Test Song 1", "artist": "Artist 1", "album": "Album 1"}], length=2, 
                                           query_noise_scale=0.2, candidate_multiplier=1)
         
         self.assertIsNotNone(playlist)
@@ -226,10 +226,10 @@ class TestPlaylistGenerator(unittest.TestCase):
             self.generator.generate([])
 
     def test_generate_playlist_no_seed_found(self):
-        self.mock_db.find_songs_by_title.return_value = []
+        self.mock_db.find_song_exact.return_value = None
         
         with self.assertRaises(ValueError):
-            self.generator.generate(["Nonexistent Song"])
+            self.generator.generate([{"title": "Nonexistent Song", "artist": "Unknown", "album": "Unknown"}])
 
 
 if __name__ == "__main__":

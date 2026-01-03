@@ -8,6 +8,7 @@ class Song:
     file_path: str
     title: str
     artist: str
+    album: str
     genre: str
     last_modified: float
     duration: Optional[int]
@@ -16,4 +17,4 @@ class Song:
         return f"{self.artist} - {self.title}"
 
     def __repr__(self) -> str:
-        return f"Song(id={self.id}, title='{self.title}', artist='{self.artist}')"
+        return f"Song(id={self.id}, title='{self.title}', artist='{self.artist}', album='{self.album}')"

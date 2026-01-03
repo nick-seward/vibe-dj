@@ -44,16 +44,18 @@ class TestAudioAnalyzer(unittest.TestCase):
             return {
                 "title": ["Test Song"],
                 "artist": ["Test Artist"],
+                "album": ["Test Album"],
                 "genre": ["Rock"]
             }.get(key, default)
         
         mock_audio.get = mock_get
         mock_mutagen.return_value = mock_audio
         
-        title, artist, genre = self.analyzer.extract_metadata("/test/song.mp3")
+        title, artist, album, genre = self.analyzer.extract_metadata("/test/song.mp3")
         
         self.assertEqual(title, "Test Song")
         self.assertEqual(artist, "Test Artist")
+        self.assertEqual(album, "Test Album")
         self.assertEqual(genre, "Rock")
 
     @patch('vibe_dj.core.analyzer.MutagenFile')
@@ -62,10 +64,11 @@ class TestAudioAnalyzer(unittest.TestCase):
         mock_audio.get.return_value = None
         mock_mutagen.return_value = mock_audio
         
-        title, artist, genre = self.analyzer.extract_metadata("/test/song.mp3")
+        title, artist, album, genre = self.analyzer.extract_metadata("/test/song.mp3")
         
         self.assertEqual(title, "song.mp3")
         self.assertEqual(artist, "Unknown")
+        self.assertEqual(album, "Unknown")
         self.assertEqual(genre, "Unknown")
 
     @patch('vibe_dj.core.analyzer.MutagenFile')
@@ -90,7 +93,7 @@ class TestAudioAnalyzer(unittest.TestCase):
     @patch.object(AudioAnalyzer, 'get_duration')
     @patch.object(AudioAnalyzer, 'extract_features')
     def test_analyze_file_success(self, mock_extract_features, mock_get_duration, mock_extract_metadata):
-        mock_extract_metadata.return_value = ("Test Song", "Test Artist", "Rock")
+        mock_extract_metadata.return_value = ("Test Song", "Test Artist", "Test Album", "Rock")
         mock_get_duration.return_value = 180
         mock_extract_features.return_value = Features(
             song_id=0,
@@ -104,6 +107,7 @@ class TestAudioAnalyzer(unittest.TestCase):
         song, features = result
         self.assertEqual(song.title, "Test Song")
         self.assertEqual(song.artist, "Test Artist")
+        self.assertEqual(song.album, "Test Album")
         self.assertEqual(features.bpm, 120.0)
 
     @patch.object(AudioAnalyzer, 'extract_features')

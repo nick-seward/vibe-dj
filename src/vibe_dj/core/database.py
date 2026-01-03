@@ -38,10 +38,17 @@ class MusicDatabase:
             file_path TEXT UNIQUE,
             title TEXT,
             artist TEXT,
+            album TEXT,
             genre TEXT,
             last_modified REAL,
             duration INTEGER
         )''')
+        
+        try:
+            cur.execute("ALTER TABLE songs ADD COLUMN album TEXT")
+            self.connection.commit()
+        except Exception:
+            pass
         cur.execute('''CREATE TABLE IF NOT EXISTS features (
             song_id INTEGER PRIMARY KEY,
             feature_vector BLOB,
@@ -53,9 +60,9 @@ class MusicDatabase:
     def add_song(self, song: Song, features: Optional[Features] = None) -> int:
         cur = self.connection.cursor()
         cur.execute("""INSERT OR REPLACE INTO songs
-                       (file_path, title, artist, genre, last_modified, duration)
-                       VALUES (?, ?, ?, ?, ?, ?)""",
-                    (song.file_path, song.title, song.artist, song.genre,
+                       (file_path, title, artist, album, genre, last_modified, duration)
+                       VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                    (song.file_path, song.title, song.artist, song.album, song.genre,
                      song.last_modified, song.duration))
         song_id = cur.lastrowid
         
@@ -79,6 +86,7 @@ class MusicDatabase:
                 file_path=row["file_path"],
                 title=row["title"],
                 artist=row["artist"],
+                album=row["album"],
                 genre=row["genre"],
                 last_modified=row["last_modified"],
                 duration=row["duration"]
@@ -96,6 +104,7 @@ class MusicDatabase:
                 file_path=row["file_path"],
                 title=row["title"],
                 artist=row["artist"],
+                album=row["album"],
                 genre=row["genre"],
                 last_modified=row["last_modified"],
                 duration=row["duration"]
@@ -112,10 +121,30 @@ class MusicDatabase:
             file_path=row["file_path"],
             title=row["title"],
             artist=row["artist"],
+            album=row["album"],
             genre=row["genre"],
             last_modified=row["last_modified"],
             duration=row["duration"]
         ) for row in rows]
+
+    def find_song_exact(self, title: str, artist: str, album: str) -> Optional[Song]:
+        cur = self.connection.cursor()
+        cur.execute("SELECT * FROM songs WHERE title = ? AND artist = ? AND album = ?",
+                    (title, artist, album))
+        row = cur.fetchone()
+        
+        if row:
+            return Song(
+                id=row["id"],
+                file_path=row["file_path"],
+                title=row["title"],
+                artist=row["artist"],
+                album=row["album"],
+                genre=row["genre"],
+                last_modified=row["last_modified"],
+                duration=row["duration"]
+            )
+        return None
 
     def get_features(self, song_id: int) -> Optional[Features]:
         cur = self.connection.cursor()
@@ -144,6 +173,7 @@ class MusicDatabase:
                 file_path=row["file_path"],
                 title=row["title"],
                 artist=row["artist"],
+                album=row["album"],
                 genre=row["genre"],
                 last_modified=row["last_modified"],
                 duration=row["duration"]
@@ -171,6 +201,7 @@ class MusicDatabase:
                 file_path=row["file_path"],
                 title=row["title"],
                 artist=row["artist"],
+                album=row["album"],
                 genre=row["genre"],
                 last_modified=row["last_modified"],
                 duration=row["duration"]
@@ -209,6 +240,7 @@ class MusicDatabase:
             file_path=row["file_path"],
             title=row["title"],
             artist=row["artist"],
+            album=row["album"],
             genre=row["genre"],
             last_modified=row["last_modified"],
             duration=row["duration"]
@@ -240,6 +272,7 @@ class MusicDatabase:
             file_path=row["file_path"],
             title=row["title"],
             artist=row["artist"],
+            album=row["album"],
             genre=row["genre"],
             last_modified=row["last_modified"],
             duration=row["duration"]

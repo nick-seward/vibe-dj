@@ -13,17 +13,29 @@ class PlaylistGenerator:
         self.database = database
         self.similarity_index = similarity_index
 
-    def find_seed_songs(self, seed_titles: List[str]) -> List[Song]:
+    def find_seed_songs(self, seed_data: List[dict]) -> List[Song]:
         seed_songs = []
         
-        for seed_title in seed_titles:
-            matches = self.database.find_songs_by_title(seed_title)
+        for seed in seed_data:
+            if not isinstance(seed, dict):
+                logger.error(f"Invalid seed format: {seed}. Expected dict with 'title', 'artist', 'album'")
+                continue
             
-            if matches:
-                seed_songs.append(matches[0])
-                logger.info(f"Found seed song: {matches[0]}")
+            title = seed.get('title')
+            artist = seed.get('artist')
+            album = seed.get('album')
+            
+            if not title or not artist or not album:
+                logger.error(f"Missing required fields in seed: {seed}. Need 'title', 'artist', and 'album'")
+                continue
+            
+            match = self.database.find_song_exact(title, artist, album)
+            
+            if match:
+                seed_songs.append(match)
+                logger.info(f"Found seed song: {match}")
             else:
-                logger.warning(f"No match found for seed: {seed_title}")
+                logger.warning(f"No exact match found for seed: {title} by {artist} from {album}")
         
         return seed_songs
 
@@ -104,13 +116,13 @@ class PlaylistGenerator:
         
         return [song for song, _ in songs_with_bpm]
 
-    def generate(self, seed_titles: List[str], length: int = 20, 
+    def generate(self, seed_data: List[dict], length: int = 20, 
                 bpm_jitter_percent: float = 5.0, query_noise_scale: float = None,
                 candidate_multiplier: int = None) -> Optional[Playlist]:
-        if not seed_titles:
-            raise ValueError("At least one seed title is required")
+        if not seed_data:
+            raise ValueError("At least one seed is required")
         
-        seed_songs = self.find_seed_songs(seed_titles)
+        seed_songs = self.find_seed_songs(seed_data)
         
         if not seed_songs:
             raise ValueError("No seed songs found in database")

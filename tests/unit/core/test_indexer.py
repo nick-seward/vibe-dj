@@ -60,7 +60,7 @@ class TestLibraryIndexer(unittest.TestCase):
             self.assertEqual(len(to_process), 1)
 
     def test_extract_metadata_phase(self):
-        self.mock_analyzer.extract_metadata.return_value = ("Title", "Artist", "Rock")
+        self.mock_analyzer.extract_metadata.return_value = ("Title", "Artist", "Album", "Rock")
         self.mock_analyzer.get_duration.return_value = 180
         
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -76,11 +76,11 @@ class TestLibraryIndexer(unittest.TestCase):
     def test_extract_features_phase(self):
         song1 = Song(
             id=1, file_path="/test/1.mp3", title="Song 1", artist="Artist 1",
-            genre="Rock", last_modified=0.0, duration=180
+            album="Album 1", genre="Rock", last_modified=0.0, duration=180
         )
         song2 = Song(
             id=2, file_path="/test/2.mp3", title="Song 2", artist="Artist 2",
-            genre="Pop", last_modified=0.0, duration=200
+            album="Album 2", genre="Pop", last_modified=0.0, duration=200
         )
         
         self.mock_db.get_songs_without_features.return_value = [song1, song2]
@@ -123,7 +123,7 @@ class TestLibraryIndexer(unittest.TestCase):
     def test_rebuild_similarity_index(self):
         song1 = Song(
             id=1, file_path="/test/1.mp3", title="Song 1", artist="Artist 1",
-            genre="Rock", last_modified=0.0, duration=180
+            album="Album 1", genre="Rock", last_modified=0.0, duration=180
         )
         features1 = Features(
             song_id=1,
@@ -133,7 +133,7 @@ class TestLibraryIndexer(unittest.TestCase):
         
         song2 = Song(
             id=2, file_path="/test/2.mp3", title="Song 2", artist="Artist 2",
-            genre="Pop", last_modified=0.0, duration=200
+            album="Album 2", genre="Pop", last_modified=0.0, duration=200
         )
         features2 = Features(
             song_id=2,
@@ -182,7 +182,7 @@ class TestLibraryIndexer(unittest.TestCase):
         
         song = Song(
             id=101, file_path="/test/101.mp3", title="Song 101", artist="Artist",
-            genre="Rock", last_modified=0.0, duration=180
+            album="Album", genre="Rock", last_modified=0.0, duration=180
         )
         features = Features(
             song_id=101,

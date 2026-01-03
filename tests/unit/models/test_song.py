@@ -9,6 +9,7 @@ class TestSong(unittest.TestCase):
             file_path="/path/to/song.mp3",
             title="Test Song",
             artist="Test Artist",
+            album="Test Album",
             genre="Rock",
             last_modified=1234567890.0,
             duration=180
@@ -25,6 +26,7 @@ class TestSong(unittest.TestCase):
             file_path="/path/to/song.mp3",
             title="Test Song",
             artist="Test Artist",
+            album="Test Album",
             genre="Rock",
             last_modified=1234567890.0,
             duration=180
@@ -38,6 +40,7 @@ class TestSong(unittest.TestCase):
             file_path="/path/to/song.mp3",
             title="Test Song",
             artist="Test Artist",
+            album="Unknown",
             genre="Unknown",
             last_modified=1234567890.0,
             duration=None
