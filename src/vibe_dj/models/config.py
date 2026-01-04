@@ -7,6 +7,12 @@ from typing import Optional
 
 @dataclass
 class Config:
+    """Configuration settings for the vibe-dj application.
+
+    Contains paths, audio analysis parameters, processing settings,
+    and optional Navidrome integration credentials.
+    """
+
     database_path: str = "music.db"
     faiss_index_path: str = "faiss_index.bin"
     playlist_output: str = "playlist.m3u"
@@ -28,14 +34,30 @@ class Config:
 
     @classmethod
     def from_file(cls, path: str) -> "Config":
+        """Load configuration from a JSON file.
+
+        :param path: Path to the JSON configuration file
+        :return: Config instance with loaded settings
+        """
         with open(path, "r") as f:
             data = json.load(f)
         return cls(**data)
 
     def save(self, path: str) -> None:
+        """Save configuration to a JSON file.
+
+        :param path: Path where the configuration should be saved
+        """
         with open(path, "w") as f:
             json.dump(asdict(self), f, indent=2)
 
     @classmethod
     def from_dict(cls, data: dict) -> "Config":
+        """Create configuration from a dictionary.
+
+        Only includes keys that match Config dataclass fields.
+
+        :param data: Dictionary containing configuration values
+        :return: Config instance with values from dictionary
+        """
         return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})

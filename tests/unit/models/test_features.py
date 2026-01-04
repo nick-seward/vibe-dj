@@ -6,7 +6,10 @@ from vibe_dj.models.features import Features
 
 
 class TestFeatures(unittest.TestCase):
+    """Test suite for Features class."""
+
     def test_features_creation(self):
+        """Test creating a Features instance."""
         vector = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float32)
         features = Features(song_id=1, feature_vector=vector, bpm=120.5)
 

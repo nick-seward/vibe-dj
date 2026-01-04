@@ -10,7 +10,10 @@ from vibe_dj.models import Config, Features, Song
 
 
 class TestMusicDatabase(unittest.TestCase):
+    """Test suite for MusicDatabase class."""
+
     def setUp(self):
+        """Set up test fixtures with temporary database before each test method."""
         self.temp_db = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
         self.temp_db.close()
 
@@ -37,15 +40,18 @@ class TestMusicDatabase(unittest.TestCase):
         )
 
     def tearDown(self):
+        """Clean up temporary database after each test method."""
         self.db.close()
         Path(self.temp_db.name).unlink(missing_ok=True)
 
     def test_context_manager(self):
+        """Test database context manager functionality."""
         with MusicDatabase(self.config) as db:
             db.init_db()
             self.assertIsNotNone(db.connection)
 
     def test_init_db(self):
+        """Test database schema initialization."""
         cur = self.db.connection.cursor()
         cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
         tables = [row[0] for row in cur.fetchall()]
@@ -54,6 +60,7 @@ class TestMusicDatabase(unittest.TestCase):
         self.assertIn("features", tables)
 
     def test_add_song_without_features(self):
+        """Test adding a song without features."""
         song_id = self.db.add_song(self.test_song)
 
         self.assertIsInstance(song_id, int)
@@ -65,6 +72,7 @@ class TestMusicDatabase(unittest.TestCase):
         self.assertEqual(retrieved.artist, "Test Artist")
 
     def test_add_song_with_features(self):
+        """Test adding a song with features."""
         song_id = self.db.add_song(self.test_song, self.test_features)
 
         retrieved_song = self.db.get_song(song_id)
@@ -78,6 +86,7 @@ class TestMusicDatabase(unittest.TestCase):
         )
 
     def test_get_song_by_path(self):
+        """Test retrieving a song by its file path."""
         song_id = self.db.add_song(self.test_song)
 
         retrieved = self.db.get_song_by_path("/test/song.mp3")
@@ -86,6 +95,7 @@ class TestMusicDatabase(unittest.TestCase):
         self.assertEqual(retrieved.title, "Test Song")
 
     def test_find_songs_by_title(self):
+        """Test finding songs by partial title match."""
         song1 = Song(
             id=0,
             file_path="/test/1.mp3",

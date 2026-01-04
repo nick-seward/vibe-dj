@@ -8,12 +8,16 @@ from vibe_dj.models import Config, Features
 
 
 class TestAudioAnalyzer(unittest.TestCase):
+    """Test suite for AudioAnalyzer class."""
+
     def setUp(self):
+        """Set up test fixtures before each test method."""
         self.config = Config()
         self.analyzer = AudioAnalyzer(self.config)
 
     @patch("vibe_dj.core.analyzer.librosa")
     def test_extract_features_success(self, mock_librosa):
+        """Test successful feature extraction from audio file."""
         mock_y = np.random.random(22050 * 10)
         mock_librosa.load.return_value = (mock_y, 22050)
         mock_librosa.feature.mfcc.return_value = np.random.random((13, 100))
@@ -32,6 +36,7 @@ class TestAudioAnalyzer(unittest.TestCase):
 
     @patch("vibe_dj.core.analyzer.librosa")
     def test_extract_features_failure(self, mock_librosa):
+        """Test feature extraction failure handling."""
         mock_librosa.load.side_effect = Exception("Load failed")
 
         features = self.analyzer.extract_features("/test/song.mp3")
@@ -40,6 +45,7 @@ class TestAudioAnalyzer(unittest.TestCase):
 
     @patch("vibe_dj.core.analyzer.MutagenFile")
     def test_extract_metadata_with_tags(self, mock_mutagen):
+        """Test metadata extraction with complete tags."""
         mock_audio = MagicMock()
 
         def mock_get(key, default=None):
@@ -62,6 +68,7 @@ class TestAudioAnalyzer(unittest.TestCase):
 
     @patch("vibe_dj.core.analyzer.MutagenFile")
     def test_extract_metadata_missing_tags(self, mock_mutagen):
+        """Test metadata extraction with missing tags."""
         mock_audio = MagicMock()
         mock_audio.get.return_value = None
         mock_mutagen.return_value = mock_audio
@@ -75,6 +82,7 @@ class TestAudioAnalyzer(unittest.TestCase):
 
     @patch("vibe_dj.core.analyzer.MutagenFile")
     def test_get_duration_success(self, mock_mutagen):
+        """Test successful duration extraction."""
         mock_audio = MagicMock()
         mock_audio.info.length = 180.5
         mock_mutagen.return_value = mock_audio
@@ -85,6 +93,7 @@ class TestAudioAnalyzer(unittest.TestCase):
 
     @patch("vibe_dj.core.analyzer.MutagenFile")
     def test_get_duration_failure(self, mock_mutagen):
+        """Test duration extraction failure handling."""
         mock_mutagen.side_effect = Exception("Failed")
 
         duration = self.analyzer.get_duration("/test/song.mp3")
@@ -97,6 +106,7 @@ class TestAudioAnalyzer(unittest.TestCase):
     def test_analyze_file_success(
         self, mock_extract_features, mock_get_duration, mock_extract_metadata
     ):
+        """Test complete file analysis with all components."""
         mock_extract_metadata.return_value = (
             "Test Song",
             "Test Artist",
@@ -121,6 +131,7 @@ class TestAudioAnalyzer(unittest.TestCase):
 
     @patch.object(AudioAnalyzer, "extract_features")
     def test_analyze_file_no_features(self, mock_extract_features):
+        """Test file analysis when feature extraction fails."""
         mock_extract_features.return_value = None
 
         result = self.analyzer.analyze_file("/test/song.mp3", 1234567890.0)

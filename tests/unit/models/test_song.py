@@ -4,7 +4,10 @@ from vibe_dj.models.song import Song
 
 
 class TestSong(unittest.TestCase):
+    """Test suite for Song class."""
+
     def test_song_creation(self):
+        """Test creating a Song instance."""
         song = Song(
             id=1,
             file_path="/path/to/song.mp3",

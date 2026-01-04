@@ -9,7 +9,10 @@ from vibe_dj.models import Config
 
 
 class TestSimilarityIndex(unittest.TestCase):
+    """Test suite for SimilarityIndex class."""
+
     def setUp(self):
+        """Set up test fixtures with temporary index file before each test method."""
         self.temp_index = tempfile.NamedTemporaryFile(delete=False, suffix=".bin")
         self.temp_index.close()
 

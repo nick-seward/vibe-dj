@@ -10,6 +10,11 @@ from .services import NavidromeSyncService, PlaylistExporter, PlaylistGenerator
 
 @click.group()
 def cli():
+    """Vibe-DJ: AI-powered music playlist generator.
+
+    Command-line interface for indexing music libraries and generating
+    playlists based on audio similarity.
+    """
     pass
 
 
@@ -17,7 +22,14 @@ def cli():
 @click.argument("library_path")
 @click.option("--config", type=click.Path(exists=True), help="Path to config JSON file")
 def index(library_path, config):
-    """Index the music library at LIBRARY_PATH."""
+    """Index the music library at LIBRARY_PATH.
+
+    Scans the specified directory for audio files, extracts metadata and
+    audio features, and builds a similarity index for playlist generation.
+
+    :param library_path: Path to the music library directory
+    :param config: Optional path to configuration JSON file
+    """
     if config:
         cfg = Config.from_file(config)
     else:
@@ -90,7 +102,24 @@ def playlist(
     navidrome_password,
     playlist_name,
 ):
-    """Generate a playlist from seed songs (requires title, artist, and album for each seed)."""
+    """Generate a playlist from seed songs.
+
+    Creates a playlist of similar songs based on seed tracks. Each seed
+    requires title, artist, and album fields for accurate matching.
+    Optionally syncs the generated playlist to a Navidrome server.
+
+    :param seeds_json: Path to JSON file containing seed songs
+    :param output: Output file path for the playlist
+    :param format: Export format (m3u, m3u8, or json)
+    :param length: Number of songs to generate
+    :param bpm_jitter: BPM jitter percentage for sorting
+    :param config: Optional path to configuration JSON file
+    :param sync_to_navidrome: Flag to enable Navidrome sync
+    :param navidrome_url: Navidrome server URL
+    :param navidrome_username: Navidrome username
+    :param navidrome_password: Navidrome password
+    :param playlist_name: Name for the playlist on Navidrome
+    """
     if config:
         cfg = Config.from_file(config)
     else:

@@ -15,6 +15,12 @@ from .similarity import SimilarityIndex
 def _worker_thread_file(
     args: Tuple[str, AudioAnalyzer],
 ) -> Tuple[str, Optional[Features], Optional[float]]:
+    """Worker function for parallel feature extraction.
+
+    :param args: Tuple of (file_path, analyzer)
+    :return: Tuple of (file_path, features, bpm) where features and bpm
+             may be None if extraction fails
+    """
     file_path, analyzer = args
     features = analyzer.extract_features(file_path)
 
@@ -24,6 +30,13 @@ def _worker_thread_file(
 
 
 class LibraryIndexer:
+    """Manages indexing of music library files.
+
+    Handles scanning, metadata extraction, feature extraction, and
+    similarity index building for a music library. Supports resumable
+    incremental processing.
+    """
+
     SUPPORTED_EXTENSIONS = (".mp3", ".flac", ".wav", ".ogg")
 
     def __init__(
@@ -33,12 +46,24 @@ class LibraryIndexer:
         analyzer: AudioAnalyzer,
         similarity_index: SimilarityIndex,
     ):
+        """Initialize the indexer with required components.
+
+        :param config: Configuration object
+        :param database: Database interface for storing songs and features
+        :param analyzer: Audio analyzer for feature extraction
+        :param similarity_index: Similarity index for nearest neighbor search
+        """
         self.config = config
         self.database = database
         self.analyzer = analyzer
         self.similarity_index = similarity_index
 
     def scan_files(self, library_path: str) -> List[str]:
+        """Scan directory for supported audio files.
+
+        :param library_path: Root directory to scan
+        :return: List of file paths for all supported audio files found
+        """
         files = []
         for root, _, fs in os.walk(library_path):
             for f in fs:
@@ -49,6 +74,13 @@ class LibraryIndexer:
         return files
 
     def get_files_to_process(self, files: List[str]) -> List[str]:
+        """Determine which files need processing.
+
+        Compares scanned files against database to find new or modified files.
+
+        :param files: List of scanned file paths
+        :return: List of file paths that need processing
+        """
         existing = self.database.get_all_file_paths_with_mtime()
 
         to_process = []
@@ -60,7 +92,14 @@ class LibraryIndexer:
         return to_process
 
     def extract_metadata_phase(self, files: List[str]) -> int:
-        """Extract and immediately persist metadata. Returns count of processed files."""
+        """Extract and immediately persist metadata.
+
+        Phase 1 of indexing: extracts metadata (title, artist, album, genre,
+        duration) and saves to database without features.
+
+        :param files: List of file paths to process
+        :return: Count of successfully processed files
+        """
         logger.info("=== Phase 1: Extracting metadata ===")
 
         processed = 0
@@ -91,7 +130,14 @@ class LibraryIndexer:
         return processed
 
     def extract_features_phase(self) -> int:
-        """Extract features for songs missing them. Returns count processed."""
+        """Extract features for songs missing them.
+
+        Phase 2 of indexing: uses librosa to extract audio features for
+        songs that have metadata but no features yet. Processes in parallel
+        with configurable timeout.
+
+        :return: Count of songs successfully processed with features
+        """
         songs_needing_features = self.database.get_songs_without_features()
 
         if not songs_needing_features:
@@ -154,6 +200,11 @@ class LibraryIndexer:
         return processed
 
     def clean_deleted_files(self, scanned_files: List[str]) -> int:
+        """Remove database entries for files no longer on disk.
+
+        :param scanned_files: List of currently existing file paths
+        :return: Count of deleted entries
+        """
         scanned_set = set(scanned_files)
         existing_paths = self.database.get_all_file_paths_with_mtime()
 
@@ -170,7 +221,11 @@ class LibraryIndexer:
         return deleted_count
 
     def rebuild_similarity_index(self) -> None:
-        """Rebuild the entire similarity index from scratch."""
+        """Rebuild the entire similarity index from scratch.
+
+        Loads all songs with features from database and builds a new
+        FAISS index for similarity search.
+        """
         logger.info("Building similarity index...")
 
         songs_with_features = self.database.get_all_songs_with_features()
@@ -192,7 +247,14 @@ class LibraryIndexer:
         logger.info(f"Index built with {len(vectors)} songs")
 
     def update_similarity_index_incremental(self, new_song_count: int) -> None:
-        """Update similarity index incrementally or rebuild if necessary."""
+        """Update similarity index incrementally or rebuild if necessary.
+
+        Decides whether to add new songs incrementally or rebuild the entire
+        index based on the percentage of change. Rebuilds if change exceeds
+        10% or if index doesn't exist.
+
+        :param new_song_count: Number of newly processed songs
+        """
         import os
 
         stats = self.database.get_indexing_stats()
@@ -254,7 +316,14 @@ class LibraryIndexer:
             self.rebuild_similarity_index()
 
     def index_library(self, library_path: str) -> None:
-        """Index the music library with resumable incremental processing."""
+        """Index the music library with resumable incremental processing.
+
+        Main entry point for library indexing. Performs scanning, metadata
+        extraction, feature extraction, cleanup, and index building in phases.
+        Supports resuming from interruption.
+
+        :param library_path: Root directory of the music library
+        """
         self.database.init_db()
 
         stats = self.database.get_indexing_stats()

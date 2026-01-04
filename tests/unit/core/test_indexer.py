@@ -14,7 +14,10 @@ from vibe_dj.models import Config, Features, Song
 
 
 class TestLibraryIndexer(unittest.TestCase):
+    """Test suite for LibraryIndexer class."""
+
     def setUp(self):
+        """Set up test fixtures with mocked dependencies before each test method."""
         self.config = Config()
         self.mock_db = MagicMock(spec=MusicDatabase)
         self.mock_analyzer = MagicMock(spec=AudioAnalyzer)

@@ -7,10 +7,24 @@ from ..models import Config, Playlist
 
 
 class PlaylistExporter:
+    """Exports playlists to various file formats.
+
+    Supports M3U, M3U8, and JSON export formats.
+    """
+
     def __init__(self, config: Config):
+        """Initialize the playlist exporter with configuration.
+
+        :param config: Configuration object containing default output paths
+        """
         self.config = config
 
     def export_m3u(self, playlist: Playlist, output_path: Optional[str] = None) -> None:
+        """Export playlist to M3U format.
+
+        :param playlist: Playlist object to export
+        :param output_path: Output file path (defaults to config.playlist_output)
+        """
         if output_path is None:
             output_path = self.config.playlist_output
 
@@ -24,6 +38,11 @@ class PlaylistExporter:
         logger.info(f"Exported M3U playlist to {output_path}")
 
     def export_m3u8(self, playlist: Playlist, output_path: str) -> None:
+        """Export playlist to M3U8 format (UTF-8 encoded M3U).
+
+        :param playlist: Playlist object to export
+        :param output_path: Output file path
+        """
         with open(output_path, "w", encoding="utf-8") as f:
             f.write("#EXTM3U\n")
             for song in playlist.songs:
@@ -34,6 +53,13 @@ class PlaylistExporter:
         logger.info(f"Exported M3U8 playlist to {output_path}")
 
     def export_json(self, playlist: Playlist, output_path: str) -> None:
+        """Export playlist to JSON format with full metadata.
+
+        Includes creation timestamp, seed songs, and detailed song information.
+
+        :param playlist: Playlist object to export
+        :param output_path: Output file path
+        """
         data = {
             "created_at": playlist.created_at.isoformat(),
             "seed_songs": [
@@ -64,6 +90,13 @@ class PlaylistExporter:
         logger.info(f"Exported JSON playlist to {output_path}")
 
     def export(self, playlist: Playlist, output_path: str, format: str = "m3u") -> None:
+        """Export playlist to specified format.
+
+        :param playlist: Playlist object to export
+        :param output_path: Output file path
+        :param format: Export format ('m3u', 'm3u8', or 'json')
+        :raises ValueError: If format is not supported
+        """
         format = format.lower()
 
         if format == "m3u":

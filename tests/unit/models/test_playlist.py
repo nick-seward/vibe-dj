@@ -6,7 +6,10 @@ from vibe_dj.models.song import Song
 
 
 class TestPlaylist(unittest.TestCase):
+    """Test suite for Playlist class."""
+
     def setUp(self):
+        """Set up test fixtures with sample songs before each test method."""
         self.song1 = Song(
             id=1,
             file_path="/path/1.mp3",

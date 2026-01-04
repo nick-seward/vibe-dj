@@ -8,7 +8,10 @@ from vibe_dj.models.config import Config
 
 
 class TestConfig(unittest.TestCase):
+    """Test suite for Config class."""
+
     def test_config_defaults(self):
+        """Test default configuration values."""
         config = Config()
 
         self.assertEqual(config.database_path, "music.db")

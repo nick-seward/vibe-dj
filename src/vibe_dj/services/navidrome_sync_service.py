@@ -17,11 +17,9 @@ class NavidromeSyncService:
     """
 
     def __init__(self, config: Config):
-        """
-        Initialize Navidrome sync service.
+        """Initialize Navidrome sync service.
 
-        Args:
-            config: Configuration object
+        :param config: Configuration object
         """
         self.config = config
 
@@ -34,34 +32,22 @@ class NavidromeSyncService:
         navidrome_username: Optional[str] = None,
         navidrome_password: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """
-        Sync a generated playlist to Navidrome server.
+        """Sync a generated playlist to Navidrome server.
 
         Credentials are resolved in the following order:
         1. Explicit parameters
         2. Environment variables
         3. Config file values
 
-        Args:
-            playlist: Generated Playlist object
-            output_path: Path to the output M3U file
-            playlist_name: Name for the playlist (optional, defaults to output filename)
-            navidrome_url: Navidrome server URL (optional)
-            navidrome_username: Navidrome username (optional)
-            navidrome_password: Navidrome password (optional)
-
-        Returns:
-            Dictionary with sync results:
-            {
-                'success': bool,
-                'playlist_id': str or None,
-                'playlist_name': str,
-                'matched_count': int,
-                'total_count': int,
-                'skipped_songs': List[str],
-                'error': str or None,
-                'action': 'created' or 'updated' or None
-            }
+        :param playlist: Generated Playlist object
+        :param output_path: Path to the output M3U file
+        :param playlist_name: Name for the playlist (optional, defaults to output filename)
+        :param navidrome_url: Navidrome server URL (optional)
+        :param navidrome_username: Navidrome username (optional)
+        :param navidrome_password: Navidrome password (optional)
+        :return: Dictionary with sync results containing keys: 'success', 'playlist_id',
+                 'playlist_name', 'matched_count', 'total_count', 'skipped_songs',
+                 'error', and 'action'
         """
         url = navidrome_url or os.getenv("NAVIDROME_URL") or self.config.navidrome_url
         username = (

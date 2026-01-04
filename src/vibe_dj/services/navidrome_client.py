@@ -25,15 +25,13 @@ class NavidromeClient:
         client_id: str = "vibe-dj",
         api_version: str = "1.16.1",
     ):
-        """
-        Initialize Navidrome client.
+        """Initialize Navidrome client.
 
-        Args:
-            base_url: Base URL of Navidrome server (e.g., http://192.168.1.100:4533)
-            username: Navidrome username
-            password: Navidrome password
-            client_id: Client identifier for API requests
-            api_version: Subsonic API version to use
+        :param base_url: Base URL of Navidrome server (e.g., http://192.168.1.100:4533)
+        :param username: Navidrome username
+        :param password: Navidrome password
+        :param client_id: Client identifier for API requests
+        :param api_version: Subsonic API version to use
         """
         self.base_url = base_url.rstrip("/")
         self.username = username
@@ -44,11 +42,9 @@ class NavidromeClient:
         self.session.headers.update({"User-Agent": f"{client_id}/1.0"})
 
     def _generate_auth_token(self) -> tuple[str, str]:
-        """
-        Generate authentication token and salt for Subsonic API.
+        """Generate authentication token and salt for Subsonic API.
 
-        Returns:
-            Tuple of (token, salt) where token is MD5(password + salt)
+        :return: Tuple of (token, salt) where token is MD5(password + salt)
         """
         salt = "".join(random.choices(string.ascii_letters + string.digits, k=16))
         token = hashlib.md5(f"{self.password}{salt}".encode()).hexdigest()
@@ -60,20 +56,14 @@ class NavidromeClient:
         params: Optional[Dict[str, Any]] = None,
         max_retries: int = 3,
     ) -> Dict[str, Any]:
-        """
-        Make an API call to Navidrome with retry logic.
+        """Make an API call to Navidrome with retry logic.
 
-        Args:
-            endpoint: API endpoint (e.g., 'search3', 'createPlaylist')
-            params: Query parameters for the request
-            max_retries: Maximum number of retry attempts
-
-        Returns:
-            JSON response from the API
-
-        Raises:
-            requests.exceptions.RequestException: On network/HTTP errors
-            ValueError: On API errors or invalid responses
+        :param endpoint: API endpoint (e.g., 'search3', 'createPlaylist')
+        :param params: Query parameters for the request
+        :param max_retries: Maximum number of retry attempts
+        :return: JSON response from the API
+        :raises requests.exceptions.RequestException: On network/HTTP errors
+        :raises ValueError: On API errors or invalid responses
         """
         if params is None:
             params = {}
@@ -141,21 +131,17 @@ class NavidromeClient:
     def search_song(
         self, title: str, artist: str, album: Optional[str] = None
     ) -> Optional[str]:
-        """
-        Search for a song on Navidrome with fallback strategy.
+        """Search for a song on Navidrome with fallback strategy.
 
         Uses a three-tier search strategy:
         1. Search by title + artist + album (most accurate)
         2. Fallback to title + artist
         3. Fallback to title only
 
-        Args:
-            title: Song title
-            artist: Artist name
-            album: Album name (optional but recommended)
-
-        Returns:
-            Song ID if found, None otherwise
+        :param title: Song title
+        :param artist: Artist name
+        :param album: Album name (optional but recommended)
+        :return: Song ID if found, None otherwise
         """
         search_strategies = []
 
@@ -192,11 +178,9 @@ class NavidromeClient:
         return None
 
     def get_playlists(self) -> List[Dict[str, Any]]:
-        """
-        Get all playlists from Navidrome.
+        """Get all playlists from Navidrome.
 
-        Returns:
-            List of playlist dictionaries with id, name, songCount, etc.
+        :return: List of playlist dictionaries with id, name, songCount, etc.
         """
         try:
             response = self._call("getPlaylists")
@@ -213,14 +197,10 @@ class NavidromeClient:
             raise
 
     def get_playlist_by_name(self, name: str) -> Optional[Dict[str, Any]]:
-        """
-        Find a playlist by name.
+        """Find a playlist by name.
 
-        Args:
-            name: Playlist name to search for
-
-        Returns:
-            Playlist dictionary if found, None otherwise
+        :param name: Playlist name to search for
+        :return: Playlist dictionary if found, None otherwise
         """
         try:
             playlists = self.get_playlists()
@@ -236,15 +216,11 @@ class NavidromeClient:
             return None
 
     def create_playlist(self, name: str, song_ids: List[str]) -> Optional[str]:
-        """
-        Create a new playlist on Navidrome.
+        """Create a new playlist on Navidrome.
 
-        Args:
-            name: Playlist name
-            song_ids: List of song IDs to add to the playlist
-
-        Returns:
-            Playlist ID if successful, None otherwise
+        :param name: Playlist name
+        :param song_ids: List of song IDs to add to the playlist
+        :return: Playlist ID if successful, None otherwise
         """
         if not song_ids:
             logger.warning("Cannot create playlist with no songs")
@@ -278,17 +254,13 @@ class NavidromeClient:
         song_ids_to_add: Optional[List[str]] = None,
         song_indices_to_remove: Optional[List[int]] = None,
     ) -> bool:
-        """
-        Update an existing playlist on Navidrome.
+        """Update an existing playlist on Navidrome.
 
-        Args:
-            playlist_id: ID of the playlist to update
-            name: New name for the playlist (optional)
-            song_ids_to_add: List of song IDs to add (optional)
-            song_indices_to_remove: List of song indices to remove (optional)
-
-        Returns:
-            True if successful, False otherwise
+        :param playlist_id: ID of the playlist to update
+        :param name: New name for the playlist (optional)
+        :param song_ids_to_add: List of song IDs to add (optional)
+        :param song_indices_to_remove: List of song indices to remove (optional)
+        :return: True if successful, False otherwise
         """
         try:
             params = {"playlistId": playlist_id}
@@ -312,17 +284,13 @@ class NavidromeClient:
             return False
 
     def replace_playlist_songs(self, playlist_id: str, song_ids: List[str]) -> bool:
-        """
-        Replace all songs in a playlist with a new set.
+        """Replace all songs in a playlist with a new set.
 
         This is done by removing all existing songs and adding new ones.
 
-        Args:
-            playlist_id: ID of the playlist to update
-            song_ids: New list of song IDs
-
-        Returns:
-            True if successful, False otherwise
+        :param playlist_id: ID of the playlist to update
+        :param song_ids: New list of song IDs
+        :return: True if successful, False otherwise
         """
         try:
             response = self._call("getPlaylist", {"id": playlist_id})
