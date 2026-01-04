@@ -1,7 +1,9 @@
-import unittest
 import tempfile
-import numpy as np
+import unittest
 from pathlib import Path
+
+import numpy as np
+
 from vibe_dj.core.similarity import SimilarityIndex
 from vibe_dj.models import Config
 

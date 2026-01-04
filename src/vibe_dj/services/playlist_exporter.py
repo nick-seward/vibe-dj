@@ -1,7 +1,9 @@
 import json
 from typing import Optional
+
 from loguru import logger
-from ..models import Playlist, Config
+
+from ..models import Config, Playlist
 
 
 class PlaylistExporter:

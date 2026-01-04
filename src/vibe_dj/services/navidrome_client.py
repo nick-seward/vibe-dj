@@ -2,8 +2,9 @@ import hashlib
 import random
 import string
 import time
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin
+
 import requests
 from loguru import logger
 

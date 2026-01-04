@@ -1,9 +1,11 @@
-import click
 import json
+
+import click
 from loguru import logger
+
+from .core import AudioAnalyzer, LibraryIndexer, MusicDatabase, SimilarityIndex
 from .models import Config
-from .core import MusicDatabase, AudioAnalyzer, SimilarityIndex, LibraryIndexer
-from .services import PlaylistGenerator, PlaylistExporter, NavidromeSyncService
+from .services import NavidromeSyncService, PlaylistExporter, PlaylistGenerator
 
 
 @click.group()

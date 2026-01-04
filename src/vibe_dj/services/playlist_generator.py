@@ -1,10 +1,12 @@
 import random
-import numpy as np
 from typing import List, Optional
+
+import numpy as np
 from loguru import logger
-from ..models import Config, Song, Features, Playlist
+
 from ..core.database import MusicDatabase
 from ..core.similarity import SimilarityIndex
+from ..models import Config, Features, Playlist, Song
 
 
 class PlaylistGenerator:

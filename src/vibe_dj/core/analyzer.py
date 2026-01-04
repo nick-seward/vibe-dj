@@ -1,10 +1,12 @@
-import numpy as np
-import librosa
 import math
 from typing import Optional, Tuple
-from mutagen import File as MutagenFile
+
+import librosa
+import numpy as np
 from loguru import logger
-from ..models import Song, Features, Config
+from mutagen import File as MutagenFile
+
+from ..models import Config, Features, Song
 
 
 class AudioAnalyzer:

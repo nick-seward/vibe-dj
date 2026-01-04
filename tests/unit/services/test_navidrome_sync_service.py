@@ -1,10 +1,12 @@
-import pytest
 import os
-from unittest.mock import Mock, patch, MagicMock
 from pathlib import Path
-from vibe_dj.services.navidrome_sync_service import NavidromeSyncService
-from vibe_dj.services.navidrome_client import NavidromeClient
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
+
 from vibe_dj.models import Config, Playlist, Song
+from vibe_dj.services.navidrome_client import NavidromeClient
+from vibe_dj.services.navidrome_sync_service import NavidromeSyncService
 
 
 class TestNavidromeSyncService:

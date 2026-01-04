@@ -1,6 +1,8 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 import numpy as np
+
 from vibe_dj.core.analyzer import AudioAnalyzer
 from vibe_dj.models import Config, Features
 

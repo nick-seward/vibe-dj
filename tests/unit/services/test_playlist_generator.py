@@ -1,10 +1,12 @@
 import unittest
 from unittest.mock import MagicMock
+
 import numpy as np
-from vibe_dj.services.playlist_generator import PlaylistGenerator
+
 from vibe_dj.core.database import MusicDatabase
 from vibe_dj.core.similarity import SimilarityIndex
-from vibe_dj.models import Config, Song, Features
+from vibe_dj.models import Config, Features, Song
+from vibe_dj.services.playlist_generator import PlaylistGenerator
 
 
 class TestPlaylistGenerator(unittest.TestCase):

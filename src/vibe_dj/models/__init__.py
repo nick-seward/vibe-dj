@@ -1,6 +1,6 @@
-from .song import Song
+from .config import Config
 from .features import Features
 from .playlist import Playlist
-from .config import Config
+from .song import Song
 
 __all__ = ["Song", "Features", "Playlist", "Config"]

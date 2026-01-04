@@ -1,7 +1,9 @@
 import os
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
+
 from loguru import logger
+
 from ..models import Config, Playlist
 from .navidrome_client import NavidromeClient
 

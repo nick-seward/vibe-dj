@@ -1,6 +1,6 @@
-from .database import MusicDatabase
 from .analyzer import AudioAnalyzer
-from .similarity import SimilarityIndex
+from .database import MusicDatabase
 from .indexer import LibraryIndexer
+from .similarity import SimilarityIndex
 
 __all__ = ["MusicDatabase", "AudioAnalyzer", "SimilarityIndex", "LibraryIndexer"]

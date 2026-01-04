@@ -1,13 +1,15 @@
 """Integration test for resumable indexing functionality."""
-import unittest
-import tempfile
 import os
 import shutil
-import numpy as np
+import tempfile
+import unittest
 from pathlib import Path
-from vibe_dj.core.indexer import LibraryIndexer
-from vibe_dj.core.database import MusicDatabase
+
+import numpy as np
+
 from vibe_dj.core.analyzer import AudioAnalyzer
+from vibe_dj.core.database import MusicDatabase
+from vibe_dj.core.indexer import LibraryIndexer
 from vibe_dj.core.similarity import SimilarityIndex
 from vibe_dj.models import Config
 

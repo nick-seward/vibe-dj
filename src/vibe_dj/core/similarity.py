@@ -1,7 +1,9 @@
+from typing import List, Tuple
+
 import faiss
 import numpy as np
-from typing import List, Tuple
 from loguru import logger
+
 from ..models import Config
 
 

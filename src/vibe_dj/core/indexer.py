@@ -1,12 +1,14 @@
 import os
-from typing import List, Dict, Tuple, Optional
 from concurrent.futures import ThreadPoolExecutor, TimeoutError, as_completed
-from tqdm import tqdm
+from typing import Dict, List, Optional, Tuple
+
 import numpy as np
 from loguru import logger
-from ..models import Config, Song, Features
-from .database import MusicDatabase
+from tqdm import tqdm
+
+from ..models import Config, Features, Song
 from .analyzer import AudioAnalyzer
+from .database import MusicDatabase
 from .similarity import SimilarityIndex
 
 

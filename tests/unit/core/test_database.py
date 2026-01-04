@@ -1,10 +1,12 @@
-import unittest
-import tempfile
 import os
-import numpy as np
+import tempfile
+import unittest
 from pathlib import Path
+
+import numpy as np
+
 from vibe_dj.core.database import MusicDatabase
-from vibe_dj.models import Song, Features, Config
+from vibe_dj.models import Config, Features, Song
 
 
 class TestMusicDatabase(unittest.TestCase):

@@ -1,6 +1,7 @@
 import sqlite3
 from typing import List, Optional, Tuple
-from ..models import Song, Features, Config
+
+from ..models import Config, Features, Song
 
 
 class MusicDatabase:

@@ -1,4 +1,5 @@
 import unittest
+
 from vibe_dj.models.song import Song
 
 
