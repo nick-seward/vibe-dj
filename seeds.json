@@ -1,6 +1,14 @@
 {
   "seeds": [
-    "Dizzy",
-    "BC"
+    {
+      "title": "The Last of the Mohicans",
+      "artist": "Luca Stricagnoli",
+      "album": "Luca Stricagnoli"
+    },
+    {
+      "title": "Blue in Green",
+      "artist": "Miles Davis",
+      "album": "Kind of Blue"
+    }
   ]
 }

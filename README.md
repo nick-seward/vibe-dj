@@ -285,16 +285,6 @@ Create a `config.json` file:
 
 - **`candidate_multiplier`** (default: `4`): Determines how many candidate songs to fetch before random sampling. For a 20-song playlist with multiplier 4, it fetches 80 candidates and randomly selects 20. Higher values increase variety but require more computation.
 
-## Migration
-
-If you're upgrading from a version without the album field, use the migration script to populate album metadata:
-
-```bash
-python scripts/migrate_add_album.py
-```
-
-This reads metadata from your audio files and updates the database without re-running expensive librosa analysis. See `docs/MIGRATION_GUIDE.md` for details.
-
 ## Development
 
 ### Running Tests

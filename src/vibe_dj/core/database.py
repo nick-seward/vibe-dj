@@ -44,11 +44,6 @@ class MusicDatabase:
             duration INTEGER
         )''')
         
-        try:
-            cur.execute("ALTER TABLE songs ADD COLUMN album TEXT")
-            self.connection.commit()
-        except Exception:
-            pass
         cur.execute('''CREATE TABLE IF NOT EXISTS features (
             song_id INTEGER PRIMARY KEY,
             feature_vector BLOB,
