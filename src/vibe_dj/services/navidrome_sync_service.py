@@ -11,20 +11,20 @@ from .navidrome_client import NavidromeClient
 class NavidromeSyncService:
     """
     Service for syncing playlists to Navidrome server.
-    
+
     Handles credential resolution, song matching, and playlist
     creation/update operations.
     """
-    
+
     def __init__(self, config: Config):
         """
         Initialize Navidrome sync service.
-        
+
         Args:
             config: Configuration object
         """
         self.config = config
-    
+
     def sync_playlist(
         self,
         playlist: Playlist,
@@ -32,16 +32,16 @@ class NavidromeSyncService:
         playlist_name: Optional[str] = None,
         navidrome_url: Optional[str] = None,
         navidrome_username: Optional[str] = None,
-        navidrome_password: Optional[str] = None
+        navidrome_password: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Sync a generated playlist to Navidrome server.
-        
+
         Credentials are resolved in the following order:
         1. Explicit parameters
         2. Environment variables
         3. Config file values
-        
+
         Args:
             playlist: Generated Playlist object
             output_path: Path to the output M3U file
@@ -49,7 +49,7 @@ class NavidromeSyncService:
             navidrome_url: Navidrome server URL (optional)
             navidrome_username: Navidrome username (optional)
             navidrome_password: Navidrome password (optional)
-            
+
         Returns:
             Dictionary with sync results:
             {
@@ -63,140 +63,156 @@ class NavidromeSyncService:
                 'action': 'created' or 'updated' or None
             }
         """
-        url = navidrome_url or os.getenv('NAVIDROME_URL') or self.config.navidrome_url
-        username = navidrome_username or os.getenv('NAVIDROME_USERNAME') or self.config.navidrome_username
-        password = navidrome_password or os.getenv('NAVIDROME_PASSWORD') or self.config.navidrome_password
-        
+        url = navidrome_url or os.getenv("NAVIDROME_URL") or self.config.navidrome_url
+        username = (
+            navidrome_username
+            or os.getenv("NAVIDROME_USERNAME")
+            or self.config.navidrome_username
+        )
+        password = (
+            navidrome_password
+            or os.getenv("NAVIDROME_PASSWORD")
+            or self.config.navidrome_password
+        )
+
         if not all([url, username, password]):
             logger.warning("Navidrome sync requested but credentials not provided")
-            logger.warning("Provide via parameters, environment variables (NAVIDROME_URL, NAVIDROME_USERNAME, NAVIDROME_PASSWORD), or config file")
+            logger.warning(
+                "Provide via parameters, environment variables (NAVIDROME_URL, NAVIDROME_USERNAME, NAVIDROME_PASSWORD), or config file"
+            )
             return {
-                'success': False,
-                'playlist_id': None,
-                'playlist_name': playlist_name or Path(output_path).stem,
-                'matched_count': 0,
-                'total_count': len(playlist.songs),
-                'skipped_songs': [],
-                'error': 'Missing credentials',
-                'action': None
+                "success": False,
+                "playlist_id": None,
+                "playlist_name": playlist_name or Path(output_path).stem,
+                "matched_count": 0,
+                "total_count": len(playlist.songs),
+                "skipped_songs": [],
+                "error": "Missing credentials",
+                "action": None,
             }
-        
+
         if not playlist_name:
             playlist_name = Path(output_path).stem
-        
+
         try:
             logger.info(f"Syncing playlist to Navidrome at {url}...")
-            
+
             client = NavidromeClient(url, username, password)
-            
+
             song_ids = []
             matched_count = 0
             skipped_songs = []
-            
+
             for song in playlist.songs:
                 song_id = client.search_song(
-                    title=song.title,
-                    artist=song.artist,
-                    album=song.album
+                    title=song.title, artist=song.artist, album=song.album
                 )
-                
+
                 if song_id:
                     song_ids.append(song_id)
                     matched_count += 1
                 else:
                     skipped_songs.append(f"{song.title} by {song.artist}")
-            
+
             if not song_ids:
                 logger.error("No songs could be matched on Navidrome. Sync aborted.")
                 return {
-                    'success': False,
-                    'playlist_id': None,
-                    'playlist_name': playlist_name,
-                    'matched_count': 0,
-                    'total_count': len(playlist.songs),
-                    'skipped_songs': skipped_songs,
-                    'error': 'No songs matched',
-                    'action': None
+                    "success": False,
+                    "playlist_id": None,
+                    "playlist_name": playlist_name,
+                    "matched_count": 0,
+                    "total_count": len(playlist.songs),
+                    "skipped_songs": skipped_songs,
+                    "error": "No songs matched",
+                    "action": None,
                 }
-            
+
             if skipped_songs:
-                logger.warning(f"{len(skipped_songs)} song(s) could not be matched on Navidrome")
+                logger.warning(
+                    f"{len(skipped_songs)} song(s) could not be matched on Navidrome"
+                )
                 for skipped in skipped_songs[:5]:
                     logger.debug(f"Skipped: {skipped}")
                 if len(skipped_songs) > 5:
                     logger.debug(f"... and {len(skipped_songs) - 5} more")
-            
+
             existing_playlist = client.get_playlist_by_name(playlist_name)
-            
+
             if existing_playlist:
-                playlist_id = existing_playlist['id']
-                logger.info(f"Updating existing playlist '{playlist_name}' (ID: {playlist_id})...")
-                
+                playlist_id = existing_playlist["id"]
+                logger.info(
+                    f"Updating existing playlist '{playlist_name}' (ID: {playlist_id})..."
+                )
+
                 if client.replace_playlist_songs(playlist_id, song_ids):
-                    logger.info(f"Playlist '{playlist_name}' successfully updated on Navidrome")
+                    logger.info(
+                        f"Playlist '{playlist_name}' successfully updated on Navidrome"
+                    )
                     logger.info(f"Matched: {matched_count}/{len(playlist.songs)} songs")
                     return {
-                        'success': True,
-                        'playlist_id': playlist_id,
-                        'playlist_name': playlist_name,
-                        'matched_count': matched_count,
-                        'total_count': len(playlist.songs),
-                        'skipped_songs': skipped_songs,
-                        'error': None,
-                        'action': 'updated'
+                        "success": True,
+                        "playlist_id": playlist_id,
+                        "playlist_name": playlist_name,
+                        "matched_count": matched_count,
+                        "total_count": len(playlist.songs),
+                        "skipped_songs": skipped_songs,
+                        "error": None,
+                        "action": "updated",
                     }
                 else:
                     logger.error(f"Failed to update playlist '{playlist_name}'")
                     return {
-                        'success': False,
-                        'playlist_id': playlist_id,
-                        'playlist_name': playlist_name,
-                        'matched_count': matched_count,
-                        'total_count': len(playlist.songs),
-                        'skipped_songs': skipped_songs,
-                        'error': 'Update failed',
-                        'action': None
+                        "success": False,
+                        "playlist_id": playlist_id,
+                        "playlist_name": playlist_name,
+                        "matched_count": matched_count,
+                        "total_count": len(playlist.songs),
+                        "skipped_songs": skipped_songs,
+                        "error": "Update failed",
+                        "action": None,
                     }
             else:
                 logger.info(f"Creating new playlist '{playlist_name}'...")
-                
+
                 playlist_id = client.create_playlist(playlist_name, song_ids)
-                
+
                 if playlist_id:
-                    logger.info(f"Playlist '{playlist_name}' successfully created on Navidrome (ID: {playlist_id})")
+                    logger.info(
+                        f"Playlist '{playlist_name}' successfully created on Navidrome (ID: {playlist_id})"
+                    )
                     logger.info(f"Matched: {matched_count}/{len(playlist.songs)} songs")
                     return {
-                        'success': True,
-                        'playlist_id': playlist_id,
-                        'playlist_name': playlist_name,
-                        'matched_count': matched_count,
-                        'total_count': len(playlist.songs),
-                        'skipped_songs': skipped_songs,
-                        'error': None,
-                        'action': 'created'
+                        "success": True,
+                        "playlist_id": playlist_id,
+                        "playlist_name": playlist_name,
+                        "matched_count": matched_count,
+                        "total_count": len(playlist.songs),
+                        "skipped_songs": skipped_songs,
+                        "error": None,
+                        "action": "created",
                     }
                 else:
                     logger.error(f"Failed to create playlist '{playlist_name}'")
                     return {
-                        'success': False,
-                        'playlist_id': None,
-                        'playlist_name': playlist_name,
-                        'matched_count': matched_count,
-                        'total_count': len(playlist.songs),
-                        'skipped_songs': skipped_songs,
-                        'error': 'Creation failed',
-                        'action': None
+                        "success": False,
+                        "playlist_id": None,
+                        "playlist_name": playlist_name,
+                        "matched_count": matched_count,
+                        "total_count": len(playlist.songs),
+                        "skipped_songs": skipped_songs,
+                        "error": "Creation failed",
+                        "action": None,
                     }
-        
+
         except Exception as e:
             logger.exception(f"Error syncing to Navidrome: {e}")
             return {
-                'success': False,
-                'playlist_id': None,
-                'playlist_name': playlist_name,
-                'matched_count': 0,
-                'total_count': len(playlist.songs),
-                'skipped_songs': [],
-                'error': str(e),
-                'action': None
+                "success": False,
+                "playlist_id": None,
+                "playlist_name": playlist_name,
+                "matched_count": 0,
+                "total_count": len(playlist.songs),
+                "skipped_songs": [],
+                "error": str(e),
+                "action": None,
             }

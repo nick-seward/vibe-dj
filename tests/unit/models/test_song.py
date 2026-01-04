@@ -13,9 +13,9 @@ class TestSong(unittest.TestCase):
             album="Test Album",
             genre="Rock",
             last_modified=1234567890.0,
-            duration=180
+            duration=180,
         )
-        
+
         self.assertEqual(song.id, 1)
         self.assertEqual(song.title, "Test Song")
         self.assertEqual(song.artist, "Test Artist")
@@ -30,9 +30,9 @@ class TestSong(unittest.TestCase):
             album="Test Album",
             genre="Rock",
             last_modified=1234567890.0,
-            duration=180
+            duration=180,
         )
-        
+
         self.assertEqual(str(song), "Test Artist - Test Song")
 
     def test_song_with_none_values(self):
@@ -44,9 +44,9 @@ class TestSong(unittest.TestCase):
             album="Unknown",
             genre="Unknown",
             last_modified=1234567890.0,
-            duration=None
+            duration=None,
         )
-        
+
         self.assertIsNone(song.duration)
 
 

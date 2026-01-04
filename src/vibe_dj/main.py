@@ -22,48 +22,83 @@ def index(library_path, config):
         cfg = Config.from_file(config)
     else:
         cfg = Config()
-    
+
     with MusicDatabase(cfg) as db:
         analyzer = AudioAnalyzer(cfg)
         similarity_index = SimilarityIndex(cfg)
         indexer = LibraryIndexer(cfg, db, analyzer, similarity_index)
-        
+
         indexer.index_library(library_path)
 
 
 @cli.command()
-@click.option("--seeds-json", type=click.Path(exists=True), required=True,
-              help='JSON file with seeds: {"seeds": [{"title": "...", "artist": "...", "album": "..."}]}')
-@click.option("--output", type=click.Path(), default=None,
-              help="Output playlist file path")
-@click.option("--format", type=click.Choice(['m3u', 'm3u8', 'json'], case_sensitive=False),
-              default='m3u', help="Output format (default: m3u)")
-@click.option("--length", type=int, default=20, help="Number of songs in playlist (default: 20)")
-@click.option("--bpm-jitter", type=float, default=5.0, 
-              help="BPM jitter percentage for sorting (default: 5.0)")
+@click.option(
+    "--seeds-json",
+    type=click.Path(exists=True),
+    required=True,
+    help='JSON file with seeds: {"seeds": [{"title": "...", "artist": "...", "album": "..."}]}',
+)
+@click.option(
+    "--output", type=click.Path(), default=None, help="Output playlist file path"
+)
+@click.option(
+    "--format",
+    type=click.Choice(["m3u", "m3u8", "json"], case_sensitive=False),
+    default="m3u",
+    help="Output format (default: m3u)",
+)
+@click.option(
+    "--length", type=int, default=20, help="Number of songs in playlist (default: 20)"
+)
+@click.option(
+    "--bpm-jitter",
+    type=float,
+    default=5.0,
+    help="BPM jitter percentage for sorting (default: 5.0)",
+)
 @click.option("--config", type=click.Path(exists=True), help="Path to config JSON file")
-@click.option("--sync-to-navidrome", is_flag=True, default=False,
-              help="Sync playlist to Navidrome server")
-@click.option("--navidrome-url", type=str, default=None,
-              help="Navidrome server URL (e.g., http://192.168.1.100:4533)")
-@click.option("--navidrome-username", type=str, default=None,
-              help="Navidrome username")
-@click.option("--navidrome-password", type=str, default=None,
-              help="Navidrome password")
-@click.option("--playlist-name", type=str, default=None,
-              help="Name for the playlist on Navidrome (defaults to output filename)")
-def playlist(seeds_json, output, format, length, bpm_jitter, config, 
-             sync_to_navidrome, navidrome_url, navidrome_username, 
-             navidrome_password, playlist_name):
+@click.option(
+    "--sync-to-navidrome",
+    is_flag=True,
+    default=False,
+    help="Sync playlist to Navidrome server",
+)
+@click.option(
+    "--navidrome-url",
+    type=str,
+    default=None,
+    help="Navidrome server URL (e.g., http://192.168.1.100:4533)",
+)
+@click.option("--navidrome-username", type=str, default=None, help="Navidrome username")
+@click.option("--navidrome-password", type=str, default=None, help="Navidrome password")
+@click.option(
+    "--playlist-name",
+    type=str,
+    default=None,
+    help="Name for the playlist on Navidrome (defaults to output filename)",
+)
+def playlist(
+    seeds_json,
+    output,
+    format,
+    length,
+    bpm_jitter,
+    config,
+    sync_to_navidrome,
+    navidrome_url,
+    navidrome_username,
+    navidrome_password,
+    playlist_name,
+):
     """Generate a playlist from seed songs (requires title, artist, and album for each seed)."""
     if config:
         cfg = Config.from_file(config)
     else:
         cfg = Config()
-    
+
     if output is None:
         output = cfg.playlist_output
-    
+
     with open(seeds_json) as f:
         data = json.load(f)
         seeds = data.get("seeds", [])
@@ -71,14 +106,18 @@ def playlist(seeds_json, output, format, length, bpm_jitter, config,
     if not seeds:
         click.echo("Error: Provide at least one seed song in the JSON.")
         return
-    
+
     for i, seed in enumerate(seeds):
         if not isinstance(seed, dict):
-            click.echo(f"Error: Seed {i+1} must be a dict with 'title', 'artist', and 'album' fields.")
+            click.echo(
+                f"Error: Seed {i + 1} must be a dict with 'title', 'artist', and 'album' fields."
+            )
             return
-        
-        if not all(k in seed for k in ['title', 'artist', 'album']):
-            click.echo(f"Error: Seed {i+1} missing required fields. Need 'title', 'artist', and 'album'.")
+
+        if not all(k in seed for k in ["title", "artist", "album"]):
+            click.echo(
+                f"Error: Seed {i + 1} missing required fields. Need 'title', 'artist', and 'album'."
+            )
             click.echo(f"Got: {seed}")
             return
 
@@ -86,42 +125,53 @@ def playlist(seeds_json, output, format, length, bpm_jitter, config,
         with MusicDatabase(cfg) as db:
             similarity_index = SimilarityIndex(cfg)
             similarity_index.load()
-            
+
             generator = PlaylistGenerator(cfg, db, similarity_index)
             exporter = PlaylistExporter(cfg)
-            
+
             pl = generator.generate(seeds, length=length, bpm_jitter_percent=bpm_jitter)
-            
+
             if pl:
                 exporter.export(pl, output, format=format)
                 click.echo(f"Playlist ({len(pl)} songs) saved to {output}")
-                
+
                 if sync_to_navidrome:
                     sync_service = NavidromeSyncService(cfg)
                     result = sync_service.sync_playlist(
-                        pl, output, playlist_name,
-                        navidrome_url, navidrome_username, navidrome_password
+                        pl,
+                        output,
+                        playlist_name,
+                        navidrome_url,
+                        navidrome_username,
+                        navidrome_password,
                     )
-                    
-                    if result['success']:
-                        click.echo(f"✓ Playlist '{result['playlist_name']}' successfully {result['action']} on Navidrome")
-                        click.echo(f"  Matched: {result['matched_count']}/{result['total_count']} songs")
-                        
-                        if result['skipped_songs']:
-                            click.echo(f"  Warning: {len(result['skipped_songs'])} song(s) could not be matched:")
-                            for skipped in result['skipped_songs'][:5]:
+
+                    if result["success"]:
+                        click.echo(
+                            f"✓ Playlist '{result['playlist_name']}' successfully {result['action']} on Navidrome"
+                        )
+                        click.echo(
+                            f"  Matched: {result['matched_count']}/{result['total_count']} songs"
+                        )
+
+                        if result["skipped_songs"]:
+                            click.echo(
+                                f"  Warning: {len(result['skipped_songs'])} song(s) could not be matched:"
+                            )
+                            for skipped in result["skipped_songs"][:5]:
                                 click.echo(f"    - {skipped}")
-                            if len(result['skipped_songs']) > 5:
-                                click.echo(f"    ... and {len(result['skipped_songs']) - 5} more")
+                            if len(result["skipped_songs"]) > 5:
+                                click.echo(
+                                    f"    ... and {len(result['skipped_songs']) - 5} more"
+                                )
                     else:
                         click.echo(f"Error: Failed to sync playlist to Navidrome")
-                        if result['error']:
+                        if result["error"]:
                             click.echo(f"  Reason: {result['error']}")
             else:
                 click.echo("Error: Could not generate playlist")
     except Exception as e:
         click.echo(f"Error: {e}")
-
 
 
 if __name__ == "__main__":

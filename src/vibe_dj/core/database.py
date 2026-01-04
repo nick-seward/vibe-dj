@@ -29,12 +29,14 @@ class MusicDatabase:
     @property
     def connection(self) -> sqlite3.Connection:
         if self._conn is None:
-            raise RuntimeError("Database not connected. Use context manager or call connect().")
+            raise RuntimeError(
+                "Database not connected. Use context manager or call connect()."
+            )
         return self._conn
 
     def init_db(self) -> None:
         cur = self.connection.cursor()
-        cur.execute('''CREATE TABLE IF NOT EXISTS songs (
+        cur.execute("""CREATE TABLE IF NOT EXISTS songs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             file_path TEXT UNIQUE,
             title TEXT,
@@ -43,31 +45,42 @@ class MusicDatabase:
             genre TEXT,
             last_modified REAL,
             duration INTEGER
-        )''')
-        
-        cur.execute('''CREATE TABLE IF NOT EXISTS features (
+        )""")
+
+        cur.execute("""CREATE TABLE IF NOT EXISTS features (
             song_id INTEGER PRIMARY KEY,
             feature_vector BLOB,
             bpm REAL,
             FOREIGN KEY(song_id) REFERENCES songs(id)
-        )''')
+        )""")
         self.connection.commit()
 
     def add_song(self, song: Song, features: Optional[Features] = None) -> int:
         cur = self.connection.cursor()
-        cur.execute("""INSERT OR REPLACE INTO songs
+        cur.execute(
+            """INSERT OR REPLACE INTO songs
                        (file_path, title, artist, album, genre, last_modified, duration)
                        VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                    (song.file_path, song.title, song.artist, song.album, song.genre,
-                     song.last_modified, song.duration))
+            (
+                song.file_path,
+                song.title,
+                song.artist,
+                song.album,
+                song.genre,
+                song.last_modified,
+                song.duration,
+            ),
+        )
         song_id = cur.lastrowid
-        
+
         if features:
-            cur.execute("""INSERT OR REPLACE INTO features
+            cur.execute(
+                """INSERT OR REPLACE INTO features
                            (song_id, feature_vector, bpm)
                            VALUES (?, ?, ?)""",
-                        (song_id, features.to_bytes(), features.bpm))
-        
+                (song_id, features.to_bytes(), features.bpm),
+            )
+
         self.connection.commit()
         return song_id
 
@@ -75,7 +88,7 @@ class MusicDatabase:
         cur = self.connection.cursor()
         cur.execute("SELECT * FROM songs WHERE id = ?", (song_id,))
         row = cur.fetchone()
-        
+
         if row:
             return Song(
                 id=row["id"],
@@ -85,7 +98,7 @@ class MusicDatabase:
                 album=row["album"],
                 genre=row["genre"],
                 last_modified=row["last_modified"],
-                duration=row["duration"]
+                duration=row["duration"],
             )
         return None
 
@@ -93,7 +106,7 @@ class MusicDatabase:
         cur = self.connection.cursor()
         cur.execute("SELECT * FROM songs WHERE file_path = ?", (file_path,))
         row = cur.fetchone()
-        
+
         if row:
             return Song(
                 id=row["id"],
@@ -103,7 +116,7 @@ class MusicDatabase:
                 album=row["album"],
                 genre=row["genre"],
                 last_modified=row["last_modified"],
-                duration=row["duration"]
+                duration=row["duration"],
             )
         return None
 
@@ -111,24 +124,29 @@ class MusicDatabase:
         cur = self.connection.cursor()
         cur.execute("SELECT * FROM songs WHERE title LIKE ?", (f"%{title}%",))
         rows = cur.fetchall()
-        
-        return [Song(
-            id=row["id"],
-            file_path=row["file_path"],
-            title=row["title"],
-            artist=row["artist"],
-            album=row["album"],
-            genre=row["genre"],
-            last_modified=row["last_modified"],
-            duration=row["duration"]
-        ) for row in rows]
+
+        return [
+            Song(
+                id=row["id"],
+                file_path=row["file_path"],
+                title=row["title"],
+                artist=row["artist"],
+                album=row["album"],
+                genre=row["genre"],
+                last_modified=row["last_modified"],
+                duration=row["duration"],
+            )
+            for row in rows
+        ]
 
     def find_song_exact(self, title: str, artist: str, album: str) -> Optional[Song]:
         cur = self.connection.cursor()
-        cur.execute("SELECT * FROM songs WHERE title = ? AND artist = ? AND album = ?",
-                    (title, artist, album))
+        cur.execute(
+            "SELECT * FROM songs WHERE title = ? AND artist = ? AND album = ?",
+            (title, artist, album),
+        )
         row = cur.fetchone()
-        
+
         if row:
             return Song(
                 id=row["id"],
@@ -138,7 +156,7 @@ class MusicDatabase:
                 album=row["album"],
                 genre=row["genre"],
                 last_modified=row["last_modified"],
-                duration=row["duration"]
+                duration=row["duration"],
             )
         return None
 
@@ -146,23 +164,26 @@ class MusicDatabase:
         cur = self.connection.cursor()
         cur.execute("SELECT * FROM features WHERE song_id = ?", (song_id,))
         row = cur.fetchone()
-        
+
         if row:
             return Features.from_bytes(
                 song_id=row["song_id"],
                 vector_bytes=row["feature_vector"],
-                bpm=row["bpm"]
+                bpm=row["bpm"],
             )
         return None
 
     def get_song_with_features(self, song_id: int) -> Optional[Tuple[Song, Features]]:
         cur = self.connection.cursor()
-        cur.execute("""SELECT songs.*, features.feature_vector, features.bpm
+        cur.execute(
+            """SELECT songs.*, features.feature_vector, features.bpm
                        FROM songs
                        JOIN features ON songs.id = features.song_id
-                       WHERE songs.id = ?""", (song_id,))
+                       WHERE songs.id = ?""",
+            (song_id,),
+        )
         row = cur.fetchone()
-        
+
         if row:
             song = Song(
                 id=row["id"],
@@ -172,12 +193,10 @@ class MusicDatabase:
                 album=row["album"],
                 genre=row["genre"],
                 last_modified=row["last_modified"],
-                duration=row["duration"]
+                duration=row["duration"],
             )
             features = Features.from_bytes(
-                song_id=row["id"],
-                vector_bytes=row["feature_vector"],
-                bpm=row["bpm"]
+                song_id=row["id"], vector_bytes=row["feature_vector"], bpm=row["bpm"]
             )
             return (song, features)
         return None
@@ -189,7 +208,7 @@ class MusicDatabase:
                        JOIN features ON songs.id = features.song_id
                        ORDER BY songs.id""")
         rows = cur.fetchall()
-        
+
         results = []
         for row in rows:
             song = Song(
@@ -200,15 +219,13 @@ class MusicDatabase:
                 album=row["album"],
                 genre=row["genre"],
                 last_modified=row["last_modified"],
-                duration=row["duration"]
+                duration=row["duration"],
             )
             features = Features.from_bytes(
-                song_id=row["id"],
-                vector_bytes=row["feature_vector"],
-                bpm=row["bpm"]
+                song_id=row["id"], vector_bytes=row["feature_vector"], bpm=row["bpm"]
             )
             results.append((song, features))
-        
+
         return results
 
     def get_all_file_paths_with_mtime(self) -> dict:
@@ -225,22 +242,25 @@ class MusicDatabase:
     def get_songs_by_ids(self, song_ids: List[int]) -> List[Song]:
         if not song_ids:
             return []
-        
+
         cur = self.connection.cursor()
-        placeholders = ','.join('?' * len(song_ids))
+        placeholders = ",".join("?" * len(song_ids))
         cur.execute(f"SELECT * FROM songs WHERE id IN ({placeholders})", song_ids)
         rows = cur.fetchall()
-        
-        return [Song(
-            id=row["id"],
-            file_path=row["file_path"],
-            title=row["title"],
-            artist=row["artist"],
-            album=row["album"],
-            genre=row["genre"],
-            last_modified=row["last_modified"],
-            duration=row["duration"]
-        ) for row in rows]
+
+        return [
+            Song(
+                id=row["id"],
+                file_path=row["file_path"],
+                title=row["title"],
+                artist=row["artist"],
+                album=row["album"],
+                genre=row["genre"],
+                last_modified=row["last_modified"],
+                duration=row["duration"],
+            )
+            for row in rows
+        ]
 
     def commit(self) -> None:
         self.connection.commit()
@@ -248,9 +268,9 @@ class MusicDatabase:
     def get_songs_without_features(self, file_paths: List[str] = None) -> List[Song]:
         """Get songs that exist in DB but don't have features yet."""
         cur = self.connection.cursor()
-        
+
         if file_paths:
-            placeholders = ','.join('?' * len(file_paths))
+            placeholders = ",".join("?" * len(file_paths))
             query = f"""SELECT songs.* FROM songs 
                        LEFT JOIN features ON songs.id = features.song_id 
                        WHERE features.song_id IS NULL 
@@ -261,33 +281,36 @@ class MusicDatabase:
                        LEFT JOIN features ON songs.id = features.song_id 
                        WHERE features.song_id IS NULL"""
             cur.execute(query)
-        
+
         rows = cur.fetchall()
-        return [Song(
-            id=row["id"],
-            file_path=row["file_path"],
-            title=row["title"],
-            artist=row["artist"],
-            album=row["album"],
-            genre=row["genre"],
-            last_modified=row["last_modified"],
-            duration=row["duration"]
-        ) for row in rows]
+        return [
+            Song(
+                id=row["id"],
+                file_path=row["file_path"],
+                title=row["title"],
+                artist=row["artist"],
+                album=row["album"],
+                genre=row["genre"],
+                last_modified=row["last_modified"],
+                duration=row["duration"],
+            )
+            for row in rows
+        ]
 
     def get_indexing_stats(self) -> dict:
         """Get statistics about indexing progress."""
         cur = self.connection.cursor()
-        
+
         cur.execute("SELECT COUNT(*) FROM songs")
         total_songs = cur.fetchone()[0]
-        
+
         cur.execute("SELECT COUNT(*) FROM features")
         songs_with_features = cur.fetchone()[0]
-        
+
         songs_without_features = total_songs - songs_with_features
-        
+
         return {
-            'total_songs': total_songs,
-            'songs_with_features': songs_with_features,
-            'songs_without_features': songs_without_features
+            "total_songs": total_songs,
+            "songs_with_features": songs_with_features,
+            "songs_without_features": songs_without_features,
         }
