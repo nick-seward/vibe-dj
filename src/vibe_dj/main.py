@@ -1,11 +1,9 @@
 import click
 import json
-import os
-from pathlib import Path
 from loguru import logger
 from .models import Config
 from .core import MusicDatabase, AudioAnalyzer, SimilarityIndex, LibraryIndexer
-from .services import PlaylistGenerator, PlaylistExporter, NavidromeClient
+from .services import PlaylistGenerator, PlaylistExporter, NavidromeSyncService
 
 
 @click.group()
@@ -97,107 +95,31 @@ def playlist(seeds_json, output, format, length, bpm_jitter, config,
                 click.echo(f"Playlist ({len(pl)} songs) saved to {output}")
                 
                 if sync_to_navidrome:
-                    _sync_to_navidrome(
-                        pl, cfg, output, playlist_name,
+                    sync_service = NavidromeSyncService(cfg)
+                    result = sync_service.sync_playlist(
+                        pl, output, playlist_name,
                         navidrome_url, navidrome_username, navidrome_password
                     )
+                    
+                    if result['success']:
+                        click.echo(f"✓ Playlist '{result['playlist_name']}' successfully {result['action']} on Navidrome")
+                        click.echo(f"  Matched: {result['matched_count']}/{result['total_count']} songs")
+                        
+                        if result['skipped_songs']:
+                            click.echo(f"  Warning: {len(result['skipped_songs'])} song(s) could not be matched:")
+                            for skipped in result['skipped_songs'][:5]:
+                                click.echo(f"    - {skipped}")
+                            if len(result['skipped_songs']) > 5:
+                                click.echo(f"    ... and {len(result['skipped_songs']) - 5} more")
+                    else:
+                        click.echo(f"Error: Failed to sync playlist to Navidrome")
+                        if result['error']:
+                            click.echo(f"  Reason: {result['error']}")
             else:
                 click.echo("Error: Could not generate playlist")
     except Exception as e:
         click.echo(f"Error: {e}")
 
-
-def _sync_to_navidrome(
-    playlist,
-    config: Config,
-    output_path: str,
-    playlist_name: str = None,
-    navidrome_url: str = None,
-    navidrome_username: str = None,
-    navidrome_password: str = None
-) -> None:
-    """
-    Sync a generated playlist to Navidrome server.
-    
-    Args:
-        playlist: Generated Playlist object
-        config: Config object
-        output_path: Path to the output M3U file
-        playlist_name: Name for the playlist (optional)
-        navidrome_url: Navidrome server URL (optional)
-        navidrome_username: Navidrome username (optional)
-        navidrome_password: Navidrome password (optional)
-    """
-    url = navidrome_url or os.getenv('NAVIDROME_URL') or config.navidrome_url
-    username = navidrome_username or os.getenv('NAVIDROME_USERNAME') or config.navidrome_username
-    password = navidrome_password or os.getenv('NAVIDROME_PASSWORD') or config.navidrome_password
-    
-    if not all([url, username, password]):
-        click.echo("Warning: Navidrome sync enabled but credentials not provided.")
-        click.echo("Provide via --navidrome-* flags, environment variables, or config file.")
-        return
-    
-    if not playlist_name:
-        playlist_name = Path(output_path).stem
-    
-    try:
-        click.echo(f"Syncing playlist to Navidrome at {url}...")
-        
-        client = NavidromeClient(url, username, password)
-        
-        song_ids = []
-        matched_count = 0
-        skipped_songs = []
-        
-        for song in playlist.songs:
-            song_id = client.search_song(
-                title=song.title,
-                artist=song.artist,
-                album=song.album
-            )
-            
-            if song_id:
-                song_ids.append(song_id)
-                matched_count += 1
-            else:
-                skipped_songs.append(f"{song.title} by {song.artist}")
-        
-        if not song_ids:
-            click.echo("Error: No songs could be matched on Navidrome. Sync aborted.")
-            return
-        
-        if skipped_songs:
-            click.echo(f"Warning: {len(skipped_songs)} song(s) could not be matched:")
-            for skipped in skipped_songs[:5]:
-                click.echo(f"  - {skipped}")
-            if len(skipped_songs) > 5:
-                click.echo(f"  ... and {len(skipped_songs) - 5} more")
-        
-        existing_playlist = client.get_playlist_by_name(playlist_name)
-        
-        if existing_playlist:
-            playlist_id = existing_playlist['id']
-            click.echo(f"Updating existing playlist '{playlist_name}' (ID: {playlist_id})...")
-            
-            if client.replace_playlist_songs(playlist_id, song_ids):
-                click.echo(f"✓ Playlist '{playlist_name}' successfully updated on Navidrome")
-                click.echo(f"  Matched: {matched_count}/{len(playlist.songs)} songs")
-            else:
-                click.echo(f"Error: Failed to update playlist '{playlist_name}'")
-        else:
-            click.echo(f"Creating new playlist '{playlist_name}'...")
-            
-            playlist_id = client.create_playlist(playlist_name, song_ids)
-            
-            if playlist_id:
-                click.echo(f"✓ Playlist '{playlist_name}' successfully created on Navidrome (ID: {playlist_id})")
-                click.echo(f"  Matched: {matched_count}/{len(playlist.songs)} songs")
-            else:
-                click.echo(f"Error: Failed to create playlist '{playlist_name}'")
-    
-    except Exception as e:
-        click.echo(f"Error syncing to Navidrome: {e}")
-        logger.exception("Navidrome sync failed")
 
 
 if __name__ == "__main__":
