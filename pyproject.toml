@@ -15,10 +15,17 @@ dependencies = [
     "mutagen>=1.47.0",
     "numpy>=2.3.5",
     "requests>=2.31.0",
+    "ruff==0.12.8",
     "soundfile>=0.13.1",
     "tqdm>=4.67.1",
-    "pytest>=8.0.0",
 ]
+
+[dependency-groups]
+test = [
+    "pytest==8.4.1",
+    "pytest-cov==6.2.1",
+]
+
 
 [project.scripts]
 vibe-dj = "vibe_dj:main"

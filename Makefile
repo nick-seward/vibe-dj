@@ -14,32 +14,14 @@ install:
 test:
 	uv run pytest tests/unit/ -v
 
-# Docker targets
-docker-build:
-	docker build -t vibe-dj .
+codecov:
+	@echo "Creating Code Cov Report"
+	uv run pytest --cov-report html:htmlcov --cov=vibe_dj tests/
 
-docker-build-compose:
-	docker-compose build
+lint:
+	@echo "Linting"
+	uv run ruff check --select I --fix .
 
-docker-index:
-	@echo "Usage: make docker-index MUSIC_PATH=/path/to/music"
-	@if [ -z "$(MUSIC_PATH)" ]; then \
-		echo "Error: MUSIC_PATH not set"; \
-		exit 1; \
-	fi
-	docker run --rm \
-		-v $(MUSIC_PATH):/music:ro \
-		-v $(PWD)/data:/data \
-		vibe-dj index /music
-
-docker-playlist:
-	@echo "Generating playlist from data/seeds.json"
-	docker run --rm \
-		-v $(PWD)/data:/data \
-		vibe-dj playlist --seeds-json /data/seeds.json --output /data/playlist.m3u
-
-docker-shell:
-	docker run --rm -it \
-		-v $(PWD)/data:/data \
-		--entrypoint /bin/bash \
-		vibe-dj
+format:
+	@echo "Formatting"
+	uv run ruff format .
