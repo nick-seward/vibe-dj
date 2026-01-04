@@ -614,6 +614,7 @@ dependencies = [
     { name = "mutagen" },
     { name = "numpy" },
     { name = "pytest" },
+    { name = "requests" },
     { name = "soundfile" },
     { name = "tqdm" },
 ]
@@ -627,6 +628,7 @@ requires-dist = [
     { name = "mutagen", specifier = ">=1.47.0" },
     { name = "numpy", specifier = ">=2.3.5" },
     { name = "pytest", specifier = ">=8.0.0" },
+    { name = "requests", specifier = ">=2.31.0" },
     { name = "soundfile", specifier = ">=0.13.1" },
     { name = "tqdm", specifier = ">=4.67.1" },
 ]

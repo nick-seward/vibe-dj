@@ -21,6 +21,10 @@ class Config:
     
     query_noise_scale: float = 0.1
     candidate_multiplier: int = 4
+    
+    navidrome_url: Optional[str] = None
+    navidrome_username: Optional[str] = None
+    navidrome_password: Optional[str] = None
 
     @classmethod
     def from_file(cls, path: str) -> "Config":

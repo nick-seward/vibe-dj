@@ -256,8 +256,122 @@ Options:
 - `--length N`: Number of songs in playlist (default: 20)
 - `--bpm-jitter PERCENT`: BPM jitter for sorting variety (default: 5.0)
 - `--config PATH`: Path to custom config JSON file
+- `--sync-to-navidrome`: Enable automatic sync to Navidrome server
+- `--navidrome-url URL`: Navidrome server URL (e.g., http://192.168.1.100:4533)
+- `--navidrome-username USER`: Navidrome username
+- `--navidrome-password PASS`: Navidrome password
+- `--playlist-name NAME`: Custom playlist name on Navidrome (defaults to output filename)
 
 **Note:** Each time you run the playlist command with the same seeds, you'll get different but acoustically similar results due to query perturbation and random sampling.
+
+### Sync Playlists to Navidrome
+
+Vibe-DJ can automatically sync generated playlists to your Navidrome server, making them instantly available in clients like Amperfy, Ultrasonic, or any Subsonic-compatible app.
+
+#### Quick Start
+
+```bash
+vibe-dj playlist --seeds-json seeds.json \
+  --sync-to-navidrome \
+  --navidrome-url http://192.168.1.100:4533 \
+  --navidrome-username admin \
+  --navidrome-password mypass \
+  --playlist-name "VibeDJ – Chill Evening"
+```
+
+#### Configuration Methods
+
+You can provide Navidrome credentials in three ways (in order of priority):
+
+**1. Command-line flags** (highest priority):
+```bash
+vibe-dj playlist --seeds-json seeds.json \
+  --sync-to-navidrome \
+  --navidrome-url http://192.168.1.100:4533 \
+  --navidrome-username admin \
+  --navidrome-password mypass
+```
+
+**2. Environment variables**:
+```bash
+export NAVIDROME_URL="http://192.168.1.100:4533"
+export NAVIDROME_USERNAME="admin"
+export NAVIDROME_PASSWORD="mypass"
+
+vibe-dj playlist --seeds-json seeds.json --sync-to-navidrome
+```
+
+**3. Config file** (lowest priority):
+```json
+{
+  "database_path": "music.db",
+  "faiss_index_path": "faiss_index.bin",
+  "playlist_output": "playlist.m3u",
+  "navidrome_url": "http://192.168.1.100:4533",
+  "navidrome_username": "admin",
+  "navidrome_password": "mypass"
+}
+```
+
+Then run:
+```bash
+vibe-dj playlist --seeds-json seeds.json --config config.json --sync-to-navidrome
+```
+
+#### How It Works
+
+When `--sync-to-navidrome` is enabled:
+
+1. **Local playlist is generated** and saved to M3U file (always happens first)
+2. **Songs are matched** on Navidrome using a three-tier search strategy:
+   - Primary: Search by title + artist + album (most accurate)
+   - Fallback 1: Search by title + artist
+   - Fallback 2: Search by title only
+3. **Playlist is created or updated**:
+   - If a playlist with the same name exists, it's updated with new songs
+   - If not, a new playlist is created
+4. **Results are reported**: Shows matched songs and any that couldn't be found
+
+#### Song Matching
+
+The sync process uses intelligent song matching to find your local tracks on Navidrome:
+
+- **Best match**: Uses all available metadata (title, artist, album)
+- **Fallback matching**: Tries progressively simpler searches if exact match fails
+- **Skips gracefully**: Songs that can't be matched are skipped with warnings
+- **Continues on errors**: Local M3U file is always created, even if Navidrome sync fails
+
+**Note**: Song matching accuracy depends on metadata consistency between your local library and Navidrome. Ensure your music files have proper ID3 tags for best results.
+
+#### Playlist Updates
+
+If you run the command again with the same `--playlist-name`, the existing playlist on Navidrome will be updated with the new song list. This allows you to:
+
+- Regenerate playlists with the same seeds (getting new variety)
+- Update playlists with different parameters (length, BPM jitter)
+- Keep playlist names consistent across regenerations
+
+#### Docker Usage with Navidrome
+
+When using Docker, you can pass Navidrome credentials via environment variables:
+
+```bash
+docker run --rm \
+  -v $(pwd)/data:/data \
+  -e NAVIDROME_URL=http://192.168.1.100:4533 \
+  -e NAVIDROME_USERNAME=admin \
+  -e NAVIDROME_PASSWORD=mypass \
+  vibe-dj playlist --seeds-json /data/seeds.json --sync-to-navidrome
+```
+
+Or use a config file in your data directory:
+
+```bash
+docker run --rm \
+  -v $(pwd)/data:/data \
+  vibe-dj playlist --seeds-json /data/seeds.json \
+    --config /data/config.json --sync-to-navidrome
+```
 
 ## Configuration
 
@@ -401,3 +515,28 @@ See LICENSE file for details.
 - Ensure the data directory is mounted: `-v $(pwd)/data:/data`
 - Check that files are being created in the mounted `data/` directory
 - Verify the container has write permissions to the data directory
+
+### Navidrome: Authentication failed
+- Verify your Navidrome URL is correct and accessible
+- Check username and password are correct
+- Ensure Navidrome server is running and reachable from your network
+- Try accessing the Navidrome web interface to confirm credentials
+
+### Navidrome: Songs not matching
+- Check that your music files have proper ID3 tags (title, artist, album)
+- Verify the same music files exist in both your local library and Navidrome
+- Use exact metadata matches between local files and Navidrome library
+- Check Navidrome's scan log to ensure files were indexed correctly
+- Try searching for the song manually in Navidrome's web interface
+
+### Navidrome: Playlist created but empty
+- This usually means no songs could be matched between local and Navidrome libraries
+- Check the warning messages for which songs couldn't be matched
+- Verify your Navidrome library contains the same music as your local library
+- Ensure Navidrome has completed its initial library scan
+
+### Navidrome: Connection timeout
+- Check network connectivity to Navidrome server
+- Verify firewall rules allow connections to Navidrome port (default: 4533)
+- Try increasing timeout by modifying the client code if on slow network
+- Ensure Navidrome server isn't overloaded or unresponsive
