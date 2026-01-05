@@ -415,3 +415,80 @@ class MusicDatabase:
             "songs_with_features": songs_with_features,
             "songs_without_features": songs_without_features,
         }
+
+    def get_all_songs(self, limit: int = 100, offset: int = 0) -> List[Song]:
+        """Retrieve all songs with pagination.
+
+        :param limit: Maximum number of songs to return
+        :param offset: Number of songs to skip
+        :return: List of Song objects
+        """
+        cur = self.connection.cursor()
+        cur.execute("SELECT * FROM songs ORDER BY id LIMIT ? OFFSET ?", (limit, offset))
+        rows = cur.fetchall()
+
+        return [
+            Song(
+                id=row["id"],
+                file_path=row["file_path"],
+                title=row["title"],
+                artist=row["artist"],
+                album=row["album"],
+                genre=row["genre"],
+                last_modified=row["last_modified"],
+                duration=row["duration"],
+            )
+            for row in rows
+        ]
+
+    def search_songs(self, query: str, limit: int = 100, offset: int = 0) -> List[Song]:
+        """Search songs by title, artist, or album.
+
+        :param query: Search query string
+        :param limit: Maximum number of songs to return
+        :param offset: Number of songs to skip
+        :return: List of matching Song objects
+        """
+        cur = self.connection.cursor()
+        search_pattern = f"%{query}%"
+        cur.execute(
+            """SELECT * FROM songs 
+               WHERE title LIKE ? OR artist LIKE ? OR album LIKE ?
+               ORDER BY id LIMIT ? OFFSET ?""",
+            (search_pattern, search_pattern, search_pattern, limit, offset),
+        )
+        rows = cur.fetchall()
+
+        return [
+            Song(
+                id=row["id"],
+                file_path=row["file_path"],
+                title=row["title"],
+                artist=row["artist"],
+                album=row["album"],
+                genre=row["genre"],
+                last_modified=row["last_modified"],
+                duration=row["duration"],
+            )
+            for row in rows
+        ]
+
+    def count_songs(self, search: Optional[str] = None) -> int:
+        """Count total songs, optionally filtered by search query.
+
+        :param search: Optional search query string
+        :return: Total count of songs
+        """
+        cur = self.connection.cursor()
+        
+        if search:
+            search_pattern = f"%{search}%"
+            cur.execute(
+                """SELECT COUNT(*) FROM songs 
+                   WHERE title LIKE ? OR artist LIKE ? OR album LIKE ?""",
+                (search_pattern, search_pattern, search_pattern),
+            )
+        else:
+            cur.execute("SELECT COUNT(*) FROM songs")
+        
+        return cur.fetchone()[0]

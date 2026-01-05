@@ -1,0 +1,240 @@
+import os
+import tempfile
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
+from loguru import logger
+
+from ...models import Config, Playlist
+from ...services import NavidromeSyncService, PlaylistExporter, PlaylistGenerator
+from ..dependencies import (
+    get_config,
+    get_navidrome_sync_service,
+    get_playlist_exporter,
+    get_playlist_generator,
+)
+from ..models import ExportRequest, PlaylistRequest, PlaylistResponse, SongResponse
+
+router = APIRouter(prefix="/api", tags=["playlist"])
+
+
+def playlist_to_response(playlist: Playlist) -> PlaylistResponse:
+    """Convert Playlist model to API response.
+    
+    :param playlist: Playlist object
+    :return: PlaylistResponse object
+    """
+    return PlaylistResponse(
+        songs=[
+            SongResponse(
+                id=song.id,
+                file_path=song.file_path,
+                title=song.title,
+                artist=song.artist,
+                album=song.album,
+                genre=song.genre,
+                duration=song.duration,
+                last_modified=song.last_modified,
+            )
+            for song in playlist.songs
+        ],
+        seed_songs=[
+            SongResponse(
+                id=song.id,
+                file_path=song.file_path,
+                title=song.title,
+                artist=song.artist,
+                album=song.album,
+                genre=song.genre,
+                duration=song.duration,
+                last_modified=song.last_modified,
+            )
+            for song in playlist.seed_songs
+        ],
+        created_at=playlist.created_at,
+        length=len(playlist.songs),
+    )
+
+
+@router.post("/playlist", response_model=PlaylistResponse)
+def generate_playlist(
+    request: PlaylistRequest,
+    generator: PlaylistGenerator = Depends(get_playlist_generator),
+    exporter: PlaylistExporter = Depends(get_playlist_exporter),
+    sync_service: NavidromeSyncService = Depends(get_navidrome_sync_service),
+    config: Config = Depends(get_config),
+) -> PlaylistResponse:
+    """Generate a playlist from seed songs.
+    
+    Creates a playlist based on audio similarity to the provided seed songs.
+    Optionally syncs to Navidrome server.
+    
+    :param request: Playlist generation request
+    :param generator: Playlist generator service
+    :param exporter: Playlist exporter service
+    :param sync_service: Navidrome sync service
+    :param config: Application configuration
+    :return: Generated playlist with songs
+    :raises HTTPException: If playlist generation fails
+    """
+    try:
+        seeds = [seed.model_dump() for seed in request.seeds]
+        
+        playlist = generator.generate(
+            seeds,
+            length=request.length,
+            bpm_jitter_percent=request.bpm_jitter,
+        )
+        
+        if not playlist:
+            raise HTTPException(
+                status_code=400,
+                detail="Could not generate playlist. Check that seed songs exist in the database."
+            )
+        
+        if request.format in ["m3u", "m3u8"]:
+            with tempfile.NamedTemporaryFile(mode='w', suffix=f'.{request.format}', delete=False) as tmp:
+                tmp_path = tmp.name
+            
+            try:
+                exporter.export(playlist, tmp_path, format=request.format)
+                
+                if request.sync_to_navidrome:
+                    navidrome_url = None
+                    navidrome_username = None
+                    navidrome_password = None
+                    playlist_name = None
+                    
+                    if request.navidrome_config:
+                        navidrome_url = request.navidrome_config.get("url")
+                        navidrome_username = request.navidrome_config.get("username")
+                        navidrome_password = request.navidrome_config.get("password")
+                        playlist_name = request.navidrome_config.get("playlist_name")
+                    
+                    result = sync_service.sync_playlist(
+                        playlist,
+                        tmp_path,
+                        playlist_name,
+                        navidrome_url,
+                        navidrome_username,
+                        navidrome_password,
+                    )
+                    
+                    if not result["success"]:
+                        logger.warning(f"Navidrome sync failed: {result.get('error')}")
+            finally:
+                if os.path.exists(tmp_path):
+                    os.unlink(tmp_path)
+        
+        return playlist_to_response(playlist)
+        
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Playlist generation failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Playlist generation failed: {str(e)}")
+
+
+@router.post("/playlist/download")
+def generate_and_download_playlist(
+    request: PlaylistRequest,
+    generator: PlaylistGenerator = Depends(get_playlist_generator),
+    exporter: PlaylistExporter = Depends(get_playlist_exporter),
+) -> FileResponse:
+    """Generate a playlist and download as a file.
+    
+    Creates a playlist and returns it as a downloadable file in the requested format.
+    
+    :param request: Playlist generation request
+    :param generator: Playlist generator service
+    :param exporter: Playlist exporter service
+    :return: File download response
+    :raises HTTPException: If playlist generation fails
+    """
+    try:
+        seeds = [seed.model_dump() for seed in request.seeds]
+        
+        playlist = generator.generate(
+            seeds,
+            length=request.length,
+            bpm_jitter_percent=request.bpm_jitter,
+        )
+        
+        if not playlist:
+            raise HTTPException(
+                status_code=400,
+                detail="Could not generate playlist. Check that seed songs exist in the database."
+            )
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix=f'.{request.format}', delete=False) as tmp:
+            tmp_path = tmp.name
+        
+        exporter.export(playlist, tmp_path, format=request.format)
+        
+        media_type_map = {
+            "m3u": "audio/x-mpegurl",
+            "m3u8": "audio/x-mpegurl",
+            "json": "application/json",
+        }
+        
+        return FileResponse(
+            path=tmp_path,
+            media_type=media_type_map.get(request.format, "application/octet-stream"),
+            filename=f"playlist.{request.format}",
+        )
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Playlist generation failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Playlist generation failed: {str(e)}")
+
+
+@router.post("/export")
+def export_playlist(
+    request: ExportRequest,
+    exporter: PlaylistExporter = Depends(get_playlist_exporter),
+    config: Config = Depends(get_config),
+) -> dict:
+    """Export a list of songs to a playlist file.
+    
+    Creates a playlist file from the provided song IDs.
+    
+    :param request: Export request with song IDs and format
+    :param exporter: Playlist exporter service
+    :param config: Application configuration
+    :return: Success message with output path
+    :raises HTTPException: If export fails
+    """
+    try:
+        from ...core import MusicDatabase
+        from ...models import Playlist as PlaylistModel
+        
+        with MusicDatabase(config) as db:
+            songs = []
+            for song_id in request.song_ids:
+                song = db.get_song(song_id)
+                if not song:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Song with ID {song_id} not found"
+                    )
+                songs.append(song)
+            
+            playlist = PlaylistModel(songs=songs)
+            exporter.export(playlist, request.output_path, format=request.format)
+            
+            return {
+                "success": True,
+                "message": f"Playlist exported to {request.output_path}",
+                "song_count": len(songs),
+            }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Playlist export failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
