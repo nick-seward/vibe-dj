@@ -4,8 +4,21 @@ set -e
 set -u
 set -o pipefail
 
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 <dockerfile> <image-name>"
+    echo "Example: $0 Dockerfile vibe-dj"
+    exit 1
+fi
+
+DOCKERFILE="$1"
+IMAGE_NAME="$2"
+
+if [ ! -f "$DOCKERFILE" ]; then
+    echo "Error: Dockerfile '$DOCKERFILE' not found"
+    exit 1
+fi
+
 REGISTRY="gitea.local.seward.ca"
-IMAGE_NAME="vibe-dj"
 REMOTE_IMAGE="$REGISTRY/mystuff/$IMAGE_NAME:latest"
 
 trap 'echo "Logging out from $REGISTRY..."; docker logout $REGISTRY 2>/dev/null || true' EXIT
@@ -24,8 +37,8 @@ else
     unset DOCKER_PASSWORD
 fi
 
-echo "Building Docker image: $IMAGE_NAME..."
-docker build -t $IMAGE_NAME .
+echo "Building Docker image: $IMAGE_NAME using $DOCKERFILE..."
+docker build -f $DOCKERFILE -t $IMAGE_NAME .
 
 echo "Tagging image as: $REMOTE_IMAGE..."
 docker tag $IMAGE_NAME $REMOTE_IMAGE
