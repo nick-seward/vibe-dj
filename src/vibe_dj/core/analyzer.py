@@ -63,7 +63,10 @@ class AudioAnalyzer:
                 [mfcc, chroma, [tempo, loudness, centroid, danceability, acousticness]]
             ).astype(np.float32)
 
-            return Features(song_id=0, feature_vector=feature_vector, bpm=float(tempo))
+            features = Features()
+            features.feature_vector = feature_vector
+            features.bpm = float(tempo)
+            return features
         except Exception as e:
             logger.error(f"Failed to extract features from {file_path}: {e}")
             return None

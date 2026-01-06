@@ -1,26 +1,56 @@
-from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import numpy as np
+from sqlalchemy import Float, ForeignKey, Integer, LargeBinary
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from .base import Base
+
+if TYPE_CHECKING:
+    from .song import Song
 
 
-@dataclass
-class Features:
+class Features(Base):
     """Audio feature representation for a song.
 
     Contains the feature vector extracted from audio analysis and
     the detected BPM (beats per minute).
     """
 
-    song_id: int
-    feature_vector: np.ndarray
-    bpm: float
+    __tablename__ = "features"
+
+    song_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("songs.id", ondelete="CASCADE"), primary_key=True
+    )
+    _feature_vector_bytes: Mapped[bytes] = mapped_column(
+        "feature_vector", LargeBinary, nullable=False
+    )
+    bpm: Mapped[float] = mapped_column(Float)
+
+    song: Mapped["Song"] = relationship("Song", back_populates="features")
+
+    @property
+    def feature_vector(self) -> np.ndarray:
+        """Get the feature vector as a numpy array.
+
+        :return: Feature vector as np.ndarray with dtype float32
+        """
+        return np.frombuffer(self._feature_vector_bytes, dtype=np.float32)
+
+    @feature_vector.setter
+    def feature_vector(self, value: np.ndarray) -> None:
+        """Set the feature vector from a numpy array.
+
+        :param value: Feature vector as np.ndarray
+        """
+        self._feature_vector_bytes = value.astype(np.float32).tobytes()
 
     def to_bytes(self) -> bytes:
         """Convert feature vector to bytes for database storage.
 
         :return: Byte representation of the feature vector
         """
-        return self.feature_vector.tobytes()
+        return self._feature_vector_bytes
 
     @classmethod
     def from_bytes(cls, song_id: int, vector_bytes: bytes, bpm: float) -> "Features":
@@ -31,8 +61,11 @@ class Features:
         :param bpm: Beats per minute value
         :return: Features instance reconstructed from bytes
         """
-        feature_vector = np.frombuffer(vector_bytes, dtype=np.float32)
-        return cls(song_id=song_id, feature_vector=feature_vector, bpm=bpm)
+        instance = cls()
+        instance.song_id = song_id
+        instance._feature_vector_bytes = vector_bytes
+        instance.bpm = bpm
+        return instance
 
     @property
     def dimension(self) -> int:

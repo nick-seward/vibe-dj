@@ -1,12 +1,46 @@
-import os
 import tempfile
 import unittest
 from pathlib import Path
 
 import numpy as np
+from sqlalchemy import text
 
 from vibe_dj.core.database import MusicDatabase
 from vibe_dj.models import Config, Features, Song
+
+
+def create_test_song(
+    file_path: str = "/test/song.mp3",
+    title: str = "Test Song",
+    artist: str = "Test Artist",
+    album: str = "Test Album",
+    genre: str = "Rock",
+    last_modified: float = 1234567890.0,
+    duration: int = 180,
+) -> Song:
+    """Helper to create a test Song object."""
+    return Song(
+        file_path=file_path,
+        title=title,
+        artist=artist,
+        album=album,
+        genre=genre,
+        last_modified=last_modified,
+        duration=duration,
+    )
+
+
+def create_test_features(
+    feature_vector: np.ndarray = None,
+    bpm: float = 120.5,
+) -> Features:
+    """Helper to create a test Features object."""
+    if feature_vector is None:
+        feature_vector = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float32)
+    features = Features()
+    features.feature_vector = feature_vector
+    features.bpm = bpm
+    return features
 
 
 class TestMusicDatabase(unittest.TestCase):
@@ -22,22 +56,8 @@ class TestMusicDatabase(unittest.TestCase):
         self.db.connect()
         self.db.init_db()
 
-        self.test_song = Song(
-            id=0,
-            file_path="/test/song.mp3",
-            title="Test Song",
-            artist="Test Artist",
-            album="Test Album",
-            genre="Rock",
-            last_modified=1234567890.0,
-            duration=180,
-        )
-
-        self.test_features = Features(
-            song_id=0,
-            feature_vector=np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float32),
-            bpm=120.5,
-        )
+        self.test_song = create_test_song()
+        self.test_features = create_test_features()
 
     def tearDown(self):
         """Clean up temporary database after each test method."""
@@ -52,9 +72,10 @@ class TestMusicDatabase(unittest.TestCase):
 
     def test_init_db(self):
         """Test database schema initialization."""
-        cur = self.db.connection.cursor()
-        cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        tables = [row[0] for row in cur.fetchall()]
+        result = self.db.session.execute(
+            text("SELECT name FROM sqlite_master WHERE type='table'")
+        )
+        tables = [row[0] for row in result.fetchall()]
 
         self.assertIn("songs", tables)
         self.assertIn("features", tables)
@@ -96,34 +117,25 @@ class TestMusicDatabase(unittest.TestCase):
 
     def test_find_songs_by_title(self):
         """Test finding songs by partial title match."""
-        song1 = Song(
-            id=0,
+        song1 = create_test_song(
             file_path="/test/1.mp3",
             title="Rock Song",
             artist="Artist 1",
             album="Album 1",
-            genre="Rock",
-            last_modified=0.0,
-            duration=180,
         )
-        song2 = Song(
-            id=0,
+        song2 = create_test_song(
             file_path="/test/2.mp3",
             title="Another Rock Track",
             artist="Artist 2",
             album="Album 2",
-            genre="Rock",
-            last_modified=0.0,
             duration=200,
         )
-        song3 = Song(
-            id=0,
+        song3 = create_test_song(
             file_path="/test/3.mp3",
             title="Pop Song",
             artist="Artist 3",
             album="Album 3",
             genre="Pop",
-            last_modified=0.0,
             duration=190,
         )
 
@@ -139,24 +151,17 @@ class TestMusicDatabase(unittest.TestCase):
         self.assertIn("Another Rock Track", titles)
 
     def test_find_song_exact(self):
-        song1 = Song(
-            id=0,
+        song1 = create_test_song(
             file_path="/test/1.mp3",
             title="Test Song",
             artist="Artist 1",
             album="Album 1",
-            genre="Rock",
-            last_modified=0.0,
-            duration=180,
         )
-        song2 = Song(
-            id=0,
+        song2 = create_test_song(
             file_path="/test/2.mp3",
             title="Test Song",
             artist="Artist 2",
             album="Album 2",
-            genre="Rock",
-            last_modified=0.0,
             duration=200,
         )
 
@@ -171,15 +176,11 @@ class TestMusicDatabase(unittest.TestCase):
         self.assertEqual(result.album, "Album 1")
 
     def test_find_song_exact_no_match(self):
-        song1 = Song(
-            id=0,
+        song1 = create_test_song(
             file_path="/test/1.mp3",
             title="Test Song",
             artist="Artist 1",
             album="Album 1",
-            genre="Rock",
-            last_modified=0.0,
-            duration=180,
         )
 
         self.db.add_song(song1)
@@ -199,32 +200,26 @@ class TestMusicDatabase(unittest.TestCase):
         self.assertEqual(features.bpm, 120.5)
 
     def test_get_all_songs_with_features(self):
-        song1 = Song(
-            id=0,
+        song1 = create_test_song(
             file_path="/test/1.mp3",
             title="Song 1",
             artist="Artist 1",
             album="Album 1",
-            genre="Rock",
-            last_modified=0.0,
-            duration=180,
         )
-        features1 = Features(
-            song_id=0, feature_vector=np.array([1.0, 2.0], dtype=np.float32), bpm=120.0
+        features1 = create_test_features(
+            feature_vector=np.array([1.0, 2.0], dtype=np.float32), bpm=120.0
         )
 
-        song2 = Song(
-            id=0,
+        song2 = create_test_song(
             file_path="/test/2.mp3",
             title="Song 2",
             artist="Artist 2",
             album="Album 2",
             genre="Pop",
-            last_modified=0.0,
             duration=200,
         )
-        features2 = Features(
-            song_id=0, feature_vector=np.array([3.0, 4.0], dtype=np.float32), bpm=130.0
+        features2 = create_test_features(
+            feature_vector=np.array([3.0, 4.0], dtype=np.float32), bpm=130.0
         )
 
         self.db.add_song(song1, features1)
@@ -250,24 +245,18 @@ class TestMusicDatabase(unittest.TestCase):
         self.assertFalse(result)
 
     def test_get_songs_by_ids(self):
-        song1 = Song(
-            id=0,
+        song1 = create_test_song(
             file_path="/test/1.mp3",
             title="Song 1",
             artist="Artist 1",
             album="Album 1",
-            genre="Rock",
-            last_modified=0.0,
-            duration=180,
         )
-        song2 = Song(
-            id=0,
+        song2 = create_test_song(
             file_path="/test/2.mp3",
             title="Song 2",
             artist="Artist 2",
             album="Album 2",
             genre="Pop",
-            last_modified=0.0,
             duration=200,
         )
 
@@ -290,28 +279,22 @@ class TestMusicDatabase(unittest.TestCase):
         self.assertEqual(paths["/test/song.mp3"], 1234567890.0)
 
     def test_get_songs_without_features(self):
-        song1 = Song(
-            id=0,
+        song1 = create_test_song(
             file_path="/test/1.mp3",
             title="Song 1",
             artist="Artist 1",
             album="Album 1",
-            genre="Rock",
-            last_modified=0.0,
-            duration=180,
         )
-        song2 = Song(
-            id=0,
+        song2 = create_test_song(
             file_path="/test/2.mp3",
             title="Song 2",
             artist="Artist 2",
             album="Album 2",
             genre="Pop",
-            last_modified=0.0,
             duration=200,
         )
-        features = Features(
-            song_id=0, feature_vector=np.array([1.0, 2.0], dtype=np.float32), bpm=120.0
+        features = create_test_features(
+            feature_vector=np.array([1.0, 2.0], dtype=np.float32), bpm=120.0
         )
 
         self.db.add_song(song1, features)
@@ -323,34 +306,26 @@ class TestMusicDatabase(unittest.TestCase):
         self.assertEqual(songs_without[0].title, "Song 2")
 
     def test_get_songs_without_features_filtered(self):
-        song1 = Song(
-            id=0,
+        song1 = create_test_song(
             file_path="/test/1.mp3",
             title="Song 1",
             artist="Artist 1",
             album="Album 1",
-            genre="Rock",
-            last_modified=0.0,
-            duration=180,
         )
-        song2 = Song(
-            id=0,
+        song2 = create_test_song(
             file_path="/test/2.mp3",
             title="Song 2",
             artist="Artist 2",
             album="Album 2",
             genre="Pop",
-            last_modified=0.0,
             duration=200,
         )
-        song3 = Song(
-            id=0,
+        song3 = create_test_song(
             file_path="/test/3.mp3",
             title="Song 3",
             artist="Artist 3",
             album="Album 3",
             genre="Jazz",
-            last_modified=0.0,
             duration=210,
         )
 
@@ -369,42 +344,37 @@ class TestMusicDatabase(unittest.TestCase):
         self.assertNotIn("Song 3", titles)
 
     def test_get_indexing_stats(self):
-        song1 = Song(
-            id=0,
+        song1 = create_test_song(
             file_path="/test/1.mp3",
             title="Song 1",
             artist="Artist 1",
             album="Album 1",
-            genre="Rock",
-            last_modified=0.0,
-            duration=180,
         )
-        song2 = Song(
-            id=0,
+        song2 = create_test_song(
             file_path="/test/2.mp3",
             title="Song 2",
             artist="Artist 2",
             album="Album 2",
             genre="Pop",
-            last_modified=0.0,
             duration=200,
         )
-        song3 = Song(
-            id=0,
+        song3 = create_test_song(
             file_path="/test/3.mp3",
             title="Song 3",
             artist="Artist 3",
             album="Album 3",
             genre="Jazz",
-            last_modified=0.0,
             duration=210,
         )
-        features = Features(
-            song_id=0, feature_vector=np.array([1.0, 2.0], dtype=np.float32), bpm=120.0
+        features1 = create_test_features(
+            feature_vector=np.array([1.0, 2.0], dtype=np.float32), bpm=120.0
+        )
+        features2 = create_test_features(
+            feature_vector=np.array([1.0, 2.0], dtype=np.float32), bpm=120.0
         )
 
-        self.db.add_song(song1, features)
-        self.db.add_song(song2, features)
+        self.db.add_song(song1, features1)
+        self.db.add_song(song2, features2)
         self.db.add_song(song3)
 
         stats = self.db.get_indexing_stats()

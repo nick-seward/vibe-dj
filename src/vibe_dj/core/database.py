@@ -1,14 +1,16 @@
-import sqlite3
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
-from ..models import Config, Features, Song
+from sqlalchemy import create_engine, func, or_, select
+from sqlalchemy.orm import Session, sessionmaker
+
+from ..models import Base, Config, Features, Song
 
 
 class MusicDatabase:
     """Database interface for managing music library data.
 
     Provides methods for storing and retrieving songs, features, and
-    managing the SQLite database connection. Supports context manager
+    managing the SQLAlchemy session. Supports context manager
     protocol for automatic connection management.
     """
 
@@ -18,10 +20,12 @@ class MusicDatabase:
         :param config: Configuration object containing database path
         """
         self.config = config
-        self._conn: Optional[sqlite3.Connection] = None
+        self._engine = create_engine(f"sqlite:///{config.database_path}")
+        self._session_factory = sessionmaker(bind=self._engine)
+        self._session: Optional[Session] = None
 
     def __enter__(self) -> "MusicDatabase":
-        """Enter context manager, establishing database connection.
+        """Enter context manager, establishing database session.
 
         :return: Self reference for use in with statement
         """
@@ -29,7 +33,7 @@ class MusicDatabase:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """Exit context manager, closing database connection.
+        """Exit context manager, closing database session.
 
         :param exc_type: Exception type if an exception occurred
         :param exc_val: Exception value if an exception occurred
@@ -38,58 +42,47 @@ class MusicDatabase:
         self.close()
 
     def connect(self) -> None:
-        """Establish connection to the SQLite database.
+        """Establish a new SQLAlchemy session.
 
-        Creates a new connection if one doesn't exist and sets up
-        row factory for dictionary-like access to results.
+        Creates a new session if one doesn't exist.
         """
-        if self._conn is None:
-            self._conn = sqlite3.connect(self.config.database_path)
-            self._conn.row_factory = sqlite3.Row
+        if self._session is None:
+            self._session = self._session_factory()
 
     def close(self) -> None:
-        """Close the database connection if open."""
-        if self._conn:
-            self._conn.close()
-            self._conn = None
+        """Close the database session if open."""
+        if self._session:
+            self._session.close()
+            self._session = None
 
     @property
-    def connection(self) -> sqlite3.Connection:
-        """Get the active database connection.
+    def session(self) -> Session:
+        """Get the active database session.
 
-        :return: Active SQLite connection
+        :return: Active SQLAlchemy session
         :raises RuntimeError: If database is not connected
         """
-        if self._conn is None:
+        if self._session is None:
             raise RuntimeError(
                 "Database not connected. Use context manager or call connect()."
             )
-        return self._conn
+        return self._session
+
+    @property
+    def connection(self) -> Session:
+        """Get the active database session (alias for backward compatibility).
+
+        :return: Active SQLAlchemy session
+        :raises RuntimeError: If database is not connected
+        """
+        return self.session
 
     def init_db(self) -> None:
         """Initialize database schema.
 
         Creates the songs and features tables if they don't exist.
         """
-        cur = self.connection.cursor()
-        cur.execute("""CREATE TABLE IF NOT EXISTS songs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            file_path TEXT UNIQUE,
-            title TEXT,
-            artist TEXT,
-            album TEXT,
-            genre TEXT,
-            last_modified REAL,
-            duration INTEGER
-        )""")
-
-        cur.execute("""CREATE TABLE IF NOT EXISTS features (
-            song_id INTEGER PRIMARY KEY,
-            feature_vector BLOB,
-            bpm REAL,
-            FOREIGN KEY(song_id) REFERENCES songs(id)
-        )""")
-        self.connection.commit()
+        Base.metadata.create_all(self._engine)
 
     def add_song(self, song: Song, features: Optional[Features] = None) -> int:
         """Add or update a song and optionally its features.
@@ -98,33 +91,34 @@ class MusicDatabase:
         :param features: Optional Features object to associate with the song
         :return: ID of the inserted or updated song
         """
-        cur = self.connection.cursor()
-        cur.execute(
-            """INSERT OR REPLACE INTO songs
-                       (file_path, title, artist, album, genre, last_modified, duration)
-                       VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            (
-                song.file_path,
-                song.title,
-                song.artist,
-                song.album,
-                song.genre,
-                song.last_modified,
-                song.duration,
-            ),
-        )
-        song_id = cur.lastrowid
+        existing = self.session.execute(
+            select(Song).where(Song.file_path == song.file_path)
+        ).scalar_one_or_none()
+
+        if existing:
+            existing.title = song.title
+            existing.artist = song.artist
+            existing.album = song.album
+            existing.genre = song.genre
+            existing.last_modified = song.last_modified
+            existing.duration = song.duration
+            merged_song = existing
+        else:
+            self.session.add(song)
+            self.session.flush()
+            merged_song = song
 
         if features:
-            cur.execute(
-                """INSERT OR REPLACE INTO features
-                           (song_id, feature_vector, bpm)
-                           VALUES (?, ?, ?)""",
-                (song_id, features.to_bytes(), features.bpm),
-            )
+            features.song_id = merged_song.id
+            existing_features = self.session.get(Features, merged_song.id)
+            if existing_features:
+                existing_features._feature_vector_bytes = features._feature_vector_bytes
+                existing_features.bpm = features.bpm
+            else:
+                self.session.add(features)
 
-        self.connection.commit()
-        return song_id
+        self.session.commit()
+        return merged_song.id
 
     def get_song(self, song_id: int) -> Optional[Song]:
         """Retrieve a song by its ID.
@@ -132,22 +126,7 @@ class MusicDatabase:
         :param song_id: ID of the song to retrieve
         :return: Song object if found, None otherwise
         """
-        cur = self.connection.cursor()
-        cur.execute("SELECT * FROM songs WHERE id = ?", (song_id,))
-        row = cur.fetchone()
-
-        if row:
-            return Song(
-                id=row["id"],
-                file_path=row["file_path"],
-                title=row["title"],
-                artist=row["artist"],
-                album=row["album"],
-                genre=row["genre"],
-                last_modified=row["last_modified"],
-                duration=row["duration"],
-            )
-        return None
+        return self.session.get(Song, song_id)
 
     def get_song_by_path(self, file_path: str) -> Optional[Song]:
         """Retrieve a song by its file path.
@@ -155,22 +134,9 @@ class MusicDatabase:
         :param file_path: File path of the song to retrieve
         :return: Song object if found, None otherwise
         """
-        cur = self.connection.cursor()
-        cur.execute("SELECT * FROM songs WHERE file_path = ?", (file_path,))
-        row = cur.fetchone()
-
-        if row:
-            return Song(
-                id=row["id"],
-                file_path=row["file_path"],
-                title=row["title"],
-                artist=row["artist"],
-                album=row["album"],
-                genre=row["genre"],
-                last_modified=row["last_modified"],
-                duration=row["duration"],
-            )
-        return None
+        return self.session.execute(
+            select(Song).where(Song.file_path == file_path)
+        ).scalar_one_or_none()
 
     def find_songs_by_title(self, title: str) -> List[Song]:
         """Find songs with titles matching a search pattern.
@@ -178,23 +144,11 @@ class MusicDatabase:
         :param title: Title search string (supports partial matches)
         :return: List of matching Song objects
         """
-        cur = self.connection.cursor()
-        cur.execute("SELECT * FROM songs WHERE title LIKE ?", (f"%{title}%",))
-        rows = cur.fetchall()
-
-        return [
-            Song(
-                id=row["id"],
-                file_path=row["file_path"],
-                title=row["title"],
-                artist=row["artist"],
-                album=row["album"],
-                genre=row["genre"],
-                last_modified=row["last_modified"],
-                duration=row["duration"],
-            )
-            for row in rows
-        ]
+        return list(
+            self.session.execute(
+                select(Song).where(Song.title.like(f"%{title}%"))
+            ).scalars().all()
+        )
 
     def find_song_exact(self, title: str, artist: str, album: str) -> Optional[Song]:
         """Find a song by exact title, artist, and album match.
@@ -204,25 +158,13 @@ class MusicDatabase:
         :param album: Exact album name
         :return: Song object if found, None otherwise
         """
-        cur = self.connection.cursor()
-        cur.execute(
-            "SELECT * FROM songs WHERE title = ? AND artist = ? AND album = ?",
-            (title, artist, album),
-        )
-        row = cur.fetchone()
-
-        if row:
-            return Song(
-                id=row["id"],
-                file_path=row["file_path"],
-                title=row["title"],
-                artist=row["artist"],
-                album=row["album"],
-                genre=row["genre"],
-                last_modified=row["last_modified"],
-                duration=row["duration"],
+        return self.session.execute(
+            select(Song).where(
+                Song.title == title,
+                Song.artist == artist,
+                Song.album == album,
             )
-        return None
+        ).scalar_one_or_none()
 
     def get_features(self, song_id: int) -> Optional[Features]:
         """Retrieve features for a specific song.
@@ -230,17 +172,7 @@ class MusicDatabase:
         :param song_id: ID of the song
         :return: Features object if found, None otherwise
         """
-        cur = self.connection.cursor()
-        cur.execute("SELECT * FROM features WHERE song_id = ?", (song_id,))
-        row = cur.fetchone()
-
-        if row:
-            return Features.from_bytes(
-                song_id=row["song_id"],
-                vector_bytes=row["feature_vector"],
-                bpm=row["bpm"],
-            )
-        return None
+        return self.session.get(Features, song_id)
 
     def get_song_with_features(self, song_id: int) -> Optional[Tuple[Song, Features]]:
         """Retrieve a song and its features together.
@@ -248,31 +180,9 @@ class MusicDatabase:
         :param song_id: ID of the song
         :return: Tuple of (Song, Features) if found, None otherwise
         """
-        cur = self.connection.cursor()
-        cur.execute(
-            """SELECT songs.*, features.feature_vector, features.bpm
-                       FROM songs
-                       JOIN features ON songs.id = features.song_id
-                       WHERE songs.id = ?""",
-            (song_id,),
-        )
-        row = cur.fetchone()
-
-        if row:
-            song = Song(
-                id=row["id"],
-                file_path=row["file_path"],
-                title=row["title"],
-                artist=row["artist"],
-                album=row["album"],
-                genre=row["genre"],
-                last_modified=row["last_modified"],
-                duration=row["duration"],
-            )
-            features = Features.from_bytes(
-                song_id=row["id"], vector_bytes=row["feature_vector"], bpm=row["bpm"]
-            )
-            return (song, features)
+        song = self.session.get(Song, song_id)
+        if song and song.features:
+            return (song, song.features)
         return None
 
     def get_all_songs_with_features(self) -> List[Tuple[Song, Features]]:
@@ -280,40 +190,23 @@ class MusicDatabase:
 
         :return: List of (Song, Features) tuples ordered by song ID
         """
-        cur = self.connection.cursor()
-        cur.execute("""SELECT songs.*, features.feature_vector, features.bpm
-                       FROM songs
-                       JOIN features ON songs.id = features.song_id
-                       ORDER BY songs.id""")
-        rows = cur.fetchall()
+        songs = self.session.execute(
+            select(Song)
+            .join(Features)
+            .order_by(Song.id)
+        ).scalars().all()
 
-        results = []
-        for row in rows:
-            song = Song(
-                id=row["id"],
-                file_path=row["file_path"],
-                title=row["title"],
-                artist=row["artist"],
-                album=row["album"],
-                genre=row["genre"],
-                last_modified=row["last_modified"],
-                duration=row["duration"],
-            )
-            features = Features.from_bytes(
-                song_id=row["id"], vector_bytes=row["feature_vector"], bpm=row["bpm"]
-            )
-            results.append((song, features))
+        return [(song, song.features) for song in songs if song.features]
 
-        return results
-
-    def get_all_file_paths_with_mtime(self) -> dict:
+    def get_all_file_paths_with_mtime(self) -> Dict[str, float]:
         """Get all file paths and their last modified times.
 
         :return: Dictionary mapping file paths to modification timestamps
         """
-        cur = self.connection.cursor()
-        cur.execute("SELECT file_path, last_modified FROM songs")
-        return {row["file_path"]: row["last_modified"] for row in cur.fetchall()}
+        results = self.session.execute(
+            select(Song.file_path, Song.last_modified)
+        ).all()
+        return {row[0]: row[1] for row in results}
 
     def delete_song(self, file_path: str) -> bool:
         """Delete a song by its file path.
@@ -321,10 +214,15 @@ class MusicDatabase:
         :param file_path: File path of the song to delete
         :return: True if a song was deleted, False otherwise
         """
-        cur = self.connection.cursor()
-        cur.execute("DELETE FROM songs WHERE file_path = ?", (file_path,))
-        self.connection.commit()
-        return cur.rowcount > 0
+        song = self.session.execute(
+            select(Song).where(Song.file_path == file_path)
+        ).scalar_one_or_none()
+
+        if song:
+            self.session.delete(song)
+            self.session.commit()
+            return True
+        return False
 
     def get_songs_by_ids(self, song_ids: List[int]) -> List[Song]:
         """Retrieve multiple songs by their IDs.
@@ -335,78 +233,46 @@ class MusicDatabase:
         if not song_ids:
             return []
 
-        cur = self.connection.cursor()
-        placeholders = ",".join("?" * len(song_ids))
-        cur.execute(f"SELECT * FROM songs WHERE id IN ({placeholders})", song_ids)
-        rows = cur.fetchall()
-
-        return [
-            Song(
-                id=row["id"],
-                file_path=row["file_path"],
-                title=row["title"],
-                artist=row["artist"],
-                album=row["album"],
-                genre=row["genre"],
-                last_modified=row["last_modified"],
-                duration=row["duration"],
-            )
-            for row in rows
-        ]
+        return list(
+            self.session.execute(
+                select(Song).where(Song.id.in_(song_ids))
+            ).scalars().all()
+        )
 
     def commit(self) -> None:
         """Commit pending database transactions."""
-        self.connection.commit()
+        self.session.commit()
 
-    def get_songs_without_features(self, file_paths: List[str] = None) -> List[Song]:
+    def get_songs_without_features(self, file_paths: Optional[List[str]] = None) -> List[Song]:
         """Get songs that exist in DB but don't have features yet.
 
         :param file_paths: Optional list of file paths to filter by
         :return: List of Song objects without associated features
         """
-        cur = self.connection.cursor()
+        stmt = (
+            select(Song)
+            .outerjoin(Features)
+            .where(Features.song_id.is_(None))
+        )
 
         if file_paths:
-            placeholders = ",".join("?" * len(file_paths))
-            query = f"""SELECT songs.* FROM songs 
-                       LEFT JOIN features ON songs.id = features.song_id 
-                       WHERE features.song_id IS NULL 
-                       AND songs.file_path IN ({placeholders})"""
-            cur.execute(query, file_paths)
-        else:
-            query = """SELECT songs.* FROM songs 
-                       LEFT JOIN features ON songs.id = features.song_id 
-                       WHERE features.song_id IS NULL"""
-            cur.execute(query)
+            stmt = stmt.where(Song.file_path.in_(file_paths))
 
-        rows = cur.fetchall()
-        return [
-            Song(
-                id=row["id"],
-                file_path=row["file_path"],
-                title=row["title"],
-                artist=row["artist"],
-                album=row["album"],
-                genre=row["genre"],
-                last_modified=row["last_modified"],
-                duration=row["duration"],
-            )
-            for row in rows
-        ]
+        return list(self.session.execute(stmt).scalars().all())
 
-    def get_indexing_stats(self) -> dict:
+    def get_indexing_stats(self) -> Dict[str, int]:
         """Get statistics about indexing progress.
 
         :return: Dictionary with keys 'total_songs', 'songs_with_features',
                  and 'songs_without_features'
         """
-        cur = self.connection.cursor()
+        total_songs = self.session.execute(
+            select(func.count()).select_from(Song)
+        ).scalar() or 0
 
-        cur.execute("SELECT COUNT(*) FROM songs")
-        total_songs = cur.fetchone()[0]
-
-        cur.execute("SELECT COUNT(*) FROM features")
-        songs_with_features = cur.fetchone()[0]
+        songs_with_features = self.session.execute(
+            select(func.count()).select_from(Features)
+        ).scalar() or 0
 
         songs_without_features = total_songs - songs_with_features
 
@@ -423,23 +289,11 @@ class MusicDatabase:
         :param offset: Number of songs to skip
         :return: List of Song objects
         """
-        cur = self.connection.cursor()
-        cur.execute("SELECT * FROM songs ORDER BY id LIMIT ? OFFSET ?", (limit, offset))
-        rows = cur.fetchall()
-
-        return [
-            Song(
-                id=row["id"],
-                file_path=row["file_path"],
-                title=row["title"],
-                artist=row["artist"],
-                album=row["album"],
-                genre=row["genre"],
-                last_modified=row["last_modified"],
-                duration=row["duration"],
-            )
-            for row in rows
-        ]
+        return list(
+            self.session.execute(
+                select(Song).order_by(Song.id).limit(limit).offset(offset)
+            ).scalars().all()
+        )
 
     def search_songs(self, query: str, limit: int = 100, offset: int = 0) -> List[Song]:
         """Search songs by title, artist, or album.
@@ -449,29 +303,22 @@ class MusicDatabase:
         :param offset: Number of songs to skip
         :return: List of matching Song objects
         """
-        cur = self.connection.cursor()
         search_pattern = f"%{query}%"
-        cur.execute(
-            """SELECT * FROM songs 
-               WHERE title LIKE ? OR artist LIKE ? OR album LIKE ?
-               ORDER BY id LIMIT ? OFFSET ?""",
-            (search_pattern, search_pattern, search_pattern, limit, offset),
+        return list(
+            self.session.execute(
+                select(Song)
+                .where(
+                    or_(
+                        Song.title.like(search_pattern),
+                        Song.artist.like(search_pattern),
+                        Song.album.like(search_pattern),
+                    )
+                )
+                .order_by(Song.id)
+                .limit(limit)
+                .offset(offset)
+            ).scalars().all()
         )
-        rows = cur.fetchall()
-
-        return [
-            Song(
-                id=row["id"],
-                file_path=row["file_path"],
-                title=row["title"],
-                artist=row["artist"],
-                album=row["album"],
-                genre=row["genre"],
-                last_modified=row["last_modified"],
-                duration=row["duration"],
-            )
-            for row in rows
-        ]
 
     def count_songs(self, search: Optional[str] = None) -> int:
         """Count total songs, optionally filtered by search query.
@@ -479,16 +326,16 @@ class MusicDatabase:
         :param search: Optional search query string
         :return: Total count of songs
         """
-        cur = self.connection.cursor()
-        
         if search:
             search_pattern = f"%{search}%"
-            cur.execute(
-                """SELECT COUNT(*) FROM songs 
-                   WHERE title LIKE ? OR artist LIKE ? OR album LIKE ?""",
-                (search_pattern, search_pattern, search_pattern),
+            stmt = select(func.count()).select_from(Song).where(
+                or_(
+                    Song.title.like(search_pattern),
+                    Song.artist.like(search_pattern),
+                    Song.album.like(search_pattern),
+                )
             )
         else:
-            cur.execute("SELECT COUNT(*) FROM songs")
-        
-        return cur.fetchone()[0]
+            stmt = select(func.count()).select_from(Song)
+
+        return self.session.execute(stmt).scalar() or 0

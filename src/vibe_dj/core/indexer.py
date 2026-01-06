@@ -109,7 +109,6 @@ class LibraryIndexer:
             mtime = os.path.getmtime(file_path)
 
             song = Song(
-                id=0,
                 file_path=file_path,
                 title=title,
                 artist=artist,

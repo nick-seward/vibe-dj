@@ -5,6 +5,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from loguru import logger
+from sqlalchemy import select
 
 from .api.routes import index_router, playlist_router, songs_router
 from .core import MusicDatabase
@@ -125,7 +126,7 @@ def health_check():
         db_status = "disconnected"
         try:
             with MusicDatabase(config) as db:
-                db.connection.cursor().execute("SELECT 1")
+                db.session.execute(select(1))
                 db_status = "connected"
         except Exception as e:
             logger.error(f"Database health check failed: {e}")
