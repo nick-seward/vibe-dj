@@ -59,6 +59,68 @@ def list_songs(
         raise HTTPException(status_code=500, detail=f"Failed to list songs: {str(e)}")
 
 
+@router.get("/songs/search", response_model=SongsListResponse)
+def search_songs_multi(
+    artist: Optional[str] = Query(None, description="Artist name to search for"),
+    title: Optional[str] = Query(None, description="Song title to search for"),
+    album: Optional[str] = Query(None, description="Album name to search for"),
+    limit: int = Query(100, ge=1, le=1000, description="Maximum number of songs to return"),
+    offset: int = Query(0, ge=0, description="Number of songs to skip"),
+    db: MusicDatabase = Depends(get_db),
+) -> SongsListResponse:
+    """Search songs with separate artist, title, and album filters.
+    
+    Returns songs matching all provided filters. At least one filter must be specified.
+    
+    :param artist: Optional artist name filter
+    :param title: Optional song title filter
+    :param album: Optional album name filter
+    :param limit: Maximum number of songs to return
+    :param offset: Number of songs to skip for pagination
+    :param db: Database connection
+    :return: Paginated list of matching songs
+    """
+    if not artist and not title and not album:
+        raise HTTPException(
+            status_code=400,
+            detail="At least one search parameter (artist, title, or album) is required"
+        )
+    
+    try:
+        songs = db.search_songs_multi(
+            artist=artist,
+            title=title,
+            album=album,
+            limit=limit,
+            offset=offset,
+        )
+        total = db.count_songs_multi(artist=artist, title=title, album=album)
+        
+        return SongsListResponse(
+            songs=[
+                SongResponse(
+                    id=song.id,
+                    file_path=song.file_path,
+                    title=song.title,
+                    artist=song.artist,
+                    album=song.album,
+                    genre=song.genre,
+                    duration=song.duration,
+                    last_modified=song.last_modified,
+                )
+                for song in songs
+            ],
+            total=total,
+            limit=limit,
+            offset=offset,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to search songs: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to search songs: {str(e)}")
+
+
 @router.get("/songs/{song_id}", response_model=SongDetailResponse)
 def get_song(
     song_id: int,

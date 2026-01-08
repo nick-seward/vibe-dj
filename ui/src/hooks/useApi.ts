@@ -1,0 +1,146 @@
+import { useState, useCallback } from 'react'
+import type { Song, SongsListResponse, PlaylistRequest, PlaylistResponse, SearchParams, NavidromeConfig } from '@/types'
+
+const API_BASE = '/api'
+
+interface UseApiState<T> {
+  data: T | null
+  loading: boolean
+  error: string | null
+}
+
+export function useSearchSongs() {
+  const [state, setState] = useState<UseApiState<Song[]>>({
+    data: null,
+    loading: false,
+    error: null,
+  })
+
+  const search = useCallback(async (params: SearchParams): Promise<Song[]> => {
+    setState({ data: null, loading: true, error: null })
+
+    try {
+      const queryParts: string[] = []
+      if (params.artist) queryParts.push(`artist=${encodeURIComponent(params.artist)}`)
+      if (params.title) queryParts.push(`title=${encodeURIComponent(params.title)}`)
+      if (params.album) queryParts.push(`album=${encodeURIComponent(params.album)}`)
+
+      const queryString = queryParts.join('&')
+      const response = await fetch(`${API_BASE}/songs/search?${queryString}`)
+
+      if (!response.ok) {
+        throw new Error(`Search failed: ${response.statusText}`)
+      }
+
+      const data: SongsListResponse = await response.json()
+      setState({ data: data.songs, loading: false, error: null })
+      return data.songs
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Search failed'
+      setState({ data: null, loading: false, error: errorMessage })
+      throw err
+    }
+  }, [])
+
+  return { ...state, search }
+}
+
+export function useGeneratePlaylist() {
+  const [state, setState] = useState<UseApiState<PlaylistResponse>>({
+    data: null,
+    loading: false,
+    error: null,
+  })
+
+  const generate = useCallback(async (seeds: Song[], length: number = 20): Promise<PlaylistResponse> => {
+    setState({ data: null, loading: true, error: null })
+
+    try {
+      const request: PlaylistRequest = {
+        seeds: seeds.map((s) => ({
+          title: s.title,
+          artist: s.artist,
+          album: s.album,
+        })),
+        length,
+        bpm_jitter: 5.0,
+        format: 'json',
+        sync_to_navidrome: false,
+      }
+
+      const response = await fetch(`${API_BASE}/playlist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(request),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Generation failed: ${response.statusText}`)
+      }
+
+      const data: PlaylistResponse = await response.json()
+      setState({ data, loading: false, error: null })
+      return data
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Playlist generation failed'
+      setState({ data: null, loading: false, error: errorMessage })
+      throw err
+    }
+  }, [])
+
+  return { ...state, generate }
+}
+
+export function useSyncToNavidrome() {
+  const [state, setState] = useState<UseApiState<{ success: boolean }>>({
+    data: null,
+    loading: false,
+    error: null,
+  })
+
+  const sync = useCallback(async (
+    playlistSongs: Song[],
+    playlistName: string,
+    credentials?: { url?: string; username?: string; password?: string }
+  ): Promise<boolean> => {
+    setState({ data: null, loading: true, error: null })
+
+    try {
+      const navidromeConfig: NavidromeConfig = {
+        playlist_name: playlistName,
+      }
+
+      // Add optional credentials if provided (takes precedence over server ENV vars)
+      if (credentials?.url) navidromeConfig.url = credentials.url
+      if (credentials?.username) navidromeConfig.username = credentials.username
+      if (credentials?.password) navidromeConfig.password = credentials.password
+
+      // Sync the already-generated playlist songs (not regenerate from seeds)
+      const request = {
+        song_ids: playlistSongs.map((s) => s.id),
+        navidrome_config: navidromeConfig,
+      }
+
+      const response = await fetch(`${API_BASE}/playlist/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(request),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.detail || errorData.error || `Sync failed: ${response.statusText}`)
+      }
+
+      setState({ data: { success: true }, loading: false, error: null })
+      return true
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Sync to Navidrome failed'
+      setState({ data: null, loading: false, error: errorMessage })
+      throw err
+    }
+  }, [])
+
+  return { ...state, sync }
+}

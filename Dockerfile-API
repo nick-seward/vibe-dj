@@ -1,4 +1,17 @@
-# Use Python 3.14 as base
+# Stage 1: Build the React UI
+FROM node:20-alpine AS ui-builder
+
+WORKDIR /ui
+
+# Copy package files and install dependencies
+COPY ui/package*.json ./
+RUN npm ci
+
+# Copy UI source and build
+COPY ui/ ./
+RUN npm run build
+
+# Stage 2: Python API with UI
 FROM python:3.14.2-slim
 
 # Install system dependencies required by librosa and audio processing
@@ -15,6 +28,9 @@ WORKDIR /app
 COPY pyproject.toml uv.lock* ./
 COPY src/ ./src/
 COPY README.md ./
+
+# Copy built UI from the first stage
+COPY --from=ui-builder /ui/dist ./ui/dist
 
 # Install uv package manager for faster dependency installation
 RUN pip install --no-cache-dir uv

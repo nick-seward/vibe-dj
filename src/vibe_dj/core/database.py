@@ -339,3 +339,71 @@ class MusicDatabase:
             stmt = select(func.count()).select_from(Song)
 
         return self.session.execute(stmt).scalar() or 0
+
+    def search_songs_multi(
+        self,
+        artist: Optional[str] = None,
+        title: Optional[str] = None,
+        album: Optional[str] = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> List[Song]:
+        """Search songs with separate artist, title, and album filters.
+
+        All provided filters are combined with AND logic.
+
+        :param artist: Optional artist name filter
+        :param title: Optional song title filter
+        :param album: Optional album name filter
+        :param limit: Maximum number of songs to return
+        :param offset: Number of songs to skip
+        :return: List of matching Song objects
+        """
+        conditions = []
+        if artist:
+            conditions.append(Song.artist.ilike(f"%{artist}%"))
+        if title:
+            conditions.append(Song.title.ilike(f"%{title}%"))
+        if album:
+            conditions.append(Song.album.ilike(f"%{album}%"))
+
+        stmt = select(Song)
+        if conditions:
+            from sqlalchemy import and_
+            stmt = stmt.where(and_(*conditions))
+
+        return list(
+            self.session.execute(
+                stmt.order_by(Song.artist, Song.album, Song.title)
+                .limit(limit)
+                .offset(offset)
+            ).scalars().all()
+        )
+
+    def count_songs_multi(
+        self,
+        artist: Optional[str] = None,
+        title: Optional[str] = None,
+        album: Optional[str] = None,
+    ) -> int:
+        """Count songs matching the multi-field search criteria.
+
+        :param artist: Optional artist name filter
+        :param title: Optional song title filter
+        :param album: Optional album name filter
+        :return: Total count of matching songs
+        """
+        conditions = []
+        if artist:
+            conditions.append(Song.artist.ilike(f"%{artist}%"))
+        if title:
+            conditions.append(Song.title.ilike(f"%{title}%"))
+        if album:
+            conditions.append(Song.album.ilike(f"%{album}%"))
+
+        stmt = select(func.count()).select_from(Song)
+        if conditions:
+            from sqlalchemy import and_
+            stmt = stmt.where(and_(*conditions))
+
+        return self.session.execute(stmt).scalar() or 0

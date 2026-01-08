@@ -14,7 +14,7 @@ from ..dependencies import (
     get_playlist_exporter,
     get_playlist_generator,
 )
-from ..models import ExportRequest, PlaylistRequest, PlaylistResponse, SongResponse
+from ..models import ExportRequest, PlaylistRequest, PlaylistResponse, SongResponse, SyncToNavidromeRequest
 
 router = APIRouter(prefix="/api", tags=["playlist"])
 
@@ -238,3 +238,79 @@ def export_playlist(
     except Exception as e:
         logger.error(f"Playlist export failed: {e}")
         raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
+
+
+@router.post("/playlist/sync")
+def sync_playlist_to_navidrome(
+    request: SyncToNavidromeRequest,
+    sync_service: NavidromeSyncService = Depends(get_navidrome_sync_service),
+    config: Config = Depends(get_config),
+) -> dict:
+    """Sync an existing playlist to Navidrome by song IDs.
+    
+    This endpoint syncs songs that have already been selected/generated,
+    rather than generating a new playlist.
+    
+    :param request: Sync request with song IDs and Navidrome config
+    :param sync_service: Navidrome sync service
+    :param config: Application configuration
+    :return: Sync result with success status
+    :raises HTTPException: If sync fails
+    """
+    try:
+        from ...core import MusicDatabase
+        from ...models import Playlist as PlaylistModel
+        
+        with MusicDatabase(config) as db:
+            songs = []
+            for song_id in request.song_ids:
+                song = db.get_song(song_id)
+                if not song:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Song with ID {song_id} not found"
+                    )
+                songs.append(song)
+            
+            playlist = PlaylistModel(songs=songs)
+            
+            navidrome_url = None
+            navidrome_username = None
+            navidrome_password = None
+            playlist_name = "Vibe DJ Playlist"
+            
+            if request.navidrome_config:
+                navidrome_url = request.navidrome_config.get("url")
+                navidrome_username = request.navidrome_config.get("username")
+                navidrome_password = request.navidrome_config.get("password")
+                playlist_name = request.navidrome_config.get("playlist_name", playlist_name)
+            
+            result = sync_service.sync_playlist(
+                playlist,
+                "/tmp/sync_playlist.m3u",
+                playlist_name,
+                navidrome_url,
+                navidrome_username,
+                navidrome_password,
+            )
+            
+            if not result["success"]:
+                raise HTTPException(
+                    status_code=400,
+                    detail=result.get("error", "Navidrome sync failed")
+                )
+            
+            return {
+                "success": True,
+                "playlist_name": result.get("playlist_name"),
+                "playlist_id": result.get("playlist_id"),
+                "matched_count": result.get("matched_count"),
+                "total_count": result.get("total_count"),
+                "action": result.get("action"),
+            }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Navidrome sync failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Sync failed: {str(e)}")

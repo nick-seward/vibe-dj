@@ -1,9 +1,11 @@
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from loguru import logger
 from sqlalchemy import select
 
@@ -89,25 +91,29 @@ async def general_exception_handler(request, exc):
     )
 
 
-@app.get("/")
-def root():
-    """Root endpoint with API information.
-    
-    :return: API information and available endpoints
-    """
-    return {
-        "name": "Vibe-DJ API",
-        "version": "0.1.0",
-        "description": "Music library indexer and intelligent playlist generator",
-        "endpoints": {
-            "docs": "/docs",
-            "health": "/health",
-            "index": "/api/index",
-            "status": "/api/status/{job_id}",
-            "playlist": "/api/playlist",
-            "songs": "/api/songs",
-        },
-    }
+# Root endpoint is only registered if the UI is not available
+# When UI is available, the static file mount will serve index.html at "/"
+ui_dist_path = Path(__file__).parent.parent.parent / "ui" / "dist"
+if not ui_dist_path.exists():
+    @app.get("/")
+    def root():
+        """Root endpoint with API information.
+        
+        :return: API information and available endpoints
+        """
+        return {
+            "name": "Vibe-DJ API",
+            "version": "0.1.0",
+            "description": "Music library indexer and intelligent playlist generator",
+            "endpoints": {
+                "docs": "/docs",
+                "health": "/health",
+                "index": "/api/index",
+                "status": "/api/status/{job_id}",
+                "playlist": "/api/playlist",
+                "songs": "/api/songs",
+            },
+        }
 
 
 @app.get("/health")
@@ -158,6 +164,13 @@ def health_check():
 app.include_router(index_router)
 app.include_router(playlist_router)
 app.include_router(songs_router)
+
+# Serve the React UI static files if they exist
+# The UI is built and placed in ui/dist during the Docker build
+# Note: ui_dist_path is defined earlier in the file
+if ui_dist_path.exists():
+    app.mount("/", StaticFiles(directory=str(ui_dist_path), html=True), name="ui")
+    logger.info(f"Serving UI from {ui_dist_path}")
 
 
 if __name__ == "__main__":

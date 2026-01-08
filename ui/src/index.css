@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #8b5cf6;
+  --color-primary-hover: #7c3aed;
+  --color-secondary: #ec4899;
+  --color-accent: #06b6d4;
+  --color-background: #0f0f1a;
+  --color-surface: #1a1a2e;
+  --color-surface-hover: #252540;
+  --color-text: #f8fafc;
+  --color-text-muted: #94a3b8;
+  --color-border: #334155;
+}
+
+body {
+  @apply bg-background text-text antialiased;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+#root {
+  @apply min-h-screen;
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f1a 100%);
+}
+
+.gradient-text {
+  @apply bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent;
+}
+
+.card {
+  @apply bg-surface rounded-xl border border-border p-4 transition-all duration-200;
+}
+
+.card:hover {
+  @apply bg-surface-hover border-primary/50;
+}
+
+.btn-primary {
+  @apply bg-primary hover:bg-primary-hover text-white font-medium px-6 py-2.5 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-secondary {
+  @apply bg-surface hover:bg-surface-hover text-text border border-border font-medium px-6 py-2.5 rounded-lg transition-all duration-200;
+}
+
+.input-field {
+  @apply bg-surface border border-border rounded-lg px-4 py-2.5 text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 w-full;
+}

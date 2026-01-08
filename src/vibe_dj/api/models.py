@@ -55,6 +55,18 @@ class ExportRequest(BaseModel):
     output_path: str = Field(..., description="Output file path")
 
 
+class SyncToNavidromeRequest(BaseModel):
+    """Request to sync an existing playlist to Navidrome.
+    
+    Syncs a list of songs by their IDs to Navidrome server.
+    """
+    
+    song_ids: List[int] = Field(..., min_length=1, description="List of song IDs to sync")
+    navidrome_config: Optional[Dict[str, str]] = Field(
+        None, description="Navidrome configuration (url, username, password, playlist_name)"
+    )
+
+
 class SongResponse(BaseModel):
     """Song metadata response.
     
