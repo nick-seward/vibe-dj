@@ -64,18 +64,19 @@ def search_songs_multi(
     artist: Optional[str] = Query(None, description="Artist name to search for"),
     title: Optional[str] = Query(None, description="Song title to search for"),
     album: Optional[str] = Query(None, description="Album name to search for"),
-    limit: int = Query(100, ge=1, le=1000, description="Maximum number of songs to return"),
+    limit: int = Query(50, ge=1, le=200, description="Maximum number of songs to return (max 200)"),
     offset: int = Query(0, ge=0, description="Number of songs to skip"),
     db: MusicDatabase = Depends(get_db),
 ) -> SongsListResponse:
     """Search songs with separate artist, title, and album filters.
     
     Returns songs matching all provided filters. At least one filter must be specified.
+    The maximum depth into search results is 1000 (offset + limit <= 1000).
     
     :param artist: Optional artist name filter
     :param title: Optional song title filter
     :param album: Optional album name filter
-    :param limit: Maximum number of songs to return
+    :param limit: Maximum number of songs to return (max 200 per page)
     :param offset: Number of songs to skip for pagination
     :param db: Database connection
     :return: Paginated list of matching songs
@@ -84,6 +85,12 @@ def search_songs_multi(
         raise HTTPException(
             status_code=400,
             detail="At least one search parameter (artist, title, or album) is required"
+        )
+    
+    if offset + limit > 1000:
+        raise HTTPException(
+            status_code=400,
+            detail="Maximum search depth is 1000 results (offset + limit cannot exceed 1000)"
         )
     
     try:

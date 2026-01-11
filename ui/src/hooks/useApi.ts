@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import type { Song, SongsListResponse, PlaylistRequest, PlaylistResponse, SearchParams, NavidromeConfig } from '@/types'
+import type { Song, SongsListResponse, PlaylistRequest, PlaylistResponse, SearchParams, NavidromeConfig, PaginatedSearchResult } from '@/types'
 
 const API_BASE = '/api'
 
@@ -10,20 +10,22 @@ interface UseApiState<T> {
 }
 
 export function useSearchSongs() {
-  const [state, setState] = useState<UseApiState<Song[]>>({
+  const [state, setState] = useState<UseApiState<PaginatedSearchResult>>({
     data: null,
     loading: false,
     error: null,
   })
 
-  const search = useCallback(async (params: SearchParams): Promise<Song[]> => {
-    setState({ data: null, loading: true, error: null })
+  const search = useCallback(async (params: SearchParams): Promise<PaginatedSearchResult> => {
+    setState((prev) => ({ ...prev, loading: true, error: null }))
 
     try {
       const queryParts: string[] = []
       if (params.artist) queryParts.push(`artist=${encodeURIComponent(params.artist)}`)
       if (params.title) queryParts.push(`title=${encodeURIComponent(params.title)}`)
       if (params.album) queryParts.push(`album=${encodeURIComponent(params.album)}`)
+      if (params.limit !== undefined) queryParts.push(`limit=${params.limit}`)
+      if (params.offset !== undefined) queryParts.push(`offset=${params.offset}`)
 
       const queryString = queryParts.join('&')
       const response = await fetch(`${API_BASE}/songs/search?${queryString}`)
@@ -33,8 +35,14 @@ export function useSearchSongs() {
       }
 
       const data: SongsListResponse = await response.json()
-      setState({ data: data.songs, loading: false, error: null })
-      return data.songs
+      const result: PaginatedSearchResult = {
+        songs: data.songs,
+        total: data.total,
+        limit: data.limit,
+        offset: data.offset,
+      }
+      setState({ data: result, loading: false, error: null })
+      return result
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Search failed'
       setState({ data: null, loading: false, error: errorMessage })

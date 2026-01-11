@@ -13,7 +13,21 @@ export interface SearchParams {
   artist?: string
   title?: string
   album?: string
+  limit?: number
+  offset?: number
 }
+
+export interface PaginatedSearchResult {
+  songs: Song[]
+  total: number
+  limit: number
+  offset: number
+}
+
+export const PAGE_SIZE_OPTIONS = [50, 100, 150, 200] as const
+export type PageSize = typeof PAGE_SIZE_OPTIONS[number]
+export const DEFAULT_PAGE_SIZE: PageSize = 50
+export const MAX_SEARCH_DEPTH = 1000
 
 export interface SongsListResponse {
   songs: Song[]

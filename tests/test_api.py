@@ -101,12 +101,19 @@ class TestRootEndpoints:
     """Test root and health check endpoints."""
     
     def test_root_endpoint(self, client):
-        """Test root endpoint returns API information."""
+        """Test root endpoint returns API information or UI."""
         response = client.get("/")
         assert response.status_code == 200
-        data = response.json()
-        assert data["name"] == "Vibe-DJ API"
-        assert "endpoints" in data
+        
+        # If UI dist exists, root serves HTML; otherwise serves JSON API info
+        content_type = response.headers.get("content-type", "")
+        if "application/json" in content_type:
+            data = response.json()
+            assert data["name"] == "Vibe-DJ API"
+            assert "endpoints" in data
+        elif "text/html" in content_type:
+            # UI is being served, which is also valid
+            assert len(response.content) > 0
     
     def test_health_check_endpoint(self, client):
         """Test health check endpoint."""
@@ -572,6 +579,184 @@ class TestSongsEndpoints:
             data = response.json()
             assert data["song"]["id"] == 1
             assert data["features"] is None
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+
+
+class TestSearchSongsMultiEndpoint:
+    """Test the /songs/search endpoint with pagination."""
+    
+    def test_search_songs_multi_default_pagination(self, client):
+        """Test search with default pagination (50 results per page)."""
+        from vibe_dj.api.dependencies import get_db
+        
+        mock_songs = [
+            Song(
+                id=i,
+                file_path=f"/test/song{i}.mp3",
+                title=f"Test Song {i}",
+                artist="Test Artist",
+                album="Test Album",
+                genre="Rock",
+                last_modified=1234567890.0,
+                duration=180,
+            )
+            for i in range(50)
+        ]
+        
+        mock_db = MagicMock()
+        mock_db.search_songs_multi.return_value = mock_songs
+        mock_db.count_songs_multi.return_value = 100
+        
+        def override_get_db():
+            yield mock_db
+        
+        app.dependency_overrides[get_db] = override_get_db
+        
+        try:
+            response = client.get("/api/songs/search?artist=Test")
+            
+            assert response.status_code == 200
+            data = response.json()
+            assert data["total"] == 100
+            assert len(data["songs"]) == 50
+            assert data["limit"] == 50
+            assert data["offset"] == 0
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+    
+    def test_search_songs_multi_with_pagination(self, client):
+        """Test search with custom pagination parameters."""
+        from vibe_dj.api.dependencies import get_db
+        
+        mock_songs = [
+            Song(
+                id=i,
+                file_path=f"/test/song{i}.mp3",
+                title=f"Test Song {i}",
+                artist="Test Artist",
+                album="Test Album",
+                genre="Rock",
+                last_modified=1234567890.0,
+                duration=180,
+            )
+            for i in range(100)
+        ]
+        
+        mock_db = MagicMock()
+        mock_db.search_songs_multi.return_value = mock_songs
+        mock_db.count_songs_multi.return_value = 500
+        
+        def override_get_db():
+            yield mock_db
+        
+        app.dependency_overrides[get_db] = override_get_db
+        
+        try:
+            response = client.get("/api/songs/search?artist=Test&limit=100&offset=50")
+            
+            assert response.status_code == 200
+            data = response.json()
+            assert data["total"] == 500
+            assert data["limit"] == 100
+            assert data["offset"] == 50
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+    
+    def test_search_songs_multi_max_limit(self, client):
+        """Test that limit is capped at 200."""
+        response = client.get("/api/songs/search?artist=Test&limit=300")
+        
+        assert response.status_code == 422  # Validation error
+    
+    def test_search_songs_multi_max_depth_exceeded(self, client):
+        """Test that offset + limit cannot exceed 1000."""
+        from vibe_dj.api.dependencies import get_db
+        
+        mock_db = MagicMock()
+        mock_db.search_songs_multi.return_value = []
+        mock_db.count_songs_multi.return_value = 2000
+        
+        def override_get_db():
+            yield mock_db
+        
+        app.dependency_overrides[get_db] = override_get_db
+        
+        try:
+            response = client.get("/api/songs/search?artist=Test&limit=200&offset=900")
+            
+            assert response.status_code == 400
+            data = response.json()
+            error_msg = data.get("detail") or data.get("error", "")
+            assert "1000" in error_msg
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+    
+    def test_search_songs_multi_at_max_depth(self, client):
+        """Test that offset + limit at exactly 1000 is allowed."""
+        from vibe_dj.api.dependencies import get_db
+        
+        mock_songs = [
+            Song(
+                id=i,
+                file_path=f"/test/song{i}.mp3",
+                title=f"Test Song {i}",
+                artist="Test Artist",
+                album="Test Album",
+                genre="Rock",
+                last_modified=1234567890.0,
+                duration=180,
+            )
+            for i in range(200)
+        ]
+        
+        mock_db = MagicMock()
+        mock_db.search_songs_multi.return_value = mock_songs
+        mock_db.count_songs_multi.return_value = 2000
+        
+        def override_get_db():
+            yield mock_db
+        
+        app.dependency_overrides[get_db] = override_get_db
+        
+        try:
+            response = client.get("/api/songs/search?artist=Test&limit=200&offset=800")
+            
+            assert response.status_code == 200
+            data = response.json()
+            assert data["limit"] == 200
+            assert data["offset"] == 800
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+    
+    def test_search_songs_multi_requires_at_least_one_param(self, client):
+        """Test that at least one search parameter is required."""
+        response = client.get("/api/songs/search")
+        
+        assert response.status_code == 400
+        data = response.json()
+        error_msg = data.get("detail") or data.get("error", "")
+        assert "at least one search parameter" in error_msg.lower()
+    
+    def test_search_songs_multi_page_size_options(self, client):
+        """Test all valid page size options (50, 100, 150, 200)."""
+        from vibe_dj.api.dependencies import get_db
+        
+        mock_db = MagicMock()
+        mock_db.search_songs_multi.return_value = []
+        mock_db.count_songs_multi.return_value = 0
+        
+        def override_get_db():
+            yield mock_db
+        
+        app.dependency_overrides[get_db] = override_get_db
+        
+        try:
+            for page_size in [50, 100, 150, 200]:
+                response = client.get(f"/api/songs/search?artist=Test&limit={page_size}")
+                assert response.status_code == 200
+                data = response.json()
+                assert data["limit"] == page_size
         finally:
             app.dependency_overrides.pop(get_db, None)
 

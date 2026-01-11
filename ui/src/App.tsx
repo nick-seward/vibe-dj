@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { SearchForm } from './components/SearchForm'
 import { SearchResults } from './components/SearchResults'
@@ -6,12 +6,15 @@ import { PlaylistView } from './components/PlaylistView'
 import { ChoiceListDrawer } from './components/ChoiceListDrawer'
 import { ChoiceListProvider, useChoiceList } from './context/ChoiceListContext'
 import { useSearchSongs, useGeneratePlaylist, useSyncToNavidrome } from './hooks/useApi'
-import type { AppScreen, Song, PlaylistResponse, SearchParams } from './types'
+import type { AppScreen, PlaylistResponse, SearchParams, PaginatedSearchResult, PageSize } from './types'
+import { DEFAULT_PAGE_SIZE } from './types'
 
 function AppContent() {
   const [screen, setScreen] = useState<AppScreen>('search')
-  const [searchResults, setSearchResults] = useState<Song[]>([])
+  const [searchResults, setSearchResults] = useState<PaginatedSearchResult | null>(null)
   const [playlist, setPlaylist] = useState<PlaylistResponse | null>(null)
+  const [pageSize, setPageSize] = useState<PageSize>(DEFAULT_PAGE_SIZE)
+  const currentSearchParams = useRef<SearchParams>({})
 
   const { songs: choiceListSongs, clearAll } = useChoiceList()
   const { search, loading: searching } = useSearchSongs()
@@ -20,9 +23,31 @@ function AppContent() {
 
   const handleSearch = async (params: SearchParams) => {
     try {
-      const results = await search(params)
+      currentSearchParams.current = params
+      const results = await search({ ...params, limit: pageSize, offset: 0 })
       setSearchResults(results)
       setScreen('results')
+    } catch {
+      // Error is handled in the hook
+    }
+  }
+
+  const handlePageChange = async (offset: number) => {
+    try {
+      const results = await search({ ...currentSearchParams.current, limit: pageSize, offset })
+      setSearchResults(results)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } catch {
+      // Error is handled in the hook
+    }
+  }
+
+  const handlePageSizeChange = async (newPageSize: PageSize) => {
+    setPageSize(newPageSize)
+    try {
+      const results = await search({ ...currentSearchParams.current, limit: newPageSize, offset: 0 })
+      setSearchResults(results)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch {
       // Error is handled in the hook
     }
@@ -61,7 +86,7 @@ function AppContent() {
 
   const handleStartOver = () => {
     setScreen('search')
-    setSearchResults([])
+    setSearchResults(null)
     setPlaylist(null)
     clearAll()
   }
@@ -85,7 +110,7 @@ function AppContent() {
             </motion.div>
           )}
 
-          {screen === 'results' && (
+          {screen === 'results' && searchResults && (
             <motion.div
               key="results"
               initial={{ opacity: 0 }}
@@ -94,8 +119,12 @@ function AppContent() {
             >
               <SearchResults
                 results={searchResults}
+                pageSize={pageSize}
+                onPageSizeChange={handlePageSizeChange}
+                onPageChange={handlePageChange}
                 onBack={handleBackToSearch}
                 onGeneratePlaylist={handleGeneratePlaylist}
+                loading={searching}
               />
             </motion.div>
           )}
