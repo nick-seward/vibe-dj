@@ -124,7 +124,7 @@ class TestPlaylistExporter(unittest.TestCase):
             temp_path = f.name
 
         try:
-            self.exporter.export(self.playlist, temp_path, format="m3u")
+            self.exporter.export(self.playlist, temp_path, output_format="m3u")
 
             self.assertTrue(Path(temp_path).exists())
         finally:
@@ -135,7 +135,7 @@ class TestPlaylistExporter(unittest.TestCase):
             temp_path = f.name
 
         try:
-            self.exporter.export(self.playlist, temp_path, format="json")
+            self.exporter.export(self.playlist, temp_path, output_format="json")
 
             with open(temp_path, "r") as f:
                 data = json.load(f)
@@ -150,7 +150,7 @@ class TestPlaylistExporter(unittest.TestCase):
 
         try:
             with self.assertRaises(ValueError):
-                self.exporter.export(self.playlist, temp_path, format="txt")
+                self.exporter.export(self.playlist, temp_path, output_format="txt")
         finally:
             Path(temp_path).unlink(missing_ok=True)
 

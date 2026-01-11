@@ -29,7 +29,7 @@ class PlaylistExporter:
         with open(output_path, "w", encoding="utf-8") as f:
             f.write("#EXTM3U\n")
             for song in playlist.songs:
-                duration = song.duration if song.duration else -1
+                duration = song.duration or -1
                 f.write(f"#EXTINF:{duration},{song.artist} - {song.title}\n")
                 f.write(f"{song.file_path}\n")
 
@@ -90,23 +90,23 @@ class PlaylistExporter:
 
         logger.info(f"Exported JSON playlist to {output_path}")
 
-    def export(self, playlist: Playlist, output_path: str, format: str = "m3u") -> None:
+    def export(self, playlist: Playlist, output_path: str, output_format: str = "m3u") -> None:
         """Export playlist to specified format.
 
         :param playlist: Playlist object to export
         :param output_path: Output file path
-        :param format: Export format ('m3u', 'm3u8', or 'json')
+        :param output_format: Export format ('m3u', 'm3u8', or 'json')
         :raises ValueError: If format is not supported
         """
-        format = format.lower()
+        output_format = output_format.lower()
 
-        if format == "m3u":
+        if output_format == "m3u":
             self.export_m3u(playlist, output_path)
-        elif format == "m3u8":
+        elif output_format == "m3u8":
             self.export_m3u8(playlist, output_path)
-        elif format == "json":
+        elif output_format == "json":
             self.export_json(playlist, output_path)
         else:
             raise ValueError(
-                f"Unsupported format: {format}. Use 'm3u', 'm3u8', or 'json'"
+                f"Unsupported format: {output_format}. Use 'm3u', 'm3u8', or 'json'"
             )

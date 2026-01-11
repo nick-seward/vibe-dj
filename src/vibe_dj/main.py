@@ -161,7 +161,7 @@ def playlist(
             pl = generator.generate(seeds, length=length, bpm_jitter_percent=bpm_jitter)
 
             if pl:
-                exporter.export(pl, output, format=format)
+                exporter.export(pl, output, output_format=format)
                 click.echo(f"Playlist ({len(pl)} songs) saved to {output}")
 
                 if sync_to_navidrome:

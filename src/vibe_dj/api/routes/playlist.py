@@ -92,7 +92,7 @@ def generate_playlist(
                 tmp_path = tmp.name
             
             try:
-                exporter.export(playlist, tmp_path, format=request.format)
+                exporter.export(playlist, tmp_path, output_format=request.format)
                 
                 if request.sync_to_navidrome:
                     nav_config = request.navidrome_config or {}
@@ -156,7 +156,7 @@ def generate_and_download_playlist(
         with tempfile.NamedTemporaryFile(mode='w', suffix=f'.{request.format}', delete=False) as tmp:
             tmp_path = tmp.name
         
-        exporter.export(playlist, tmp_path, format=request.format)
+        exporter.export(playlist, tmp_path, output_format=request.format)
         
         media_type_map = {
             "m3u": "audio/x-mpegurl",
@@ -209,7 +209,7 @@ def export_playlist(
                 songs.append(song)
             
             playlist = PlaylistModel(songs=songs)
-            exporter.export(playlist, request.output_path, format=request.format)
+            exporter.export(playlist, request.output_path, output_format=request.format)
             
             return {
                 "success": True,
