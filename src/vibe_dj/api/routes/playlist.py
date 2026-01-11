@@ -6,15 +6,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 from loguru import logger
 
-from ...models import Config, Playlist
-from ...services import NavidromeSyncService, PlaylistExporter, PlaylistGenerator
-from ..dependencies import (
+from vibe_dj.core import MusicDatabase
+from vibe_dj.models import Config, Playlist
+from vibe_dj.services import NavidromeSyncService, PlaylistExporter, PlaylistGenerator
+from vibe_dj.api.dependencies import (
     get_config,
     get_navidrome_sync_service,
     get_playlist_exporter,
     get_playlist_generator,
 )
-from ..models import (
+from vibe_dj.api.models import (
     ExportRequest,
     PlaylistRequest,
     PlaylistResponse,
@@ -208,9 +209,6 @@ def export_playlist(
     :raises HTTPException: If export fails
     """
     try:
-        from ...core import MusicDatabase
-        from ...models import Playlist as PlaylistModel
-
         with MusicDatabase(config) as db:
             songs = []
             for song_id in request.song_ids:
@@ -221,7 +219,7 @@ def export_playlist(
                     )
                 songs.append(song)
 
-            playlist = PlaylistModel(songs=songs)
+            playlist = Playlist(songs=songs)
             exporter.export(playlist, request.output_path, output_format=request.format)
 
             return {
@@ -255,9 +253,6 @@ def sync_playlist_to_navidrome(
     :raises HTTPException: If sync fails
     """
     try:
-        from ...core import MusicDatabase
-        from ...models import Playlist as PlaylistModel
-
         with MusicDatabase(config) as db:
             songs = []
             for song_id in request.song_ids:
@@ -268,7 +263,7 @@ def sync_playlist_to_navidrome(
                     )
                 songs.append(song)
 
-            playlist = PlaylistModel(songs=songs)
+            playlist = Playlist(songs=songs)
 
             nav_config = request.navidrome_config or {}
             result = sync_service.sync_playlist(

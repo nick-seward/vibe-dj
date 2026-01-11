@@ -4,9 +4,9 @@ from typing import List, Optional
 import numpy as np
 from loguru import logger
 
-from ..core.database import MusicDatabase
-from ..core.similarity import SimilarityIndex
-from ..models import Config, Features, Playlist, Song
+from vibe_dj.core.database import MusicDatabase
+from vibe_dj.core.similarity import SimilarityIndex
+from vibe_dj.models import Config, Features, Playlist, Song
 
 
 class PlaylistGenerator:

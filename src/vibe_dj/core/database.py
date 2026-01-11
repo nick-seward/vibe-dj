@@ -1,9 +1,9 @@
 from typing import Dict, List, Optional, Tuple
 
-from sqlalchemy import create_engine, func, or_, select
+from sqlalchemy import and_, create_engine, func, or_, select
 from sqlalchemy.orm import Session, sessionmaker
 
-from ..models import Base, Config, Features, Song
+from vibe_dj.models import Base, Config, Features, Song
 
 
 class MusicDatabase:
@@ -374,8 +374,6 @@ class MusicDatabase:
 
         stmt = select(Song)
         if conditions:
-            from sqlalchemy import and_
-
             stmt = stmt.where(and_(*conditions))
 
         return list(
@@ -411,8 +409,6 @@ class MusicDatabase:
 
         stmt = select(func.count()).select_from(Song)
         if conditions:
-            from sqlalchemy import and_
-
             stmt = stmt.where(and_(*conditions))
 
         return self.session.execute(stmt).scalar() or 0

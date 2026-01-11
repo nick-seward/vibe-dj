@@ -3,9 +3,9 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from loguru import logger
 
-from ...core import MusicDatabase
-from ..dependencies import get_db
-from ..models import (
+from vibe_dj.core import MusicDatabase
+from vibe_dj.api.dependencies import get_db
+from vibe_dj.api.models import (
     FeaturesResponse,
     SongDetailResponse,
     SongResponse,

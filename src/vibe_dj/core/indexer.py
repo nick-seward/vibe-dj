@@ -6,10 +6,10 @@ import numpy as np
 from loguru import logger
 from tqdm import tqdm
 
-from ..models import Config, Features, Song
-from .analyzer import AudioAnalyzer
-from .database import MusicDatabase
-from .similarity import SimilarityIndex
+from vibe_dj.models import Config, Features, Song
+from vibe_dj.core.analyzer import AudioAnalyzer
+from vibe_dj.core.database import MusicDatabase
+from vibe_dj.core.similarity import SimilarityIndex
 
 
 def _worker_thread_file(

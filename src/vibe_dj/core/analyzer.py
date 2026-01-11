@@ -1,4 +1,5 @@
 import math
+import os
 from typing import Optional, Tuple
 
 import librosa
@@ -6,7 +7,7 @@ import numpy as np
 from loguru import logger
 from mutagen import File as MutagenFile
 
-from ..models import Config, Features, Song
+from vibe_dj.models import Config, Features, Song
 
 
 class AudioAnalyzer:
@@ -85,8 +86,6 @@ class AudioAnalyzer:
             audio = MutagenFile(file_path, easy=True)
             title = (audio.get("title", [None]) or [None])[0]
             if not title:
-                import os
-
                 title = os.path.basename(file_path)
 
             artist = (audio.get("artist", ["Unknown"]) or ["Unknown"])[0]
@@ -96,8 +95,6 @@ class AudioAnalyzer:
             return title, artist, album, genre
         except Exception as e:
             logger.error(f"Failed to extract metadata from {file_path}: {e}")
-            import os
-
             return os.path.basename(file_path), "Unknown", "Unknown", "Unknown"
 
     def get_duration(self, file_path: str) -> Optional[int]:

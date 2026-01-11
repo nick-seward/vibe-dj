@@ -4,8 +4,8 @@ from typing import Any, Dict, List, Optional
 
 from loguru import logger
 
-from ..models import Config, Playlist
-from .navidrome_client import NavidromeClient
+from vibe_dj.models import Config, Playlist
+from vibe_dj.services.navidrome_client import NavidromeClient
 
 
 class NavidromeSyncService:

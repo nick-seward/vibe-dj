@@ -3,7 +3,7 @@ from typing import Optional
 
 from loguru import logger
 
-from ..models import Config, Playlist
+from vibe_dj.models import Config, Playlist
 
 
 class PlaylistExporter:

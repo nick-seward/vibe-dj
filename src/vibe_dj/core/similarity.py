@@ -4,7 +4,7 @@ import faiss
 import numpy as np
 from loguru import logger
 
-from ..models import Config
+from vibe_dj.models import Config
 
 
 class SimilarityIndex:

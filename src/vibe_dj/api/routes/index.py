@@ -12,10 +12,10 @@ from fastapi import (
 )
 from loguru import logger
 
-from ...core import AudioAnalyzer, LibraryIndexer, MusicDatabase, SimilarityIndex
-from ...models import Config
-from ..background import JobManager
-from ..dependencies import (
+from vibe_dj.core import AudioAnalyzer, LibraryIndexer, MusicDatabase, SimilarityIndex
+from vibe_dj.models import Config
+from vibe_dj.api.background import JobManager
+from vibe_dj.api.dependencies import (
     get_audio_analyzer,
     get_config,
     get_db,
@@ -23,7 +23,7 @@ from ..dependencies import (
     get_similarity_index,
     parse_config_file,
 )
-from ..models import IndexJobResponse, IndexRequest, JobStatusResponse
+from vibe_dj.api.models import IndexJobResponse, IndexRequest, JobStatusResponse
 
 router = APIRouter(prefix="/api", tags=["indexing"])
 
