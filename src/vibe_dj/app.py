@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
 
     :param app: FastAPI application instance
     """
-    logger.info("Starting Vibe-DJ API server")
+    logger.info("Starting Vibe-DJ server")
 
     try:
         config = Config()
@@ -37,11 +37,11 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    logger.info("Shutting down Vibe-DJ API server")
+    logger.info("Shutting down Vibe-DJ server")
 
 
 app = FastAPI(
-    title="Vibe-DJ API",
+    title="Vibe-DJ",
     description="Music library indexer and intelligent playlist generator using audio feature analysis",
     version="0.1.0",
     lifespan=lifespan,
@@ -103,7 +103,7 @@ if not ui_dist_path.exists():
         :return: API information and available endpoints
         """
         return {
-            "name": "Vibe-DJ API",
+            "name": "Vibe-DJ",
             "version": "0.1.0",
             "description": "Music library indexer and intelligent playlist generator",
             "endpoints": {

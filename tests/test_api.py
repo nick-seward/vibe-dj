@@ -109,7 +109,7 @@ class TestRootEndpoints:
         content_type = response.headers.get("content-type", "")
         if "application/json" in content_type:
             data = response.json()
-            assert data["name"] == "Vibe-DJ API"
+            assert data["name"] == "Vibe-DJ"
             assert "endpoints" in data
         elif "text/html" in content_type:
             # UI is being served, which is also valid
