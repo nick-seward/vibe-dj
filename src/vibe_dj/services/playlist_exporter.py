@@ -19,6 +19,22 @@ class PlaylistExporter:
         """
         self.config = config
 
+    def _write_m3u(self, playlist: Playlist, output_path: str, format_name: str) -> None:
+        """Write playlist to M3U/M3U8 format.
+
+        :param playlist: Playlist object to export
+        :param output_path: Output file path
+        :param format_name: Format name for logging ('M3U' or 'M3U8')
+        """
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write("#EXTM3U\n")
+            for song in playlist.songs:
+                duration = song.duration if song.duration else -1
+                f.write(f"#EXTINF:{duration},{song.artist} - {song.title}\n")
+                f.write(f"{song.file_path}\n")
+
+        logger.info(f"Exported {format_name} playlist to {output_path}")
+
     def export_m3u(self, playlist: Playlist, output_path: Optional[str] = None) -> None:
         """Export playlist to M3U format.
 
@@ -27,15 +43,7 @@ class PlaylistExporter:
         """
         if output_path is None:
             output_path = self.config.playlist_output
-
-        with open(output_path, "w", encoding="utf-8") as f:
-            f.write("#EXTM3U\n")
-            for song in playlist.songs:
-                duration = song.duration if song.duration else -1
-                f.write(f"#EXTINF:{duration},{song.artist} - {song.title}\n")
-                f.write(f"{song.file_path}\n")
-
-        logger.info(f"Exported M3U playlist to {output_path}")
+        self._write_m3u(playlist, output_path, "M3U")
 
     def export_m3u8(self, playlist: Playlist, output_path: str) -> None:
         """Export playlist to M3U8 format (UTF-8 encoded M3U).
@@ -43,14 +51,7 @@ class PlaylistExporter:
         :param playlist: Playlist object to export
         :param output_path: Output file path
         """
-        with open(output_path, "w", encoding="utf-8") as f:
-            f.write("#EXTM3U\n")
-            for song in playlist.songs:
-                duration = song.duration if song.duration else -1
-                f.write(f"#EXTINF:{duration},{song.artist} - {song.title}\n")
-                f.write(f"{song.file_path}\n")
-
-        logger.info(f"Exported M3U8 playlist to {output_path}")
+        self._write_m3u(playlist, output_path, "M3U8")
 
     def export_json(self, playlist: Playlist, output_path: str) -> None:
         """Export playlist to JSON format with full metadata.

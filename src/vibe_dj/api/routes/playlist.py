@@ -19,6 +19,24 @@ from ..models import ExportRequest, PlaylistRequest, PlaylistResponse, SongRespo
 router = APIRouter(prefix="/api", tags=["playlist"])
 
 
+def _song_to_response(song) -> SongResponse:
+    """Convert a Song model to SongResponse.
+    
+    :param song: Song object
+    :return: SongResponse object
+    """
+    return SongResponse(
+        id=song.id,
+        file_path=song.file_path,
+        title=song.title,
+        artist=song.artist,
+        album=song.album,
+        genre=song.genre,
+        duration=song.duration,
+        last_modified=song.last_modified,
+    )
+
+
 def playlist_to_response(playlist: Playlist) -> PlaylistResponse:
     """Convert Playlist model to API response.
     
@@ -26,32 +44,8 @@ def playlist_to_response(playlist: Playlist) -> PlaylistResponse:
     :return: PlaylistResponse object
     """
     return PlaylistResponse(
-        songs=[
-            SongResponse(
-                id=song.id,
-                file_path=song.file_path,
-                title=song.title,
-                artist=song.artist,
-                album=song.album,
-                genre=song.genre,
-                duration=song.duration,
-                last_modified=song.last_modified,
-            )
-            for song in playlist.songs
-        ],
-        seed_songs=[
-            SongResponse(
-                id=song.id,
-                file_path=song.file_path,
-                title=song.title,
-                artist=song.artist,
-                album=song.album,
-                genre=song.genre,
-                duration=song.duration,
-                last_modified=song.last_modified,
-            )
-            for song in playlist.seed_songs
-        ],
+        songs=[_song_to_response(song) for song in playlist.songs],
+        seed_songs=[_song_to_response(song) for song in playlist.seed_songs],
         created_at=playlist.created_at,
         length=len(playlist.songs),
     )
@@ -101,24 +95,14 @@ def generate_playlist(
                 exporter.export(playlist, tmp_path, format=request.format)
                 
                 if request.sync_to_navidrome:
-                    navidrome_url = None
-                    navidrome_username = None
-                    navidrome_password = None
-                    playlist_name = None
-                    
-                    if request.navidrome_config:
-                        navidrome_url = request.navidrome_config.get("url")
-                        navidrome_username = request.navidrome_config.get("username")
-                        navidrome_password = request.navidrome_config.get("password")
-                        playlist_name = request.navidrome_config.get("playlist_name")
-                    
+                    nav_config = request.navidrome_config or {}
                     result = sync_service.sync_playlist(
                         playlist,
                         tmp_path,
-                        playlist_name,
-                        navidrome_url,
-                        navidrome_username,
-                        navidrome_password,
+                        nav_config.get("playlist_name"),
+                        nav_config.get("url"),
+                        nav_config.get("username"),
+                        nav_config.get("password"),
                     )
                     
                     if not result["success"]:
@@ -274,24 +258,14 @@ def sync_playlist_to_navidrome(
             
             playlist = PlaylistModel(songs=songs)
             
-            navidrome_url = None
-            navidrome_username = None
-            navidrome_password = None
-            playlist_name = "Vibe DJ Playlist"
-            
-            if request.navidrome_config:
-                navidrome_url = request.navidrome_config.get("url")
-                navidrome_username = request.navidrome_config.get("username")
-                navidrome_password = request.navidrome_config.get("password")
-                playlist_name = request.navidrome_config.get("playlist_name", playlist_name)
-            
+            nav_config = request.navidrome_config or {}
             result = sync_service.sync_playlist(
                 playlist,
                 "/tmp/sync_playlist.m3u",
-                playlist_name,
-                navidrome_url,
-                navidrome_username,
-                navidrome_password,
+                nav_config.get("playlist_name", "Vibe DJ Playlist"),
+                nav_config.get("url"),
+                nav_config.get("username"),
+                nav_config.get("password"),
             )
             
             if not result["success"]:
