@@ -9,7 +9,6 @@ from ..models import Config
 from ..services import NavidromeSyncService, PlaylistExporter, PlaylistGenerator
 from .background import JobManager, job_manager
 
-
 _config_cache: Optional[Config] = None
 
 
