@@ -17,26 +17,26 @@ from .models import Config
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager.
-    
+
     Handles startup and shutdown tasks including database initialization.
-    
+
     :param app: FastAPI application instance
     """
     logger.info("Starting Vibe-DJ API server")
-    
+
     try:
         config = Config()
         if os.path.exists("config.json"):
             config = Config.from_file("config.json")
-        
+
         with MusicDatabase(config) as db:
             db.init_db()
             logger.info("Database initialized")
     except Exception as e:
         logger.error(f"Failed to initialize database: {e}")
-    
+
     yield
-    
+
     logger.info("Shutting down Vibe-DJ API server")
 
 
@@ -59,7 +59,7 @@ app.add_middleware(
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc):
     """Handle HTTP exceptions with consistent JSON responses.
-    
+
     :param request: Request object
     :param exc: HTTPException instance
     :return: JSON response with error details
@@ -76,7 +76,7 @@ async def http_exception_handler(request, exc):
 @app.exception_handler(Exception)
 async def general_exception_handler(request, exc):
     """Handle unexpected exceptions.
-    
+
     :param request: Request object
     :param exc: Exception instance
     :return: JSON response with error details
@@ -95,10 +95,11 @@ async def general_exception_handler(request, exc):
 # When UI is available, the static file mount will serve index.html at "/"
 ui_dist_path = Path(__file__).parent.parent.parent / "ui" / "dist"
 if not ui_dist_path.exists():
+
     @app.get("/")
     def root():
         """Root endpoint with API information.
-        
+
         :return: API information and available endpoints
         """
         return {
@@ -119,16 +120,16 @@ if not ui_dist_path.exists():
 @app.get("/health")
 def health_check():
     """Health check endpoint.
-    
+
     Verifies database connectivity and FAISS index availability.
-    
+
     :return: Health status information
     """
     try:
         config = Config()
         if os.path.exists("config.json"):
             config = Config.from_file("config.json")
-        
+
         db_status = "disconnected"
         try:
             with MusicDatabase(config) as db:
@@ -137,15 +138,15 @@ def health_check():
         except Exception as e:
             logger.error(f"Database health check failed: {e}")
             db_status = f"error: {str(e)}"
-        
+
         faiss_status = "not_loaded"
         if os.path.exists(config.faiss_index_path):
             faiss_status = "available"
         else:
             faiss_status = "not_found"
-        
+
         overall_status = "ok" if db_status == "connected" else "degraded"
-        
+
         return {
             "status": overall_status,
             "database": db_status,
@@ -175,7 +176,7 @@ if ui_dist_path.exists():
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "vibe_dj.app:app",
         host="0.0.0.0",

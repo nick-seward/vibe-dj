@@ -19,7 +19,9 @@ class PlaylistExporter:
         """
         self.config = config
 
-    def _write_m3u(self, playlist: Playlist, output_path: str, format_name: str) -> None:
+    def _write_m3u(
+        self, playlist: Playlist, output_path: str, format_name: str
+    ) -> None:
         """Write playlist to M3U/M3U8 format.
 
         :param playlist: Playlist object to export
@@ -90,7 +92,9 @@ class PlaylistExporter:
 
         logger.info(f"Exported JSON playlist to {output_path}")
 
-    def export(self, playlist: Playlist, output_path: str, output_format: str = "m3u") -> None:
+    def export(
+        self, playlist: Playlist, output_path: str, output_format: str = "m3u"
+    ) -> None:
         """Export playlist to specified format.
 
         :param playlist: Playlist object to export

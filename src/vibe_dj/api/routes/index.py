@@ -1,7 +1,15 @@
 import os
 from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    UploadFile,
+)
 from loguru import logger
 
 from ...core import AudioAnalyzer, LibraryIndexer, MusicDatabase, SimilarityIndex
@@ -27,7 +35,7 @@ def run_indexing_job(
     job_manager: JobManager,
 ) -> None:
     """Background task to run library indexing.
-    
+
     :param job_id: Job identifier for tracking
     :param library_path: Path to music library
     :param config: Configuration object
@@ -35,33 +43,32 @@ def run_indexing_job(
     """
     try:
         job_manager.start_job(job_id)
-        
+
         if not os.path.exists(library_path):
             raise ValueError(f"Library path does not exist: {library_path}")
-        
+
         if not os.path.isdir(library_path):
             raise ValueError(f"Library path is not a directory: {library_path}")
-        
+
         with MusicDatabase(config) as db:
             analyzer = AudioAnalyzer(config)
             similarity_index = SimilarityIndex(config)
             indexer = LibraryIndexer(config, db, analyzer, similarity_index)
-            
-            job_manager.update_progress(job_id, {
-                "phase": "scanning",
-                "message": "Scanning music library..."
-            })
-            
+
+            job_manager.update_progress(
+                job_id, {"phase": "scanning", "message": "Scanning music library..."}
+            )
+
             indexer.index_library(library_path)
-            
-            job_manager.update_progress(job_id, {
-                "phase": "completed",
-                "message": "Indexing completed successfully"
-            })
-        
+
+            job_manager.update_progress(
+                job_id,
+                {"phase": "completed", "message": "Indexing completed successfully"},
+            )
+
         job_manager.complete_job(job_id)
         logger.info(f"Indexing job {job_id} completed successfully")
-        
+
     except Exception as e:
         error_msg = str(e)
         logger.error(f"Indexing job {job_id} failed: {error_msg}")
@@ -76,10 +83,10 @@ def index_library(
     job_manager: JobManager = Depends(get_job_manager),
 ) -> IndexJobResponse:
     """Trigger library indexing as a background task.
-    
+
     Starts indexing of the specified music library directory. Returns
     immediately with a job ID for status polling.
-    
+
     :param background_tasks: FastAPI background tasks
     :param request: Index request with library path and config overrides
     :param config: Application configuration
@@ -88,9 +95,9 @@ def index_library(
     """
     if request.config_overrides:
         config = Config.from_dict({**config.__dict__, **request.config_overrides})
-    
+
     job_id = job_manager.create_job()
-    
+
     background_tasks.add_task(
         run_indexing_job,
         job_id,
@@ -98,11 +105,11 @@ def index_library(
         config,
         job_manager,
     )
-    
+
     return IndexJobResponse(
         job_id=job_id,
         status="queued",
-        message=f"Indexing job queued for {request.library_path}"
+        message=f"Indexing job queued for {request.library_path}",
     )
 
 
@@ -115,9 +122,9 @@ async def index_library_with_config_upload(
     job_manager: JobManager = Depends(get_job_manager),
 ) -> IndexJobResponse:
     """Trigger library indexing with optional config file upload.
-    
+
     Accepts a config file upload for custom configuration.
-    
+
     :param background_tasks: FastAPI background tasks
     :param library_path: Path to music library directory
     :param config_file: Optional uploaded config file
@@ -130,9 +137,9 @@ async def index_library_with_config_upload(
         uploaded_config = await parse_config_file(config_file)
         if uploaded_config:
             config = uploaded_config
-    
+
     job_id = job_manager.create_job()
-    
+
     background_tasks.add_task(
         run_indexing_job,
         job_id,
@@ -140,11 +147,11 @@ async def index_library_with_config_upload(
         config,
         job_manager,
     )
-    
+
     return IndexJobResponse(
         job_id=job_id,
         status="queued",
-        message=f"Indexing job queued for {library_path}"
+        message=f"Indexing job queued for {library_path}",
     )
 
 
@@ -154,19 +161,19 @@ def get_job_status(
     job_manager: JobManager = Depends(get_job_manager),
 ) -> JobStatusResponse:
     """Get status of an indexing job.
-    
+
     Poll this endpoint to track progress of a background indexing job.
-    
+
     :param job_id: Job identifier
     :param job_manager: Job manager for tracking
     :return: Current job status with progress information
     :raises HTTPException: If job not found
     """
     job = job_manager.get_job(job_id)
-    
+
     if not job:
         raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
-    
+
     return JobStatusResponse(
         job_id=job.job_id,
         status=job.status,

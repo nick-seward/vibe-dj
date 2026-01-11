@@ -145,9 +145,9 @@ class MusicDatabase:
         :return: List of matching Song objects
         """
         return list(
-            self.session.execute(
-                select(Song).where(Song.title.like(f"%{title}%"))
-            ).scalars().all()
+            self.session.execute(select(Song).where(Song.title.like(f"%{title}%")))
+            .scalars()
+            .all()
         )
 
     def find_song_exact(self, title: str, artist: str, album: str) -> Optional[Song]:
@@ -190,11 +190,11 @@ class MusicDatabase:
 
         :return: List of (Song, Features) tuples ordered by song ID
         """
-        songs = self.session.execute(
-            select(Song)
-            .join(Features)
-            .order_by(Song.id)
-        ).scalars().all()
+        songs = (
+            self.session.execute(select(Song).join(Features).order_by(Song.id))
+            .scalars()
+            .all()
+        )
 
         return [(song, song.features) for song in songs if song.features]
 
@@ -203,9 +203,7 @@ class MusicDatabase:
 
         :return: Dictionary mapping file paths to modification timestamps
         """
-        results = self.session.execute(
-            select(Song.file_path, Song.last_modified)
-        ).all()
+        results = self.session.execute(select(Song.file_path, Song.last_modified)).all()
         return {row[0]: row[1] for row in results}
 
     def delete_song(self, file_path: str) -> bool:
@@ -234,26 +232,24 @@ class MusicDatabase:
             return []
 
         return list(
-            self.session.execute(
-                select(Song).where(Song.id.in_(song_ids))
-            ).scalars().all()
+            self.session.execute(select(Song).where(Song.id.in_(song_ids)))
+            .scalars()
+            .all()
         )
 
     def commit(self) -> None:
         """Commit pending database transactions."""
         self.session.commit()
 
-    def get_songs_without_features(self, file_paths: Optional[List[str]] = None) -> List[Song]:
+    def get_songs_without_features(
+        self, file_paths: Optional[List[str]] = None
+    ) -> List[Song]:
         """Get songs that exist in DB but don't have features yet.
 
         :param file_paths: Optional list of file paths to filter by
         :return: List of Song objects without associated features
         """
-        stmt = (
-            select(Song)
-            .outerjoin(Features)
-            .where(Features.song_id.is_(None))
-        )
+        stmt = select(Song).outerjoin(Features).where(Features.song_id.is_(None))
 
         if file_paths:
             stmt = stmt.where(Song.file_path.in_(file_paths))
@@ -266,13 +262,14 @@ class MusicDatabase:
         :return: Dictionary with keys 'total_songs', 'songs_with_features',
                  and 'songs_without_features'
         """
-        total_songs = self.session.execute(
-            select(func.count()).select_from(Song)
-        ).scalar() or 0
+        total_songs = (
+            self.session.execute(select(func.count()).select_from(Song)).scalar() or 0
+        )
 
-        songs_with_features = self.session.execute(
-            select(func.count()).select_from(Features)
-        ).scalar() or 0
+        songs_with_features = (
+            self.session.execute(select(func.count()).select_from(Features)).scalar()
+            or 0
+        )
 
         songs_without_features = total_songs - songs_with_features
 
@@ -292,7 +289,9 @@ class MusicDatabase:
         return list(
             self.session.execute(
                 select(Song).order_by(Song.id).limit(limit).offset(offset)
-            ).scalars().all()
+            )
+            .scalars()
+            .all()
         )
 
     def search_songs(self, query: str, limit: int = 100, offset: int = 0) -> List[Song]:
@@ -317,7 +316,9 @@ class MusicDatabase:
                 .order_by(Song.id)
                 .limit(limit)
                 .offset(offset)
-            ).scalars().all()
+            )
+            .scalars()
+            .all()
         )
 
     def count_songs(self, search: Optional[str] = None) -> int:
@@ -328,11 +329,15 @@ class MusicDatabase:
         """
         if search:
             search_pattern = f"%{search}%"
-            stmt = select(func.count()).select_from(Song).where(
-                or_(
-                    Song.title.like(search_pattern),
-                    Song.artist.like(search_pattern),
-                    Song.album.like(search_pattern),
+            stmt = (
+                select(func.count())
+                .select_from(Song)
+                .where(
+                    or_(
+                        Song.title.like(search_pattern),
+                        Song.artist.like(search_pattern),
+                        Song.album.like(search_pattern),
+                    )
                 )
             )
         else:
@@ -370,6 +375,7 @@ class MusicDatabase:
         stmt = select(Song)
         if conditions:
             from sqlalchemy import and_
+
             stmt = stmt.where(and_(*conditions))
 
         return list(
@@ -377,7 +383,9 @@ class MusicDatabase:
                 stmt.order_by(Song.artist, Song.album, Song.title)
                 .limit(limit)
                 .offset(offset)
-            ).scalars().all()
+            )
+            .scalars()
+            .all()
         )
 
     def count_songs_multi(
@@ -404,6 +412,7 @@ class MusicDatabase:
         stmt = select(func.count()).select_from(Song)
         if conditions:
             from sqlalchemy import and_
+
             stmt = stmt.where(and_(*conditions))
 
         return self.session.execute(stmt).scalar() or 0
