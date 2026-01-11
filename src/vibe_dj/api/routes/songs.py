@@ -3,7 +3,6 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from loguru import logger
 
-from vibe_dj.core import MusicDatabase
 from vibe_dj.api.dependencies import get_db
 from vibe_dj.api.models import (
     FeaturesResponse,
@@ -11,6 +10,7 @@ from vibe_dj.api.models import (
     SongResponse,
     SongsListResponse,
 )
+from vibe_dj.core import MusicDatabase
 
 router = APIRouter(prefix="/api", tags=["songs"])
 

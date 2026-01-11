@@ -6,9 +6,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 from loguru import logger
 
-from vibe_dj.core import MusicDatabase
-from vibe_dj.models import Config, Playlist
-from vibe_dj.services import NavidromeSyncService, PlaylistExporter, PlaylistGenerator
 from vibe_dj.api.dependencies import (
     get_config,
     get_navidrome_sync_service,
@@ -22,6 +19,9 @@ from vibe_dj.api.models import (
     SongResponse,
     SyncToNavidromeRequest,
 )
+from vibe_dj.core import MusicDatabase
+from vibe_dj.models import Config, Playlist
+from vibe_dj.services import NavidromeSyncService, PlaylistExporter, PlaylistGenerator
 
 router = APIRouter(prefix="/api", tags=["playlist"])
 
