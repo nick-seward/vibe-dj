@@ -12,9 +12,6 @@ wheels/
 
 .DS_Store
 
-# Data directory (used by Docker)
-data/
-
 # Database and index files
 *.db
 *.bin
@@ -22,7 +19,3 @@ data/
 # Playlist files
 *.m3u
 *.m3u8
-
-# Configuration files (keep examples)
-config.json
-seeds.json

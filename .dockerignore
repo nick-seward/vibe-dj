@@ -18,7 +18,6 @@ build/
 *.bin
 *.m3u
 *.m3u8
-seeds.json
 
 # Documentation
 docs/
