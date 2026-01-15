@@ -16,19 +16,6 @@ uvicorn vibe_dj.app:app --reload --host 0.0.0.0 --port 8000
 
 The API will be available at `http://localhost:8000`
 
-### Running with Docker
-
-```bash
-# Build the API container
-docker build -f Dockerfile-API -t vibe-dj-api .
-
-# Run the API server
-docker run -p 8000:8000 \
-  -v $(pwd)/data:/data \
-  -v /path/to/music:/music:ro \
-  vibe-dj-api
-```
-
 ## API Documentation
 
 Interactive API documentation is available at:
@@ -311,71 +298,3 @@ uv run pytest tests/test_api.py -v
 # Run with coverage
 uv run pytest tests/test_api.py --cov=vibe_dj.api --cov=vibe_dj.app --cov-report=html
 ```
-
-## Architecture
-
-### Components
-
-- **`app.py`**: FastAPI application entrypoint with CORS and error handling
-- **`api/models.py`**: Pydantic request/response models
-- **`api/dependencies.py`**: Dependency injection (database, config, services)
-- **`api/background.py`**: Background job manager for long-running tasks
-- **`api/routes/`**: Route handlers organized by domain
-  - `index.py`: Indexing endpoints
-  - `playlist.py`: Playlist generation and export
-  - `songs.py`: Song listing and retrieval
-
-### Design Principles
-
-- **Dependency Injection**: Services injected via FastAPI's `Depends()`
-- **Background Tasks**: Long-running indexing uses `BackgroundTasks`
-- **Type Safety**: Full Pydantic validation on all inputs/outputs
-- **Error Handling**: Consistent HTTPException usage with proper status codes
-- **Separation of Concerns**: Routes delegate to existing services
-- **Backward Compatibility**: CLI (`main.py`) remains functional
-
-## Deployment
-
-### Docker Compose Example
-
-```yaml
-version: '3.8'
-
-services:
-  vibe-dj-api:
-    build:
-      context: .
-      dockerfile: Dockerfile-API
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./data:/data
-      - /path/to/music:/music:ro
-    environment:
-      - VIBE_DJ_DATABASE_PATH=/data/music.db
-      - VIBE_DJ_FAISS_INDEX_PATH=/data/faiss_index.bin
-    restart: unless-stopped
-```
-
-### Production Considerations
-
-1. **Authentication**: Add API key authentication for production
-2. **Rate Limiting**: Implement rate limiting to prevent abuse
-3. **Job Persistence**: Use Redis for job tracking in multi-instance deployments
-4. **HTTPS**: Use reverse proxy (nginx/traefik) with SSL certificates
-5. **Monitoring**: Add logging, metrics, and health checks
-6. **Scaling**: Use multiple workers with shared database and FAISS index
-
-## CLI Compatibility
-
-The original CLI remains fully functional:
-
-```bash
-# Index library (CLI)
-vibe-dj index /path/to/music
-
-# Generate playlist (CLI)
-vibe-dj playlist --seeds-json seeds.json --output playlist.m3u
-```
-
-Both CLI and API share the same core services and database.
