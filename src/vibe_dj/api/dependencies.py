@@ -50,6 +50,8 @@ def get_config(config_path: Optional[str] = None) -> Config:
 
     config_dict = {}
 
+    if music_library := os.getenv("MUSIC_LIBRARY"):
+        config_dict["music_library"] = music_library
     if db_path := os.getenv("VIBE_DJ_DATABASE_PATH"):
         config_dict["database_path"] = db_path
     if faiss_path := os.getenv("VIBE_DJ_FAISS_INDEX_PATH"):

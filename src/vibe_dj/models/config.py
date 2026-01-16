@@ -13,6 +13,7 @@ class Config:
     and optional Navidrome integration credentials.
     """
 
+    music_library: str = ""
     database_path: str = "music.db"
     faiss_index_path: str = "faiss_index.bin"
     playlist_output: str = "playlist.m3u"
@@ -31,6 +32,13 @@ class Config:
     navidrome_url: Optional[str] = None
     navidrome_username: Optional[str] = None
     navidrome_password: Optional[str] = None
+
+    def __post_init__(self):
+        """Validate configuration after initialization."""
+        if self.music_library and not os.path.exists(self.music_library):
+            raise ValueError(f"Music library path does not exist: {self.music_library}")
+        if self.music_library and not os.path.isdir(self.music_library):
+            raise ValueError(f"Music library path is not a directory: {self.music_library}")
 
     @classmethod
     def from_file(cls, path: str) -> "Config":
