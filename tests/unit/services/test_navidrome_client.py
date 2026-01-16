@@ -355,3 +355,40 @@ class TestNavidromeClient:
         song_id = client.search_song(title="Test Song", artist="Test Artist")
 
         assert song_id == "first"
+
+    @patch("vibe_dj.services.navidrome_client.requests.Session.get")
+    def test_ping_success(self, mock_get, client, mock_response):
+        """Test successful ping to server."""
+        mock_response.json.return_value = {
+            "subsonic-response": {"status": "ok", "version": "1.16.1"}
+        }
+        mock_get.return_value = mock_response
+
+        result = client.ping()
+
+        assert result is True
+        assert mock_get.called
+
+    @patch("vibe_dj.services.navidrome_client.requests.Session.get")
+    def test_ping_failure(self, mock_get, client, mock_response):
+        """Test failed ping to server."""
+        mock_response.json.return_value = {
+            "subsonic-response": {
+                "status": "failed",
+                "error": {"code": 40, "message": "Wrong username or password"},
+            }
+        }
+        mock_get.return_value = mock_response
+
+        result = client.ping()
+
+        assert result is False
+
+    @patch("vibe_dj.services.navidrome_client.requests.Session.get")
+    def test_ping_network_error(self, mock_get, client):
+        """Test ping with network error."""
+        mock_get.side_effect = requests.exceptions.ConnectionError("Connection refused")
+
+        result = client.ping()
+
+        assert result is False

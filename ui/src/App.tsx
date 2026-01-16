@@ -4,7 +4,9 @@ import { SearchForm } from './components/SearchForm'
 import { SearchResults } from './components/SearchResults'
 import { PlaylistView } from './components/PlaylistView'
 import { ChoiceListDrawer } from './components/ChoiceListDrawer'
+import { SettingsModal } from './components/SettingsModal'
 import { ChoiceListProvider, useChoiceList } from './context/ChoiceListContext'
+import { ToastProvider } from './context/ToastContext'
 import { useSearchSongs, useGeneratePlaylist, useSyncToNavidrome } from './hooks/useApi'
 import type { AppScreen, PlaylistResponse, SearchParams, PaginatedSearchResult, PageSize } from './types'
 import { DEFAULT_PAGE_SIZE } from './types'
@@ -14,6 +16,7 @@ function AppContent() {
   const [searchResults, setSearchResults] = useState<PaginatedSearchResult | null>(null)
   const [playlist, setPlaylist] = useState<PlaylistResponse | null>(null)
   const [pageSize, setPageSize] = useState<PageSize>(DEFAULT_PAGE_SIZE)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const currentSearchParams = useRef<SearchParams>({})
 
   const { songs: choiceListSongs, clearAll } = useChoiceList()
@@ -106,7 +109,7 @@ function AppContent() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <SearchForm onSearch={handleSearch} loading={searching} />
+              <SearchForm onSearch={handleSearch} loading={searching} onSettingsClick={() => setIsSettingsOpen(true)} />
             </motion.div>
           )}
 
@@ -149,15 +152,18 @@ function AppContent() {
       </div>
 
       <ChoiceListDrawer />
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </div>
   )
 }
 
 function App() {
   return (
-    <ChoiceListProvider>
-      <AppContent />
-    </ChoiceListProvider>
+    <ToastProvider>
+      <ChoiceListProvider>
+        <AppContent />
+      </ChoiceListProvider>
+    </ToastProvider>
   )
 }
 

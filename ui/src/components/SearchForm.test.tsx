@@ -6,7 +6,8 @@ import { SearchForm } from './SearchForm'
 describe('SearchForm', () => {
   it('renders all input fields', () => {
     const onSearch = vi.fn()
-    render(<SearchForm onSearch={onSearch} loading={false} />)
+    const onSettingsClick = vi.fn()
+    render(<SearchForm onSearch={onSearch} loading={false} onSettingsClick={onSettingsClick} />)
 
     expect(screen.getByLabelText(/artist/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/song title/i)).toBeInTheDocument()
@@ -15,7 +16,8 @@ describe('SearchForm', () => {
 
   it('shows error when submitting with no fields filled', async () => {
     const onSearch = vi.fn()
-    render(<SearchForm onSearch={onSearch} loading={false} />)
+    const onSettingsClick = vi.fn()
+    render(<SearchForm onSearch={onSearch} loading={false} onSettingsClick={onSettingsClick} />)
 
     const button = screen.getByRole('button', { name: /search/i })
     fireEvent.click(button)
@@ -30,7 +32,8 @@ describe('SearchForm', () => {
   it('calls onSearch with artist when only artist is filled', async () => {
     const user = userEvent.setup()
     const onSearch = vi.fn().mockResolvedValue(undefined)
-    render(<SearchForm onSearch={onSearch} loading={false} />)
+    const onSettingsClick = vi.fn()
+    render(<SearchForm onSearch={onSearch} loading={false} onSettingsClick={onSettingsClick} />)
 
     await user.type(screen.getByLabelText(/artist/i), 'The Beatles')
     await user.click(screen.getByRole('button', { name: /search/i }))
@@ -43,7 +46,8 @@ describe('SearchForm', () => {
   it('calls onSearch with all fields when all are filled', async () => {
     const user = userEvent.setup()
     const onSearch = vi.fn().mockResolvedValue(undefined)
-    render(<SearchForm onSearch={onSearch} loading={false} />)
+    const onSettingsClick = vi.fn()
+    render(<SearchForm onSearch={onSearch} loading={false} onSettingsClick={onSettingsClick} />)
 
     await user.type(screen.getByLabelText(/artist/i), 'The Beatles')
     await user.type(screen.getByLabelText(/song title/i), 'Yesterday')
@@ -61,7 +65,8 @@ describe('SearchForm', () => {
 
   it('disables inputs and shows loading state when loading', () => {
     const onSearch = vi.fn()
-    render(<SearchForm onSearch={onSearch} loading={true} />)
+    const onSettingsClick = vi.fn()
+    render(<SearchForm onSearch={onSearch} loading={true} onSettingsClick={onSettingsClick} />)
 
     expect(screen.getByLabelText(/artist/i)).toBeDisabled()
     expect(screen.getByLabelText(/song title/i)).toBeDisabled()
@@ -72,7 +77,8 @@ describe('SearchForm', () => {
   it('trims whitespace from input values', async () => {
     const user = userEvent.setup()
     const onSearch = vi.fn().mockResolvedValue(undefined)
-    render(<SearchForm onSearch={onSearch} loading={false} />)
+    const onSettingsClick = vi.fn()
+    render(<SearchForm onSearch={onSearch} loading={false} onSettingsClick={onSettingsClick} />)
 
     await user.type(screen.getByLabelText(/artist/i), '  The Beatles  ')
     await user.click(screen.getByRole('button', { name: /search/i }))

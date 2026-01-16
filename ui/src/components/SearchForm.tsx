@@ -1,14 +1,15 @@
 import { useState, type FormEvent } from 'react'
-import { Search, Loader2 } from 'lucide-react'
+import { Search, Loader2, Settings } from 'lucide-react'
 import { motion } from 'framer-motion'
 import type { SearchParams } from '@/types'
 
 interface SearchFormProps {
   onSearch: (params: SearchParams) => Promise<void>
   loading: boolean
+  onSettingsClick: () => void
 }
 
-export function SearchForm({ onSearch, loading }: SearchFormProps) {
+export function SearchForm({ onSearch, loading, onSettingsClick }: SearchFormProps) {
   const [artist, setArtist] = useState('')
   const [title, setTitle] = useState('')
   const [album, setAlbum] = useState('')
@@ -38,7 +39,14 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
       transition={{ duration: 0.5 }}
       className="w-full max-w-xl mx-auto"
     >
-      <div className="text-center mb-8">
+      <div className="text-center mb-8 relative">
+        <button
+          onClick={onSettingsClick}
+          className="absolute right-0 top-0 p-2 text-text-muted hover:text-text hover:bg-surface-hover rounded-lg transition-all duration-200"
+          aria-label="Settings"
+        >
+          <Settings className="w-5 h-5" />
+        </button>
         <h1 className="text-4xl md:text-5xl font-bold gradient-text mb-4">
           Vibe DJ
         </h1>

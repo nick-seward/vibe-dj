@@ -128,6 +128,18 @@ class NavidromeClient:
 
         raise RuntimeError("Unexpected error in _call method")
 
+    def ping(self) -> bool:
+        """Test connection to Navidrome server.
+
+        :return: True if connection successful, False otherwise
+        """
+        try:
+            response = self._call("ping")
+            return response.get("status") == "ok"
+        except Exception as e:
+            logger.error(f"Ping failed: {e}")
+            return False
+
     def search_song(
         self, title: str, artist: str, album: Optional[str] = None
     ) -> Optional[str]:

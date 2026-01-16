@@ -66,3 +66,40 @@ export interface PlaylistResponse {
 }
 
 export type AppScreen = 'search' | 'results' | 'playlist'
+
+export interface ConfigResponse {
+  music_library: string
+  navidrome_url: string | null
+  navidrome_username: string | null
+  has_navidrome_password: boolean
+}
+
+export interface ValidatePathResponse {
+  valid: boolean
+  exists: boolean
+  is_directory: boolean
+  message: string
+}
+
+export interface IndexJobResponse {
+  job_id: string
+  status: 'queued' | 'running' | 'completed' | 'failed'
+  message: string
+}
+
+export interface JobStatusResponse {
+  job_id: string
+  status: 'queued' | 'running' | 'completed' | 'failed'
+  progress: {
+    phase?: string
+    message?: string
+  } | null
+  error: string | null
+  started_at: string | null
+  completed_at: string | null
+}
+
+export interface TestNavidromeResponse {
+  success: boolean
+  message: string
+}
