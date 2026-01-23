@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -36,8 +35,7 @@ class NavidromeSyncService:
 
         Credentials are resolved in the following order:
         1. Explicit parameters
-        2. Environment variables
-        3. Config file values
+        2. Config file values
 
         :param playlist: Generated Playlist object
         :param output_path: Path to the output M3U file
@@ -49,22 +47,14 @@ class NavidromeSyncService:
                  'playlist_name', 'matched_count', 'total_count', 'skipped_songs',
                  'error', and 'action'
         """
-        url = navidrome_url or os.getenv("NAVIDROME_URL") or self.config.navidrome_url
-        username = (
-            navidrome_username
-            or os.getenv("NAVIDROME_USERNAME")
-            or self.config.navidrome_username
-        )
-        password = (
-            navidrome_password
-            or os.getenv("NAVIDROME_PASSWORD")
-            or self.config.navidrome_password
-        )
+        url = navidrome_url or self.config.navidrome_url
+        username = navidrome_username or self.config.navidrome_username
+        password = navidrome_password or self.config.navidrome_password
 
         if not all([url, username, password]):
             logger.warning("Navidrome sync requested but credentials not provided")
             logger.warning(
-                "Provide via parameters, environment variables (NAVIDROME_URL, NAVIDROME_USERNAME, NAVIDROME_PASSWORD), or config file"
+                "Provide via parameters or config file"
             )
             return {
                 "success": False,

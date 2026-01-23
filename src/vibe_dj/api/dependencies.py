@@ -15,8 +15,8 @@ _config_cache: Optional[Config] = None
 def get_config(config_path: Optional[str] = None) -> Config:
     """Get application configuration.
 
-    Loads configuration from file, environment variables, or defaults.
-    Priority: config_path > env vars > config.json > defaults
+    Loads configuration from file or defaults.
+    Priority: config_path > config.json > defaults
     Uses simple caching to avoid reloading config on every request.
 
     :param config_path: Optional path to config file
@@ -34,38 +34,10 @@ def get_config(config_path: Optional[str] = None) -> Config:
         _config_cache = config
         return config
 
-    env_config_path = os.getenv("VIBE_DJ_CONFIG_PATH")
-    if env_config_path and os.path.exists(env_config_path):
-        logger.info(f"Loading config from env: {env_config_path}")
-        config = Config.from_file(env_config_path)
-        _config_cache = config
-        return config
-
     default_config_path = "config.json"
     if os.path.exists(default_config_path):
         logger.info(f"Loading config from {default_config_path}")
         config = Config.from_file(default_config_path)
-        _config_cache = config
-        return config
-
-    config_dict = {}
-
-    if music_library := os.getenv("MUSIC_LIBRARY"):
-        config_dict["music_library"] = music_library
-    if db_path := os.getenv("VIBE_DJ_DATABASE_PATH"):
-        config_dict["database_path"] = db_path
-    if faiss_path := os.getenv("VIBE_DJ_FAISS_INDEX_PATH"):
-        config_dict["faiss_index_path"] = faiss_path
-    if navidrome_url := os.getenv("NAVIDROME_URL"):
-        config_dict["navidrome_url"] = navidrome_url
-    if navidrome_username := os.getenv("NAVIDROME_USERNAME"):
-        config_dict["navidrome_username"] = navidrome_username
-    if navidrome_password := os.getenv("NAVIDROME_PASSWORD"):
-        config_dict["navidrome_password"] = navidrome_password
-
-    if config_dict:
-        logger.info("Loading config from environment variables")
-        config = Config.from_dict(config_dict)
         _config_cache = config
         return config
 

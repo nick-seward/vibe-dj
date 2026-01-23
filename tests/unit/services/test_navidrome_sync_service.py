@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
@@ -198,38 +197,6 @@ class TestNavidromeSyncService:
         assert result["matched_count"] == 0
         assert result["action"] is None
 
-    @patch.dict(
-        os.environ,
-        {
-            "NAVIDROME_URL": "http://env-url:4533",
-            "NAVIDROME_USERNAME": "env_user",
-            "NAVIDROME_PASSWORD": "env_pass",
-        },
-    )
-    @patch("vibe_dj.services.navidrome_sync_service.NavidromeClient")
-    def test_credential_resolution_env_vars(
-        self, mock_client_class, service, mock_playlist
-    ):
-        """Test credential resolution from environment variables."""
-        service.config.navidrome_url = None
-        service.config.navidrome_username = None
-        service.config.navidrome_password = None
-
-        mock_client = Mock(spec=NavidromeClient)
-        mock_client_class.return_value = mock_client
-        mock_client.search_song.return_value = "song_id"
-        mock_client.get_playlist_by_name.return_value = None
-        mock_client.create_playlist.return_value = "playlist_id"
-
-        result = service.sync_playlist(
-            playlist=mock_playlist, output_path="/playlists/test.m3u"
-        )
-
-        assert result["success"] is True
-        mock_client_class.assert_called_once_with(
-            "http://env-url:4533", "env_user", "env_pass"
-        )
-
     @patch("vibe_dj.services.navidrome_sync_service.NavidromeClient")
     def test_credential_resolution_config(
         self, mock_client_class, service, mock_playlist
@@ -251,36 +218,28 @@ class TestNavidromeSyncService:
         )
 
     @patch("vibe_dj.services.navidrome_sync_service.NavidromeClient")
-    def test_credential_resolution_priority_params_over_env(
+    def test_credential_resolution_priority_params_over_config(
         self, mock_client_class, service, mock_playlist
     ):
-        """Test that explicit parameters take priority over environment variables."""
-        with patch.dict(
-            os.environ,
-            {
-                "NAVIDROME_URL": "http://env-url:4533",
-                "NAVIDROME_USERNAME": "env_user",
-                "NAVIDROME_PASSWORD": "env_pass",
-            },
-        ):
-            mock_client = Mock(spec=NavidromeClient)
-            mock_client_class.return_value = mock_client
-            mock_client.search_song.return_value = "song_id"
-            mock_client.get_playlist_by_name.return_value = None
-            mock_client.create_playlist.return_value = "playlist_id"
+        """Test that explicit parameters take priority over config file values."""
+        mock_client = Mock(spec=NavidromeClient)
+        mock_client_class.return_value = mock_client
+        mock_client.search_song.return_value = "song_id"
+        mock_client.get_playlist_by_name.return_value = None
+        mock_client.create_playlist.return_value = "playlist_id"
 
-            result = service.sync_playlist(
-                playlist=mock_playlist,
-                output_path="/playlists/test.m3u",
-                navidrome_url="http://param-url:4533",
-                navidrome_username="param_user",
-                navidrome_password="param_pass",
-            )
+        result = service.sync_playlist(
+            playlist=mock_playlist,
+            output_path="/playlists/test.m3u",
+            navidrome_url="http://param-url:4533",
+            navidrome_username="param_user",
+            navidrome_password="param_pass",
+        )
 
-            assert result["success"] is True
-            mock_client_class.assert_called_once_with(
-                "http://param-url:4533", "param_user", "param_pass"
-            )
+        assert result["success"] is True
+        mock_client_class.assert_called_once_with(
+            "http://param-url:4533", "param_user", "param_pass"
+        )
 
     @patch("vibe_dj.services.navidrome_sync_service.NavidromeClient")
     def test_playlist_name_defaults_to_filename(
