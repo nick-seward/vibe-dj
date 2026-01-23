@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from loguru import logger
 from sqlalchemy import select
 
-from .api.routes import index_router, playlist_router, songs_router
+from .api.routes import config_router, index_router, playlist_router, songs_router
 from .core import MusicDatabase
 from .models import Config
 
@@ -162,6 +162,7 @@ def health_check():
         }
 
 
+app.include_router(config_router)
 app.include_router(index_router)
 app.include_router(playlist_router)
 app.include_router(songs_router)
