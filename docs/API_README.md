@@ -235,19 +235,11 @@ Get detailed information about a specific song.
 
 ## Configuration
 
-Configuration can be provided via:
+Configuration is provided via:
 
-1. **Environment variables** (highest priority):
-   - `VIBE_DJ_CONFIG_PATH`: Path to config file
-   - `VIBE_DJ_DATABASE_PATH`: Database file path
-   - `VIBE_DJ_FAISS_INDEX_PATH`: FAISS index file path
-   - `NAVIDROME_URL`: Navidrome server URL
-   - `NAVIDROME_USERNAME`: Navidrome username
-   - `NAVIDROME_PASSWORD`: Navidrome password
+**Config file** (`config.json` in working directory)
 
-2. **Config file** (`config.json` in working directory)
-
-3. **Defaults**
+**Defaults**
 
 ### Example config.json
 
