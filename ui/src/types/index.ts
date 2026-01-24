@@ -65,7 +65,7 @@ export interface PlaylistResponse {
   length: number
 }
 
-export type AppScreen = 'search' | 'results' | 'playlist'
+export type AppScreen = 'search' | 'results' | 'playlist' | 'config'
 
 export interface ConfigResponse {
   music_library: string

@@ -4,7 +4,7 @@ import { SearchForm } from './components/SearchForm'
 import { SearchResults } from './components/SearchResults'
 import { PlaylistView } from './components/PlaylistView'
 import { ChoiceListDrawer } from './components/ChoiceListDrawer'
-import { SettingsModal } from './components/SettingsModal'
+import { ConfigScreen } from './components/ConfigScreen'
 import { ChoiceListProvider, useChoiceList } from './context/ChoiceListContext'
 import { ToastProvider } from './context/ToastContext'
 import { useSearchSongs, useGeneratePlaylist, useSyncToNavidrome } from './hooks/useApi'
@@ -16,7 +16,6 @@ function AppContent() {
   const [searchResults, setSearchResults] = useState<PaginatedSearchResult | null>(null)
   const [playlist, setPlaylist] = useState<PlaylistResponse | null>(null)
   const [pageSize, setPageSize] = useState<PageSize>(DEFAULT_PAGE_SIZE)
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const currentSearchParams = useRef<SearchParams>({})
 
   const { songs: choiceListSongs, clearAll } = useChoiceList()
@@ -98,6 +97,14 @@ function AppContent() {
     setScreen('search')
   }
 
+  const handleOpenConfig = () => {
+    setScreen('config')
+  }
+
+  const handleCloseConfig = () => {
+    setScreen('search')
+  }
+
   return (
     <div className="min-h-screen gradient-bg">
       <div className="container mx-auto px-4 py-8 md:py-16">
@@ -109,7 +116,7 @@ function AppContent() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <SearchForm onSearch={handleSearch} loading={searching} onSettingsClick={() => setIsSettingsOpen(true)} />
+              <SearchForm onSearch={handleSearch} loading={searching} onSettingsClick={handleOpenConfig} />
             </motion.div>
           )}
 
@@ -148,11 +155,21 @@ function AppContent() {
               />
             </motion.div>
           )}
+
+          {screen === 'config' && (
+            <motion.div
+              key="config"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <ConfigScreen onClose={handleCloseConfig} />
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 
       <ChoiceListDrawer />
-      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </div>
   )
 }

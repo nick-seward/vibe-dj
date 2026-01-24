@@ -101,6 +101,38 @@ export function SubSonicTab({
 
   return (
     <div className="space-y-6">
+      {/* Header with Save Button */}
+      <div className="flex justify-end">
+        <motion.button
+          onClick={handleSave}
+          disabled={isSaveDisabled && !showSaveSuccess}
+          whileHover={!isSaveDisabled ? { scale: 1.02 } : {}}
+          whileTap={!isSaveDisabled ? { scale: 0.98 } : {}}
+          className={`flex items-center gap-2 font-medium px-4 py-2 rounded-lg transition-all duration-200 ${
+            showSaveSuccess
+              ? 'bg-green-600 text-white cursor-default'
+              : 'btn-primary'
+          }`}
+        >
+          {saving ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Saving...
+            </>
+          ) : showSaveSuccess ? (
+            <>
+              <CheckCircle className="w-4 h-4" />
+              Saved
+            </>
+          ) : (
+            <>
+              <Save className="w-4 h-4" />
+              Save
+            </>
+          )}
+        </motion.button>
+      </div>
+
       {/* URL Field */}
       <div>
         <label htmlFor="navidromeUrl" className="block text-sm font-medium text-text-muted mb-2">
@@ -175,38 +207,6 @@ export function SubSonicTab({
         </div>
       </div>
 
-      {/* Save Button */}
-      <div>
-        <motion.button
-          onClick={handleSave}
-          disabled={isSaveDisabled && !showSaveSuccess}
-          whileHover={!isSaveDisabled ? { scale: 1.02 } : {}}
-          whileTap={!isSaveDisabled ? { scale: 0.98 } : {}}
-          className={`w-full flex items-center justify-center gap-2 font-medium px-6 py-2.5 rounded-lg transition-all duration-200 ${
-            showSaveSuccess
-              ? 'bg-green-600 text-white cursor-default'
-              : 'btn-primary'
-          }`}
-        >
-          {saving ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Saving...
-            </>
-          ) : showSaveSuccess ? (
-            <>
-              <CheckCircle className="w-5 h-5" />
-              Saved
-            </>
-          ) : (
-            <>
-              <Save className="w-5 h-5" />
-              Save Settings
-            </>
-          )}
-        </motion.button>
-      </div>
-
       {/* Test Connection Button */}
       <div>
         <motion.button
@@ -253,12 +253,6 @@ export function SubSonicTab({
           </div>
         </motion.div>
       )}
-
-      {/* Info text */}
-      <p className="text-xs text-text-muted">
-        These credentials will be used when syncing playlists to your SubSonic/Navidrome server.
-        Click Save Settings to persist them to the config file.
-      </p>
     </div>
   )
 }

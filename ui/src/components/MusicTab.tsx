@@ -113,6 +113,38 @@ export function MusicTab({ musicLibrary, originalMusicLibrary, onMusicLibraryCha
 
   return (
     <div className="space-y-6">
+      {/* Header with Save Button */}
+      <div className="flex justify-end">
+        <motion.button
+          onClick={handleSave}
+          disabled={isSaveDisabled && !showSaveSuccess}
+          whileHover={!isSaveDisabled ? { scale: 1.02 } : {}}
+          whileTap={!isSaveDisabled ? { scale: 0.98 } : {}}
+          className={`flex items-center gap-2 font-medium px-4 py-2 rounded-lg transition-all duration-200 ${
+            showSaveSuccess
+              ? 'bg-green-600 text-white cursor-default'
+              : 'btn-primary'
+          }`}
+        >
+          {saving ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Saving...
+            </>
+          ) : showSaveSuccess ? (
+            <>
+              <CheckCircle className="w-4 h-4" />
+              Saved
+            </>
+          ) : (
+            <>
+              <Save className="w-4 h-4" />
+              Save
+            </>
+          )}
+        </motion.button>
+      </div>
+
       <div>
         <label htmlFor="musicLibrary" className="block text-sm font-medium text-text-muted mb-2">
           Music Library Path
@@ -151,43 +183,6 @@ export function MusicTab({ musicLibrary, originalMusicLibrary, onMusicLibraryCha
           >
             Path is valid and accessible
           </motion.p>
-        )}
-      </div>
-
-      {/* Save Button */}
-      <div>
-        <motion.button
-          onClick={handleSave}
-          disabled={isSaveDisabled && !showSaveSuccess}
-          whileHover={!isSaveDisabled ? { scale: 1.02 } : {}}
-          whileTap={!isSaveDisabled ? { scale: 0.98 } : {}}
-          className={`w-full flex items-center justify-center gap-2 font-medium px-6 py-2.5 rounded-lg transition-all duration-200 ${
-            showSaveSuccess
-              ? 'bg-green-600 text-white cursor-default'
-              : 'btn-primary'
-          }`}
-        >
-          {saving ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Saving...
-            </>
-          ) : showSaveSuccess ? (
-            <>
-              <CheckCircle className="w-5 h-5" />
-              Saved
-            </>
-          ) : (
-            <>
-              <Save className="w-5 h-5" />
-              Save Settings
-            </>
-          )}
-        </motion.button>
-        {hasChanges && !validation?.valid && hasValidated && (
-          <p className="text-xs text-text-muted mt-2">
-            Path must be valid before saving
-          </p>
         )}
       </div>
 
