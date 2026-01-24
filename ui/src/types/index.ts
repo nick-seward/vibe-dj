@@ -103,3 +103,15 @@ export interface TestNavidromeResponse {
   success: boolean
   message: string
 }
+
+export interface UpdateConfigRequest {
+  music_library?: string
+  navidrome_url?: string
+  navidrome_username?: string
+  navidrome_password?: string
+}
+
+export interface UpdateConfigResponse {
+  success: boolean
+  message: string
+}

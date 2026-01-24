@@ -1,21 +1,50 @@
 import { useState, useEffect, useCallback } from 'react'
-import { FolderOpen, Loader2, CheckCircle, XCircle, Music } from 'lucide-react'
+import { FolderOpen, Loader2, CheckCircle, XCircle, Music, Save } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { useValidatePath } from '@/hooks/useConfig'
+import { useValidatePath, useSaveConfig } from '@/hooks/useConfig'
 import { useIndexing } from '@/hooks/useIndexing'
 import { useToast } from '@/context/ToastContext'
 
 interface MusicTabProps {
   musicLibrary: string
+  originalMusicLibrary: string
   onMusicLibraryChange: (value: string) => void
+  onSaveSuccess: () => void
 }
 
-export function MusicTab({ musicLibrary, onMusicLibraryChange }: MusicTabProps) {
+export function MusicTab({ musicLibrary, originalMusicLibrary, onMusicLibraryChange, onSaveSuccess }: MusicTabProps) {
   const { validating, validation, validatePath, clearValidation } = useValidatePath()
   const { isIndexing, status, error: indexError, startIndexing } = useIndexing()
+  const { saving, saveConfig } = useSaveConfig()
   const { showToast } = useToast()
 
   const [hasValidated, setHasValidated] = useState(false)
+  const [showSaveSuccess, setShowSaveSuccess] = useState(false)
+
+  // Determine if the value has changed from the original
+  const hasChanges = musicLibrary !== originalMusicLibrary
+
+  // Save button is disabled if: no changes, invalid path, currently saving, or currently indexing
+  const isSaveDisabled = !hasChanges || !validation?.valid || saving || isIndexing
+
+  const handleSave = useCallback(async () => {
+    if (isSaveDisabled) return
+
+    const result = await saveConfig({ music_library: musicLibrary })
+
+    if (result.success) {
+      showToast('success', result.message)
+      setShowSaveSuccess(true)
+
+      // Hide checkmark after 2 seconds, then refresh config
+      setTimeout(() => {
+        setShowSaveSuccess(false)
+        onSaveSuccess()
+      }, 2000)
+    } else {
+      showToast('error', result.message)
+    }
+  }, [isSaveDisabled, musicLibrary, saveConfig, showToast, onSaveSuccess])
 
   // Debounced validation
   useEffect(() => {
@@ -125,13 +154,51 @@ export function MusicTab({ musicLibrary, onMusicLibraryChange }: MusicTabProps) 
         )}
       </div>
 
+      {/* Save Button */}
+      <div>
+        <motion.button
+          onClick={handleSave}
+          disabled={isSaveDisabled && !showSaveSuccess}
+          whileHover={!isSaveDisabled ? { scale: 1.02 } : {}}
+          whileTap={!isSaveDisabled ? { scale: 0.98 } : {}}
+          className={`w-full flex items-center justify-center gap-2 font-medium px-6 py-2.5 rounded-lg transition-all duration-200 ${
+            showSaveSuccess
+              ? 'bg-green-600 text-white cursor-default'
+              : 'btn-primary'
+          }`}
+        >
+          {saving ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Saving...
+            </>
+          ) : showSaveSuccess ? (
+            <>
+              <CheckCircle className="w-5 h-5" />
+              Saved
+            </>
+          ) : (
+            <>
+              <Save className="w-5 h-5" />
+              Save Settings
+            </>
+          )}
+        </motion.button>
+        {hasChanges && !validation?.valid && hasValidated && (
+          <p className="text-xs text-text-muted mt-2">
+            Path must be valid before saving
+          </p>
+        )}
+      </div>
+
+      {/* Index Button */}
       <div>
         <motion.button
           onClick={handleIndexClick}
           disabled={isButtonDisabled}
           whileHover={!isButtonDisabled ? { scale: 1.02 } : {}}
           whileTap={!isButtonDisabled ? { scale: 0.98 } : {}}
-          className="btn-primary w-full flex items-center justify-center gap-2"
+          className="btn-secondary w-full flex items-center justify-center gap-2"
         >
           {isIndexing ? (
             <>

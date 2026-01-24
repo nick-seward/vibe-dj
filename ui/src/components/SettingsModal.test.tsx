@@ -19,7 +19,7 @@ vi.mock('@/hooks/useConfig', () => ({
   }),
   useValidatePath: () => ({
     validating: false,
-    validation: null,
+    validation: { valid: true, exists: true, is_directory: true, message: 'Path is valid' },
     validatePath: vi.fn(),
     clearValidation: vi.fn(),
   }),
@@ -27,6 +27,12 @@ vi.mock('@/hooks/useConfig', () => ({
     testing: false,
     result: null,
     testConnection: vi.fn(),
+    clearResult: vi.fn(),
+  }),
+  useSaveConfig: () => ({
+    saving: false,
+    result: null,
+    saveConfig: vi.fn().mockResolvedValue({ success: true, message: 'Configuration saved successfully' }),
     clearResult: vi.fn(),
   }),
 }))
@@ -124,5 +130,49 @@ describe('SettingsModal', () => {
     
     const input = screen.getByLabelText(/music library path/i) as HTMLInputElement
     expect(input.value).toBe('/test/music')
+  })
+
+  it('shows Save Settings button in Music tab', () => {
+    renderWithProviders(<SettingsModal isOpen={true} onClose={mockOnClose} />)
+    
+    expect(screen.getByRole('button', { name: /save settings/i })).toBeInTheDocument()
+  })
+
+  it('Save button is disabled when no changes made', () => {
+    renderWithProviders(<SettingsModal isOpen={true} onClose={mockOnClose} />)
+    
+    const saveButton = screen.getByRole('button', { name: /save settings/i })
+    expect(saveButton).toBeDisabled()
+  })
+
+
+  it('shows Save Settings button in SubSonic tab', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<SettingsModal isOpen={true} onClose={mockOnClose} />)
+
+    await user.click(screen.getByText('SubSonic'))
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /save settings/i })).toBeInTheDocument()
+    })
+  })
+
+  it('SubSonic Save button is enabled when password is entered', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<SettingsModal isOpen={true} onClose={mockOnClose} />)
+
+    await user.click(screen.getByText('SubSonic'))
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/password/i)).toBeInTheDocument()
+    })
+
+    const passwordInput = screen.getByLabelText(/password/i)
+    await user.type(passwordInput, 'newpassword')
+
+    await waitFor(() => {
+      const saveButton = screen.getByRole('button', { name: /save settings/i })
+      expect(saveButton).not.toBeDisabled()
+    })
   })
 })

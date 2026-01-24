@@ -1,31 +1,80 @@
-import { useState } from 'react'
-import { Globe, User, Lock, Eye, EyeOff, Loader2, CheckCircle, XCircle } from 'lucide-react'
+import { useState, useCallback } from 'react'
+import { Globe, User, Lock, Eye, EyeOff, Loader2, CheckCircle, XCircle, Save } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { useTestNavidrome } from '@/hooks/useConfig'
+import { useTestNavidrome, useSaveConfig } from '@/hooks/useConfig'
 import { useToast } from '@/context/ToastContext'
 
 interface SubSonicTabProps {
   url: string
   username: string
   password: string
+  originalUrl: string
+  originalUsername: string
   hasServerPassword: boolean
   onUrlChange: (value: string) => void
   onUsernameChange: (value: string) => void
   onPasswordChange: (value: string) => void
+  onSaveSuccess: () => void
 }
 
 export function SubSonicTab({
   url,
   username,
   password,
+  originalUrl,
+  originalUsername,
   hasServerPassword,
   onUrlChange,
   onUsernameChange,
   onPasswordChange,
+  onSaveSuccess,
 }: SubSonicTabProps) {
   const [showPassword, setShowPassword] = useState(false)
+  const [showSaveSuccess, setShowSaveSuccess] = useState(false)
   const { testing, result, testConnection, clearResult } = useTestNavidrome()
+  const { saving, saveConfig } = useSaveConfig()
   const { showToast } = useToast()
+
+  // Determine if values have changed from original
+  const hasUrlChange = url !== originalUrl
+  const hasUsernameChange = username !== originalUsername
+  const hasPasswordChange = password.length > 0
+  const hasChanges = hasUrlChange || hasUsernameChange || hasPasswordChange
+
+  // Save button is disabled if: no changes, or currently saving/testing
+  const isSaveDisabled = !hasChanges || saving || testing
+
+  const handleSave = useCallback(async () => {
+    if (isSaveDisabled) return
+
+    const updates: { navidrome_url?: string; navidrome_username?: string; navidrome_password?: string } = {}
+
+    // Only include fields that have changed
+    if (hasUrlChange) {
+      updates.navidrome_url = url
+    }
+    if (hasUsernameChange) {
+      updates.navidrome_username = username
+    }
+    if (hasPasswordChange) {
+      updates.navidrome_password = password
+    }
+
+    const result = await saveConfig(updates)
+
+    if (result.success) {
+      showToast('success', result.message)
+      setShowSaveSuccess(true)
+
+      // Hide checkmark after 2 seconds, then refresh config
+      setTimeout(() => {
+        setShowSaveSuccess(false)
+        onSaveSuccess()
+      }, 2000)
+    } else {
+      showToast('error', result.message)
+    }
+  }, [isSaveDisabled, hasUrlChange, hasUsernameChange, hasPasswordChange, url, username, password, saveConfig, showToast, onSaveSuccess])
 
   const handleTestConnection = async () => {
     if (!url.trim() || !username.trim() || !password.trim()) return
@@ -126,6 +175,38 @@ export function SubSonicTab({
         </div>
       </div>
 
+      {/* Save Button */}
+      <div>
+        <motion.button
+          onClick={handleSave}
+          disabled={isSaveDisabled && !showSaveSuccess}
+          whileHover={!isSaveDisabled ? { scale: 1.02 } : {}}
+          whileTap={!isSaveDisabled ? { scale: 0.98 } : {}}
+          className={`w-full flex items-center justify-center gap-2 font-medium px-6 py-2.5 rounded-lg transition-all duration-200 ${
+            showSaveSuccess
+              ? 'bg-green-600 text-white cursor-default'
+              : 'btn-primary'
+          }`}
+        >
+          {saving ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Saving...
+            </>
+          ) : showSaveSuccess ? (
+            <>
+              <CheckCircle className="w-5 h-5" />
+              Saved
+            </>
+          ) : (
+            <>
+              <Save className="w-5 h-5" />
+              Save Settings
+            </>
+          )}
+        </motion.button>
+      </div>
+
       {/* Test Connection Button */}
       <div>
         <motion.button
@@ -133,7 +214,7 @@ export function SubSonicTab({
           disabled={isTestDisabled}
           whileHover={!isTestDisabled ? { scale: 1.02 } : {}}
           whileTap={!isTestDisabled ? { scale: 0.98 } : {}}
-          className="btn-primary w-full flex items-center justify-center gap-2"
+          className="btn-secondary w-full flex items-center justify-center gap-2"
         >
           {testing ? (
             <>
@@ -176,7 +257,7 @@ export function SubSonicTab({
       {/* Info text */}
       <p className="text-xs text-text-muted">
         These credentials will be used when syncing playlists to your SubSonic/Navidrome server.
-        They are stored only for this session.
+        Click Save Settings to persist them to the config file.
       </p>
     </div>
   )

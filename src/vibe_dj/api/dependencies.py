@@ -12,6 +12,16 @@ from vibe_dj.services import NavidromeSyncService, PlaylistExporter, PlaylistGen
 _config_cache: Optional[Config] = None
 
 
+def invalidate_config_cache() -> None:
+    """Invalidate the cached configuration.
+
+    Call this after updating the config file to ensure
+    subsequent requests get the fresh values.
+    """
+    global _config_cache
+    _config_cache = None
+
+
 def get_config(config_path: Optional[str] = None) -> Config:
     """Get application configuration.
 

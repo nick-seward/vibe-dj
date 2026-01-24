@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import type { ConfigResponse, ValidatePathResponse, TestNavidromeResponse } from '@/types'
+import type { ConfigResponse, ValidatePathResponse, TestNavidromeResponse, UpdateConfigRequest, UpdateConfigResponse } from '@/types'
 
 const API_BASE = '/api'
 
@@ -130,4 +130,47 @@ export function useTestNavidrome() {
   }, [])
 
   return { testing, result, testConnection, clearResult }
+}
+
+export function useSaveConfig() {
+  const [saving, setSaving] = useState(false)
+  const [result, setResult] = useState<UpdateConfigResponse | null>(null)
+
+  const saveConfig = useCallback(async (
+    updates: UpdateConfigRequest
+  ): Promise<UpdateConfigResponse> => {
+    setSaving(true)
+    setResult(null)
+
+    try {
+      const response = await fetch(`${API_BASE}/config`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Save failed: ${response.statusText}`)
+      }
+
+      const data: UpdateConfigResponse = await response.json()
+      setResult(data)
+      setSaving(false)
+      return data
+    } catch (err) {
+      const errorResult: UpdateConfigResponse = {
+        success: false,
+        message: err instanceof Error ? err.message : 'Failed to save configuration',
+      }
+      setResult(errorResult)
+      setSaving(false)
+      return errorResult
+    }
+  }, [])
+
+  const clearResult = useCallback(() => {
+    setResult(null)
+  }, [])
+
+  return { saving, result, saveConfig, clearResult }
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 import { MusicTab } from './MusicTab'
@@ -14,13 +14,18 @@ interface SettingsModalProps {
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>('music')
-  const { config, loading: configLoading } = useConfig()
+  const { config, loading: configLoading, fetchConfig } = useConfig()
 
-  // Local state for form values (session-only storage)
+  // Local state for form values
   const [musicLibrary, setMusicLibrary] = useState('')
   const [navidromeUrl, setNavidromeUrl] = useState('')
   const [navidromeUsername, setNavidromeUsername] = useState('')
   const [navidromePassword, setNavidromePassword] = useState('')
+
+  // Track original values from config (for change detection)
+  const [originalMusicLibrary, setOriginalMusicLibrary] = useState('')
+  const [originalNavidromeUrl, setOriginalNavidromeUrl] = useState('')
+  const [originalNavidromeUsername, setOriginalNavidromeUsername] = useState('')
 
   // Initialize form values from config when loaded
   useEffect(() => {
@@ -28,9 +33,20 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       setMusicLibrary(config.music_library || '')
       setNavidromeUrl(config.navidrome_url || '')
       setNavidromeUsername(config.navidrome_username || '')
+      // Update original values
+      setOriginalMusicLibrary(config.music_library || '')
+      setOriginalNavidromeUrl(config.navidrome_url || '')
+      setOriginalNavidromeUsername(config.navidrome_username || '')
       // Password is never returned from server, keep local value
     }
   }, [config])
+
+  // Callback to refresh config after successful save
+  const handleSaveSuccess = useCallback(() => {
+    fetchConfig().catch(() => {
+      // Error is handled in the hook
+    })
+  }, [fetchConfig])
 
   // Handle escape key
   useEffect(() => {
@@ -131,7 +147,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     >
                       <MusicTab
                         musicLibrary={musicLibrary}
+                        originalMusicLibrary={originalMusicLibrary}
                         onMusicLibraryChange={setMusicLibrary}
+                        onSaveSuccess={handleSaveSuccess}
                       />
                     </motion.div>
                   )}
@@ -147,10 +165,13 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         url={navidromeUrl}
                         username={navidromeUsername}
                         password={navidromePassword}
+                        originalUrl={originalNavidromeUrl}
+                        originalUsername={originalNavidromeUsername}
                         hasServerPassword={config?.has_navidrome_password || false}
                         onUrlChange={setNavidromeUrl}
                         onUsernameChange={setNavidromeUsername}
                         onPasswordChange={setNavidromePassword}
+                        onSaveSuccess={handleSaveSuccess}
                       />
                     </motion.div>
                   )}
