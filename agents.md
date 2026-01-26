@@ -227,3 +227,107 @@ export function SongCard({ song, onSelect }: SongCardProps) {
   );
 }
 ```
+
+---
+
+## Beads Issue Tracking
+
+This project uses **bd** (beads) for issue tracking. Run `bd onboard` to get started.
+
+## Quick Reference
+
+```bash
+bd ready              # Find available work
+bd show <id>          # View issue details
+bd update <id> --status in_progress  # Claim work
+bd close <id>         # Complete work
+bd sync               # Sync with git
+```
+
+## Landing the Plane (Session Completion)
+
+**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
+
+**MANDATORY WORKFLOW:**
+
+1. **File issues for remaining work** - Create issues for anything that needs follow-up
+```bash
+bd create "Follow-up: Add error handling to API endpoint" -p 1 --parent <current-id>
+```
+
+2. **Run quality gates** (if code changed)
+Tests, linters, builds, type checks — whatever the project requires. Fix failures before proceeding.
+
+3. **Update issue status** - Update in-progress items (e.g., --status=blocked if waiting on something).
+
+4. **Prepare changes for review**
+- Stage changes if not already: git add . (or selectively)
+- Show what would be committed: git diff --staged or git status
+- Stop and request human review — do NOT commit or push yet.
+- Tell the human:
+  "I have completed work on bead <id>. Here are the changes:"
+  Then paste:
+  - git diff --staged output (or relevant file diffs)
+  - Summary of what was changed
+  - Any new/updated beads and notes
+  - "Please review the changes. Once you approve, reply with 'Approved' or similar, and I will commit, push, and complete the workflow."
+
+5. **Wait for human approval**
+- Do NOT proceed to commit/push until the human explicitly approves (e.g., "Approved", "Looks good", "Proceed").
+- If the human requests changes: make fixes, re-run quality gates, and request review again.
+
+6. **Commit, PUSH TO REMOTE, and finish** (only after explicit human approval)
+Once approved:
+```bash
+git commit -m "bd-<id>: [short description of changes]"
+git pull --rebase
+bd sync
+git push
+git status     # MUST show "up to date with origin"
+```
+
+If push fails, resolve conflicts/errors and retry until it succeeds.
+
+7. **Clean up** - Clear stashes, prune remote branches
+```bash
+git stash drop    # if any stashes exist
+git remote prune origin
+```
+
+8. **Verify** - Confirm all changes are committed **and** pushed. No local-only work should remain.
+9. **Hand off** - Provide context for the next session
+Always leave detailed, persistent context using Beads notes. For every relevant bead (especially in-progress or newly created ones):
+
+```bash
+bd note add <id> "Session hand-off [YYYY-MM-DD]: Completed X feature. Key decisions: chose Y approach because Z. Current state: ABC implemented, tests passing locally. Pending: integration tests (see bd-new-id). Pointers: see commit abc1234; review diff for edge cases. No blockers."
+```
+
+- Do this before closing any beads.
+- Use clear, factual language — treat notes as instructions for the next agent.
+- Include: decisions made, rationale, code pointers (commits/files), current state, open questions, and next suggested steps.
+- If creating follow-up beads, add initial context notes to them too.
+
+## Note-Writing Best Practices
+
+When adding notes (`bd note add`):
+- Be specific and self-contained — the next agent may start from `bd show` without prior chat history.
+- Reference commits, files, or external links when helpful.
+- Keep notes concise but comprehensive (aim for 3–8 sentences per major update).
+- **Never** use interactive commands like `bd edit` (they open an editor agents can't use). Always use `bd update` flags or `bd note add`.
+
+**CRITICAL RULES:**
+- NEVER commit or push without explicit human approval.
+- Work is NOT complete until human-approved changes are pushed successfully.
+- NEVER stop before pushing (after approval) — that strands work locally and breaks continuity.
+- NEVER say "ready to push when you are" without first showing diffs and waiting for approval.
+- If push fails after approval, diagnose and retry until successful.
+- Always prioritize `bd ready` tasks unless explicitly directed otherwise.
+- Use Beads exclusively for task tracking — no markdown TODOs or plan files.
+
+## Quick Tips for Agents
+- Start every session with: `bd ready` → pick one high-priority unblocked task.
+- Claim work before editing: `bd update <id> --status in_progress`.
+- Add notes liberally during work — they build durable memory.
+- Always request human review before committing/pushing.
+
+Follow these rules strictly — they make multi-session and multi-agent work reliable, amnesia-proof, and human-supervised.
