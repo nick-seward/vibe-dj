@@ -208,4 +208,21 @@ describe('ConfigScreen', () => {
       expect(saveButton).not.toBeDisabled()
     })
   })
+
+  it('SubSonic Test Connection button is enabled when password is stored on server', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<ConfigScreen onClose={mockOnClose} />)
+
+    const dropdown = screen.getByLabelText('Select settings tab')
+    await user.selectOptions(dropdown, 'subsonic')
+
+    await waitFor(() => {
+      // The test button should be enabled because:
+      // - url is set (http://localhost:4533)
+      // - username is set (testuser)
+      // - has_navidrome_password is true (from mock)
+      const testButton = screen.getByRole('button', { name: /test subsonic connection/i })
+      expect(testButton).not.toBeDisabled()
+    })
+  })
 })

@@ -6,7 +6,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
 from pydantic import BaseModel
 
-from vibe_dj.api.dependencies import get_config, get_navidrome_sync_service, invalidate_config_cache
+from vibe_dj.api.dependencies import (
+    get_config,
+    get_navidrome_sync_service,
+    invalidate_config_cache,
+)
 from vibe_dj.models import Config
 from vibe_dj.services import NavidromeSyncService
 
@@ -44,11 +48,14 @@ class ValidatePathResponse(BaseModel):
 
 
 class TestNavidromeRequest(BaseModel):
-    """Request to test Navidrome connection."""
+    """Request to test Navidrome connection.
+
+    Password is optional - if not provided, the stored password from config will be used.
+    """
 
     url: str
     username: str
-    password: str
+    password: Optional[str] = None
 
 
 class TestNavidromeResponse(BaseModel):
@@ -145,21 +152,33 @@ def validate_path(request: ValidatePathRequest) -> ValidatePathResponse:
 @router.post("/navidrome/test", response_model=TestNavidromeResponse)
 def test_navidrome_connection(
     request: TestNavidromeRequest,
+    config: Config = Depends(get_config),
 ) -> TestNavidromeResponse:
     """Test connection to Navidrome server.
 
     Attempts to authenticate with the provided credentials.
+    If password is not provided, uses the stored password from config.
 
     :param request: Navidrome connection test request
+    :param config: Application configuration for fallback password
     :return: Connection test result
     """
     from vibe_dj.services.navidrome_client import NavidromeClient
+
+    # Use provided password, or fall back to stored password
+    password = request.password if request.password else config.navidrome_password
+
+    if not password:
+        return TestNavidromeResponse(
+            success=False,
+            message="No password provided and no password stored in configuration",
+        )
 
     try:
         client = NavidromeClient(
             base_url=request.url,
             username=request.username,
-            password=request.password,
+            password=password,
         )
 
         # Try to ping the server

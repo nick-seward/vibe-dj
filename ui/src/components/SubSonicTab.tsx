@@ -77,10 +77,13 @@ export function SubSonicTab({
   }, [isSaveDisabled, hasUrlChange, hasUsernameChange, hasPasswordChange, url, username, password, saveConfig, showToast, onSaveSuccess])
 
   const handleTestConnection = async () => {
-    if (!url.trim() || !username.trim() || !password.trim()) return
+    // Allow testing with stored password (hasServerPassword) even if password field is empty
+    const hasUsablePassword = password.trim() || hasServerPassword
+    if (!url.trim() || !username.trim() || !hasUsablePassword) return
 
     clearResult()
-    const testResult = await testConnection(url, username, password)
+    // Pass empty string if using stored password - backend will use stored password
+    const testResult = await testConnection(url, username, password.trim() || '')
 
     if (testResult.success) {
       showToast('success', testResult.message)
@@ -89,7 +92,8 @@ export function SubSonicTab({
     }
   }
 
-  const isTestDisabled = !url.trim() || !username.trim() || !password.trim() || testing
+  // Enable test button if user typed password OR if password is stored on server
+  const isTestDisabled = !url.trim() || !username.trim() || (!password.trim() && !hasServerPassword) || testing
 
   const getResultIcon = () => {
     if (!result) return null

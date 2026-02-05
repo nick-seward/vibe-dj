@@ -1,4 +1,5 @@
 import json
+import os
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
@@ -159,6 +160,189 @@ class TestConfigRoutes:
         data = response.json()
         assert data["success"] is False
         assert "Connection refused" in data["message"]
+
+    @patch("vibe_dj.services.navidrome_client.NavidromeClient.ping")
+    def test_navidrome_test_uses_stored_password_when_not_provided(
+        self, mock_ping, client, monkeypatch
+    ):
+        """Test that stored password is used when password is not provided in request."""
+        mock_ping.return_value = True
+
+        # Create a temp directory for music_library (Config validates it exists)
+        with tempfile.TemporaryDirectory() as temp_music_dir:
+            # Create a temp config file with stored password
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".json", delete=False
+            ) as f:
+                json.dump(
+                    {
+                        "music_library": temp_music_dir,
+                        "navidrome_url": "http://localhost:4533",
+                        "navidrome_username": "testuser",
+                        "navidrome_password": "stored_password",
+                    },
+                    f,
+                )
+                temp_path = f.name
+
+            # Mock os.path.exists to return True for "config.json"
+            original_exists = os.path.exists
+
+            def mock_exists(path):
+                if path == "config.json":
+                    return True
+                return original_exists(path)
+
+            monkeypatch.setattr("os.path.exists", mock_exists)
+
+            # Mock Config.from_file to load our temp config
+            from vibe_dj.models import Config
+
+            original_from_file = Config.from_file
+
+            def mock_from_file(path):
+                if path == "config.json":
+                    return original_from_file(temp_path)
+                return original_from_file(path)
+
+            monkeypatch.setattr("vibe_dj.models.Config.from_file", mock_from_file)
+            invalidate_config_cache()
+
+            try:
+                # Request without password - should use stored password
+                response = client.post(
+                    "/api/navidrome/test",
+                    json={
+                        "url": "http://localhost:4533",
+                        "username": "testuser",
+                    },
+                )
+
+                assert response.status_code == 200
+                data = response.json()
+                assert data["success"] is True
+                assert "successfully" in data["message"].lower()
+            finally:
+                Path(temp_path).unlink(missing_ok=True)
+                invalidate_config_cache()
+
+    @patch("vibe_dj.services.navidrome_client.NavidromeClient.ping")
+    def test_navidrome_test_empty_password_uses_stored(self, mock_ping, client, monkeypatch):
+        """Test that empty password string falls back to stored password."""
+        mock_ping.return_value = True
+
+        # Create a temp directory for music_library (Config validates it exists)
+        with tempfile.TemporaryDirectory() as temp_music_dir:
+            # Create a temp config file with stored password
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".json", delete=False
+            ) as f:
+                json.dump(
+                    {
+                        "music_library": temp_music_dir,
+                        "navidrome_password": "stored_password",
+                    },
+                    f,
+                )
+                temp_path = f.name
+
+            # Mock os.path.exists to return True for "config.json"
+            original_exists = os.path.exists
+
+            def mock_exists(path):
+                if path == "config.json":
+                    return True
+                return original_exists(path)
+
+            monkeypatch.setattr("os.path.exists", mock_exists)
+
+            # Mock Config.from_file to load our temp config
+            from vibe_dj.models import Config
+
+            original_from_file = Config.from_file
+
+            def mock_from_file(path):
+                if path == "config.json":
+                    return original_from_file(temp_path)
+                return original_from_file(path)
+
+            monkeypatch.setattr("vibe_dj.models.Config.from_file", mock_from_file)
+            invalidate_config_cache()
+
+            try:
+                # Request with empty password - should use stored password
+                response = client.post(
+                    "/api/navidrome/test",
+                    json={
+                        "url": "http://localhost:4533",
+                        "username": "testuser",
+                        "password": "",
+                    },
+                )
+
+                assert response.status_code == 200
+                data = response.json()
+                assert data["success"] is True
+            finally:
+                Path(temp_path).unlink(missing_ok=True)
+                invalidate_config_cache()
+
+    def test_navidrome_test_fails_when_no_password_anywhere(self, client, monkeypatch):
+        """Test that connection test fails when no password provided and none stored."""
+        # Create a temp directory for music_library (Config validates it exists)
+        with tempfile.TemporaryDirectory() as temp_music_dir:
+            # Create a temp config file without password
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".json", delete=False
+            ) as f:
+                json.dump(
+                    {
+                        "music_library": temp_music_dir,
+                    },
+                    f,
+                )
+                temp_path = f.name
+
+            # Mock os.path.exists to return True for "config.json"
+            original_exists = os.path.exists
+
+            def mock_exists(path):
+                if path == "config.json":
+                    return True
+                return original_exists(path)
+
+            monkeypatch.setattr("os.path.exists", mock_exists)
+
+            # Mock Config.from_file to load our temp config
+            from vibe_dj.models import Config
+
+            original_from_file = Config.from_file
+
+            def mock_from_file(path):
+                if path == "config.json":
+                    return original_from_file(temp_path)
+                return original_from_file(path)
+
+            monkeypatch.setattr("vibe_dj.models.Config.from_file", mock_from_file)
+            invalidate_config_cache()
+
+            try:
+                # Request without password and none stored
+                response = client.post(
+                    "/api/navidrome/test",
+                    json={
+                        "url": "http://localhost:4533",
+                        "username": "testuser",
+                    },
+                )
+
+                assert response.status_code == 200
+                data = response.json()
+                assert data["success"] is False
+                assert "no password" in data["message"].lower()
+            finally:
+                Path(temp_path).unlink(missing_ok=True)
+                invalidate_config_cache()
 
 
 class TestUpdateConfigRoutes:
