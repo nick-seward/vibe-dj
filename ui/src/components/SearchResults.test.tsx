@@ -79,33 +79,37 @@ describe('SearchResults', () => {
     expect(defaultProps.onPageSizeChange).toHaveBeenCalledWith(100)
   })
 
-  it('renders pagination controls when there are multiple pages', () => {
+  it('renders pagination controls at both top and bottom when there are multiple pages', () => {
     renderWithProvider(<SearchResults {...defaultProps} />)
 
-    expect(screen.getByText(/page 1 of 2/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /previous/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument()
+    const pageLabels = screen.getAllByText(/page 1 of 2/i)
+    expect(pageLabels).toHaveLength(2)
+
+    const prevButtons = screen.getAllByRole('button', { name: /previous/i })
+    const nextButtons = screen.getAllByRole('button', { name: /next/i })
+    expect(prevButtons).toHaveLength(2)
+    expect(nextButtons).toHaveLength(2)
   })
 
   it('disables previous button on first page', () => {
     renderWithProvider(<SearchResults {...defaultProps} />)
 
-    const prevButton = screen.getByRole('button', { name: /previous/i })
-    expect(prevButton).toBeDisabled()
+    const prevButtons = screen.getAllByRole('button', { name: /previous/i })
+    prevButtons.forEach((btn) => expect(btn).toBeDisabled())
   })
 
   it('enables next button when there are more pages', () => {
     renderWithProvider(<SearchResults {...defaultProps} />)
 
-    const nextButton = screen.getByRole('button', { name: /next/i })
-    expect(nextButton).not.toBeDisabled()
+    const nextButtons = screen.getAllByRole('button', { name: /next/i })
+    nextButtons.forEach((btn) => expect(btn).not.toBeDisabled())
   })
 
   it('calls onPageChange when next button is clicked', () => {
     renderWithProvider(<SearchResults {...defaultProps} />)
 
-    const nextButton = screen.getByRole('button', { name: /next/i })
-    fireEvent.click(nextButton)
+    const nextButtons = screen.getAllByRole('button', { name: /next/i })
+    fireEvent.click(nextButtons[0])
 
     expect(defaultProps.onPageChange).toHaveBeenCalledWith(50)
   })
@@ -117,8 +121,8 @@ describe('SearchResults', () => {
     }
     renderWithProvider(<SearchResults {...propsOnPage2} />)
 
-    const prevButton = screen.getByRole('button', { name: /previous/i })
-    fireEvent.click(prevButton)
+    const prevButtons = screen.getAllByRole('button', { name: /previous/i })
+    fireEvent.click(prevButtons[0])
 
     expect(defaultProps.onPageChange).toHaveBeenCalledWith(0)
   })
@@ -150,8 +154,8 @@ describe('SearchResults', () => {
     }
     renderWithProvider(<SearchResults {...propsAtMaxDepth} />)
 
-    const nextButton = screen.getByRole('button', { name: /next/i })
-    expect(nextButton).toBeDisabled()
+    const nextButtons = screen.getAllByRole('button', { name: /next/i })
+    nextButtons.forEach((btn) => expect(btn).toBeDisabled())
   })
 
   it('disables dropdown when loading', () => {
@@ -172,8 +176,10 @@ describe('SearchResults', () => {
     }
     renderWithProvider(<SearchResults {...propsLoading} />)
 
-    const nextButton = screen.getByRole('button', { name: /next/i })
-    expect(nextButton).toBeDisabled()
+    const nextButtons = screen.getAllByRole('button', { name: /next/i })
+    const prevButtons = screen.getAllByRole('button', { name: /previous/i })
+    nextButtons.forEach((btn) => expect(btn).toBeDisabled())
+    prevButtons.forEach((btn) => expect(btn).toBeDisabled())
   })
 
   it('shows no results message when songs array is empty', () => {

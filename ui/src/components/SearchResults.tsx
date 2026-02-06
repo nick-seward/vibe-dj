@@ -15,6 +15,54 @@ interface SearchResultsProps {
   loading?: boolean
 }
 
+function PaginationControls({
+  currentPage,
+  totalPages,
+  canGoPrevious,
+  canGoNext,
+  onPrevious,
+  onNext,
+  loading,
+}: {
+  currentPage: number
+  totalPages: number
+  canGoPrevious: boolean
+  canGoNext: boolean
+  onPrevious: () => void
+  onNext: () => void
+  loading: boolean
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="flex items-center justify-center gap-4"
+    >
+      <button
+        onClick={onPrevious}
+        disabled={!canGoPrevious || loading}
+        className="flex items-center gap-1 px-4 py-2 rounded-lg bg-surface hover:bg-surface-light disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        <ChevronLeft className="w-5 h-5" />
+        Previous
+      </button>
+
+      <span className="text-text-muted">
+        Page {currentPage} of {totalPages}
+      </span>
+
+      <button
+        onClick={onNext}
+        disabled={!canGoNext || loading}
+        className="flex items-center gap-1 px-4 py-2 rounded-lg bg-surface hover:bg-surface-light disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        Next
+        <ChevronRight className="w-5 h-5" />
+      </button>
+    </motion.div>
+  )
+}
+
 export function SearchResults({ 
   results, 
   pageSize, 
@@ -126,6 +174,20 @@ export function SearchResults({
             </div>
           </div>
 
+          {totalPages > 1 && (
+            <div className="mb-4">
+              <PaginationControls
+                currentPage={currentPage}
+                totalPages={totalPages}
+                canGoPrevious={canGoPrevious}
+                canGoNext={canGoNext}
+                onPrevious={handlePrevious}
+                onNext={handleNext}
+                loading={loading}
+              />
+            </div>
+          )}
+
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
             <AnimatePresence>
               {results.songs.map((song) => (
@@ -141,33 +203,17 @@ export function SearchResults({
           </div>
 
           {totalPages > 1 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex items-center justify-center gap-4 mt-8"
-            >
-              <button
-                onClick={handlePrevious}
-                disabled={!canGoPrevious || loading}
-                className="flex items-center gap-1 px-4 py-2 rounded-lg bg-surface hover:bg-surface-light disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <ChevronLeft className="w-5 h-5" />
-                Previous
-              </button>
-
-              <span className="text-text-muted">
-                Page {currentPage} of {totalPages}
-              </span>
-
-              <button
-                onClick={handleNext}
-                disabled={!canGoNext || loading}
-                className="flex items-center gap-1 px-4 py-2 rounded-lg bg-surface hover:bg-surface-light disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                Next
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </motion.div>
+            <div className="mt-8">
+              <PaginationControls
+                currentPage={currentPage}
+                totalPages={totalPages}
+                canGoPrevious={canGoPrevious}
+                canGoNext={canGoNext}
+                onPrevious={handlePrevious}
+                onNext={handleNext}
+                loading={loading}
+              />
+            </div>
           )}
         </>
       )}
