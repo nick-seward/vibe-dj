@@ -186,6 +186,28 @@ describe('SearchResults', () => {
     expect(screen.getByText(/no songs found/i)).toBeInTheDocument()
   })
 
+  it('highlights song card with gradient when selected', () => {
+    renderWithProvider(<SearchResults {...defaultProps} />)
+
+    const addButtons = screen.getAllByRole('button', { name: /add to choice list/i })
+    fireEvent.click(addButtons[0])
+
+    const selectedButton = screen.getByRole('button', { name: /already in choice list/i })
+    const songCard = selectedButton.closest('[class*="card"]')
+    expect(songCard).toHaveClass('bg-gradient-to-r')
+    expect(songCard).toHaveClass('from-primary/20')
+    expect(songCard).toHaveClass('to-secondary/20')
+    expect(songCard).toHaveClass('border-primary/60')
+  })
+
+  it('does not highlight unselected song cards', () => {
+    renderWithProvider(<SearchResults {...defaultProps} />)
+
+    const addButtons = screen.getAllByRole('button', { name: /add to choice list/i })
+    const songCard = addButtons[0].closest('[class*="card"]')
+    expect(songCard).not.toHaveClass('bg-gradient-to-r')
+  })
+
   it('calls onBack when back button is clicked', () => {
     renderWithProvider(<SearchResults {...defaultProps} />)
 

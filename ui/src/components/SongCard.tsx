@@ -25,7 +25,7 @@ export function SongCard({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className={`card flex items-center gap-4 ${isSelected ? 'border-primary bg-primary/10' : ''}`}
+      className={`card flex items-center gap-4 ${isSelected ? 'border-primary/60 bg-gradient-to-r from-primary/20 to-secondary/20' : ''}`}
     >
       <div className="flex-1 min-w-0">
         <h3 className="font-medium text-text truncate">{song.title}</h3>
