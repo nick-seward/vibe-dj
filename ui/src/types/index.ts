@@ -93,6 +93,8 @@ export interface JobStatusResponse {
   progress: {
     phase?: string
     message?: string
+    processed?: number
+    total?: number
   } | null
   error: string | null
   started_at: string | null

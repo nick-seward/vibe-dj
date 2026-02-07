@@ -222,9 +222,20 @@ export function MusicTab({ musicLibrary, originalMusicLibrary, onMusicLibraryCha
               {getProgressMessage()}
             </span>
           </div>
-          {status?.progress?.phase && (
-            <div className="mt-2 text-xs text-text-muted">
-              Phase: <span className="text-text">{status.progress.phase}</span>
+          {status?.progress?.processed != null && status?.progress?.total != null && status.progress.total > 0 && (
+            <div className="mt-3">
+              <div className="flex justify-between text-xs text-text-muted mb-1">
+                <span>{status.progress.processed} / {status.progress.total}</span>
+                <span>{Math.round((status.progress.processed / status.progress.total) * 100)}%</span>
+              </div>
+              <div className="w-full h-2 bg-surface rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full bg-primary rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(status.progress.processed / status.progress.total) * 100}%` }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                />
+              </div>
             </div>
           )}
         </motion.div>
