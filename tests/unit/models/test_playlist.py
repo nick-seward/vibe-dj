@@ -1,91 +1,100 @@
-import unittest
 from datetime import datetime
+
+import pytest
 
 from vibe_dj.models.playlist import Playlist
 from vibe_dj.models.song import Song
 
 
-class TestPlaylist(unittest.TestCase):
-    """Test suite for Playlist class."""
-
-    def setUp(self):
-        """Set up test fixtures with sample songs before each test method."""
-        self.song1 = Song(
-            id=1,
-            file_path="/path/1.mp3",
-            title="Song 1",
-            artist="Artist 1",
-            album="Album 1",
-            genre="Rock",
-            last_modified=0.0,
-            duration=180,
-        )
-        self.song2 = Song(
-            id=2,
-            file_path="/path/2.mp3",
-            title="Song 2",
-            artist="Artist 2",
-            album="Album 2",
-            genre="Pop",
-            last_modified=0.0,
-            duration=200,
-        )
-
-    def test_playlist_creation(self):
-        playlist = Playlist()
-
-        self.assertEqual(len(playlist), 0)
-        self.assertEqual(len(playlist.songs), 0)
-        self.assertEqual(len(playlist.seed_songs), 0)
-        self.assertIsInstance(playlist.created_at, datetime)
-
-    def test_add_song(self):
-        playlist = Playlist()
-        playlist.add_song(self.song1)
-
-        self.assertEqual(len(playlist), 1)
-        self.assertEqual(playlist.songs[0], self.song1)
-
-    def test_add_multiple_songs(self):
-        playlist = Playlist()
-        playlist.add_song(self.song1)
-        playlist.add_song(self.song2)
-
-        self.assertEqual(len(playlist), 2)
-        self.assertEqual(playlist.songs[0], self.song1)
-        self.assertEqual(playlist.songs[1], self.song2)
-
-    def test_remove_song(self):
-        playlist = Playlist(songs=[self.song1, self.song2])
-
-        result = playlist.remove_song(1)
-
-        self.assertTrue(result)
-        self.assertEqual(len(playlist), 1)
-        self.assertEqual(playlist.songs[0], self.song2)
-
-    def test_remove_nonexistent_song(self):
-        playlist = Playlist(songs=[self.song1])
-
-        result = playlist.remove_song(999)
-
-        self.assertFalse(result)
-        self.assertEqual(len(playlist), 1)
-
-    def test_get_song_ids(self):
-        playlist = Playlist(songs=[self.song1, self.song2])
-
-        song_ids = playlist.get_song_ids()
-
-        self.assertEqual(song_ids, [1, 2])
-
-    def test_playlist_with_seeds(self):
-        playlist = Playlist(songs=[self.song2], seed_songs=[self.song1])
-
-        self.assertEqual(len(playlist.songs), 1)
-        self.assertEqual(len(playlist.seed_songs), 1)
-        self.assertEqual(playlist.seed_songs[0], self.song1)
+@pytest.fixture()
+def sample_songs():
+    """Set up test fixtures with sample songs before each test method."""
+    song1 = Song(
+        id=1,
+        file_path="/path/1.mp3",
+        title="Song 1",
+        artist="Artist 1",
+        album="Album 1",
+        genre="Rock",
+        last_modified=0.0,
+        duration=180,
+    )
+    song2 = Song(
+        id=2,
+        file_path="/path/2.mp3",
+        title="Song 2",
+        artist="Artist 2",
+        album="Album 2",
+        genre="Pop",
+        last_modified=0.0,
+        duration=200,
+    )
+    return song1, song2
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_playlist_creation():
+    playlist = Playlist()
+
+    assert len(playlist) == 0
+    assert len(playlist.songs) == 0
+    assert len(playlist.seed_songs) == 0
+    assert isinstance(playlist.created_at, datetime)
+
+
+def test_add_song(sample_songs):
+    song1, _song2 = sample_songs
+    playlist = Playlist()
+    playlist.add_song(song1)
+
+    assert len(playlist) == 1
+    assert playlist.songs[0] == song1
+
+
+def test_add_multiple_songs(sample_songs):
+    song1, song2 = sample_songs
+    playlist = Playlist()
+    playlist.add_song(song1)
+    playlist.add_song(song2)
+
+    assert len(playlist) == 2
+    assert playlist.songs[0] == song1
+    assert playlist.songs[1] == song2
+
+
+def test_remove_song(sample_songs):
+    song1, song2 = sample_songs
+    playlist = Playlist(songs=[song1, song2])
+
+    result = playlist.remove_song(1)
+
+    assert result
+    assert len(playlist) == 1
+    assert playlist.songs[0] == song2
+
+
+def test_remove_nonexistent_song(sample_songs):
+    song1, _song2 = sample_songs
+    playlist = Playlist(songs=[song1])
+
+    result = playlist.remove_song(999)
+
+    assert not result
+    assert len(playlist) == 1
+
+
+def test_get_song_ids(sample_songs):
+    song1, song2 = sample_songs
+    playlist = Playlist(songs=[song1, song2])
+
+    song_ids = playlist.get_song_ids()
+
+    assert song_ids == [1, 2]
+
+
+def test_playlist_with_seeds(sample_songs):
+    song1, song2 = sample_songs
+    playlist = Playlist(songs=[song2], seed_songs=[song1])
+
+    assert len(playlist.songs) == 1
+    assert len(playlist.seed_songs) == 1
+    assert playlist.seed_songs[0] == song1
