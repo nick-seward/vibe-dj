@@ -53,9 +53,7 @@ class NavidromeSyncService:
 
         if not all([url, username, password]):
             logger.warning("Navidrome sync requested but credentials not provided")
-            logger.warning(
-                "Provide via parameters or config file"
-            )
+            logger.warning("Provide via parameters or config file")
             return {
                 "success": False,
                 "playlist_id": None,

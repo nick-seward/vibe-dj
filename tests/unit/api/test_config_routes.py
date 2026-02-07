@@ -83,9 +83,7 @@ class TestConfigRoutes:
     def test_validate_path_valid_directory(self, client):
         """Test validation of a valid directory."""
         with tempfile.TemporaryDirectory() as temp_dir:
-            response = client.post(
-                "/api/config/validate-path", json={"path": temp_dir}
-            )
+            response = client.post("/api/config/validate-path", json={"path": temp_dir})
 
             assert response.status_code == 200
             data = response.json()
@@ -227,7 +225,9 @@ class TestConfigRoutes:
                 invalidate_config_cache()
 
     @patch("vibe_dj.services.navidrome_client.NavidromeClient.ping")
-    def test_navidrome_test_empty_password_uses_stored(self, mock_ping, client, monkeypatch):
+    def test_navidrome_test_empty_password_uses_stored(
+        self, mock_ping, client, monkeypatch
+    ):
         """Test that empty password string falls back to stored password."""
         mock_ping.return_value = True
 
@@ -356,9 +356,7 @@ class TestUpdateConfigRoutes:
     @pytest.fixture
     def temp_config_file(self, monkeypatch):
         """Create a temporary config file and patch the CONFIG_FILE_PATH."""
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(
                 {
                     "music_library": "/original/path",
@@ -370,9 +368,7 @@ class TestUpdateConfigRoutes:
             )
             temp_path = f.name
 
-        monkeypatch.setattr(
-            "vibe_dj.api.routes.config.CONFIG_FILE_PATH", temp_path
-        )
+        monkeypatch.setattr("vibe_dj.api.routes.config.CONFIG_FILE_PATH", temp_path)
 
         # Invalidate cache to ensure fresh config is loaded
         invalidate_config_cache()

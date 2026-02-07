@@ -1,10 +1,9 @@
 import os
 from concurrent.futures import ThreadPoolExecutor, TimeoutError, as_completed
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 from loguru import logger
-from tqdm import tqdm
 
 from vibe_dj.core.analyzer import AudioAnalyzer
 from vibe_dj.core.database import MusicDatabase
@@ -91,19 +90,25 @@ class LibraryIndexer:
         logger.info(f"{len(to_process)} new/modified files to process")
         return to_process
 
-    def extract_metadata_phase(self, files: List[str]) -> int:
+    def extract_metadata_phase(
+        self,
+        files: List[str],
+        progress_callback: Optional[Callable[[str, int, int], None]] = None,
+    ) -> int:
         """Extract and immediately persist metadata.
 
         Phase 1 of indexing: extracts metadata (title, artist, album, genre,
         duration) and saves to database without features.
 
         :param files: List of file paths to process
+        :param progress_callback: Optional callback(phase, processed, total)
         :return: Count of successfully processed files
         """
         logger.info("=== Phase 1: Extracting metadata ===")
 
+        total = len(files)
         processed = 0
-        for file_path in tqdm(files, desc="Metadata extraction", unit="song"):
+        for file_path in files:
             title, artist, album, genre = self.analyzer.extract_metadata(file_path)
             duration = self.analyzer.get_duration(file_path)
             mtime = os.path.getmtime(file_path)
@@ -121,6 +126,9 @@ class LibraryIndexer:
             self.database.add_song(song, features=None)
             processed += 1
 
+            if progress_callback is not None:
+                progress_callback("metadata", processed, total)
+
             if processed % self.config.batch_size == 0:
                 self.database.commit()
 
@@ -128,13 +136,17 @@ class LibraryIndexer:
         logger.info(f"Phase 1 complete: {processed} songs with metadata saved")
         return processed
 
-    def extract_features_phase(self) -> int:
+    def extract_features_phase(
+        self,
+        progress_callback: Optional[Callable[[str, int, int], None]] = None,
+    ) -> int:
         """Extract features for songs missing them.
 
         Phase 2 of indexing: uses librosa to extract audio features for
         songs that have metadata but no features yet. Processes in parallel
         with configurable timeout.
 
+        :param progress_callback: Optional callback(phase, processed, total)
         :return: Count of songs successfully processed with features
         """
         songs_needing_features = self.database.get_songs_without_features()
@@ -158,35 +170,36 @@ class LibraryIndexer:
                 for args in args_list
             }
 
+            total = len(file_paths)
+            completed = 0
             try:
-                with tqdm(
-                    total=len(file_paths), desc="Librosa analysis", unit="song"
-                ) as pbar:
-                    for future in as_completed(future_to_file):
-                        file_path = future_to_file[future]
-                        try:
-                            result_file_path, features, bpm = future.result(
-                                timeout=timeout_seconds
-                            )
+                for future in as_completed(future_to_file):
+                    file_path = future_to_file[future]
+                    try:
+                        result_file_path, features, bpm = future.result(
+                            timeout=timeout_seconds
+                        )
 
-                            if features is not None:
-                                song = self.database.get_song_by_path(result_file_path)
-                                if song:
-                                    self.database.add_song(song, features)
-                                    processed += 1
+                        if features is not None:
+                            song = self.database.get_song_by_path(result_file_path)
+                            if song:
+                                self.database.add_song(song, features)
+                                processed += 1
 
-                                    if processed % self.config.batch_size == 0:
-                                        self.database.commit()
-                            else:
-                                logger.warning(f"Failed to process: {result_file_path}")
-                        except TimeoutError:
-                            logger.warning(
-                                f"Timeout ({timeout_seconds}s) processing: {file_path}"
-                            )
-                        except Exception as e:
-                            logger.error(f"Error processing {file_path}: {e}")
-                        finally:
-                            pbar.update(1)
+                                if processed % self.config.batch_size == 0:
+                                    self.database.commit()
+                        else:
+                            logger.warning(f"Failed to process: {result_file_path}")
+                    except TimeoutError:
+                        logger.warning(
+                            f"Timeout ({timeout_seconds}s) processing: {file_path}"
+                        )
+                    except Exception as e:
+                        logger.error(f"Error processing {file_path}: {e}")
+                    finally:
+                        completed += 1
+                        if progress_callback is not None:
+                            progress_callback("features", completed, total)
 
                 self.database.commit()
                 logger.info(f"Phase 2 complete: {processed} songs with features saved")
@@ -314,7 +327,11 @@ class LibraryIndexer:
             )
             self.rebuild_similarity_index()
 
-    def index_library(self, library_path: str) -> None:
+    def index_library(
+        self,
+        library_path: str,
+        progress_callback: Optional[Callable[[str, int, int], None]] = None,
+    ) -> None:
         """Index the music library with resumable incremental processing.
 
         Main entry point for library indexing. Performs scanning, metadata
@@ -322,6 +339,7 @@ class LibraryIndexer:
         Supports resuming from interruption.
 
         :param library_path: Root directory of the music library
+        :param progress_callback: Optional callback(phase, processed, total)
         """
         self.database.init_db()
 
@@ -342,11 +360,15 @@ class LibraryIndexer:
 
         if files_to_process:
             logger.info(f"Indexing {len(files_to_process)} new/modified songs...")
-            metadata_count = self.extract_metadata_phase(files_to_process)
+            metadata_count = self.extract_metadata_phase(
+                files_to_process, progress_callback=progress_callback
+            )
         else:
             logger.info("No new or modified songs found.")
 
-        features_count = self.extract_features_phase()
+        features_count = self.extract_features_phase(
+            progress_callback=progress_callback
+        )
 
         deleted_count = self.clean_deleted_files(all_files)
 

@@ -80,6 +80,34 @@ class TestLibraryIndexer(unittest.TestCase):
             self.mock_db.add_song.assert_called()
             self.mock_db.commit.assert_called()
 
+    def test_extract_metadata_phase_with_callback(self):
+        self.mock_analyzer.extract_metadata.return_value = (
+            "Title",
+            "Artist",
+            "Album",
+            "Rock",
+        )
+        self.mock_analyzer.get_duration.return_value = 180
+
+        callback = MagicMock()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            files = []
+            for i in range(3):
+                f = Path(tmpdir, f"song{i}.mp3")
+                f.touch()
+                files.append(str(f))
+
+            count = self.indexer.extract_metadata_phase(
+                files, progress_callback=callback
+            )
+
+            self.assertEqual(count, 3)
+            self.assertEqual(callback.call_count, 3)
+            callback.assert_any_call("metadata", 1, 3)
+            callback.assert_any_call("metadata", 2, 3)
+            callback.assert_any_call("metadata", 3, 3)
+
     def test_extract_features_phase(self):
         song1 = Song(
             id=1,
@@ -117,6 +145,49 @@ class TestLibraryIndexer(unittest.TestCase):
 
         self.assertEqual(count, 2)
         self.mock_db.get_songs_without_features.assert_called_once()
+
+    def test_extract_features_phase_with_callback(self):
+        song1 = Song(
+            id=1,
+            file_path="/test/1.mp3",
+            title="Song 1",
+            artist="Artist 1",
+            album="Album 1",
+            genre="Rock",
+            last_modified=0.0,
+            duration=180,
+        )
+        song2 = Song(
+            id=2,
+            file_path="/test/2.mp3",
+            title="Song 2",
+            artist="Artist 2",
+            album="Album 2",
+            genre="Pop",
+            last_modified=0.0,
+            duration=200,
+        )
+
+        self.mock_db.get_songs_without_features.return_value = [song1, song2]
+
+        features = Features(
+            song_id=0,
+            feature_vector=np.array([1.0, 2.0, 3.0], dtype=np.float32),
+            bpm=120.0,
+        )
+
+        self.mock_analyzer.extract_features.return_value = features
+        self.mock_db.get_song_by_path.return_value = song1
+
+        callback = MagicMock()
+        count = self.indexer.extract_features_phase(progress_callback=callback)
+
+        self.assertEqual(count, 2)
+        self.assertEqual(callback.call_count, 2)
+        # Verify callback was called with "features" phase and correct total
+        for c in callback.call_args_list:
+            self.assertEqual(c[0][0], "features")
+            self.assertEqual(c[0][2], 2)
 
     def test_extract_features_phase_no_songs(self):
         self.mock_db.get_songs_without_features.return_value = []

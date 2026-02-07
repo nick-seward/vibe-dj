@@ -38,7 +38,9 @@ class Config:
         if self.music_library and not os.path.exists(self.music_library):
             raise ValueError(f"Music library path does not exist: {self.music_library}")
         if self.music_library and not os.path.isdir(self.music_library):
-            raise ValueError(f"Music library path is not a directory: {self.music_library}")
+            raise ValueError(
+                f"Music library path is not a directory: {self.music_library}"
+            )
 
     @classmethod
     def from_file(cls, path: str) -> "Config":
