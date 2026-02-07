@@ -42,7 +42,7 @@ export function useIndexing() {
 
       if (data.status === 'completed') {
         stopPolling()
-        setState((prev) => ({ ...prev, isIndexing: false }))
+        setState((prev) => ({ ...prev, isIndexing: false, error: null }))
         onCompleteRef.current?.(true, 'Indexing completed successfully')
       } else if (data.status === 'failed') {
         stopPolling()
@@ -55,7 +55,10 @@ export function useIndexing() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to poll status'
-      setState((prev) => ({ ...prev, error: errorMessage }))
+      // Only surface poll errors if polling has stopped (not transient failures)
+      if (!pollIntervalRef.current) {
+        setState((prev) => ({ ...prev, error: errorMessage }))
+      }
     }
   }, [stopPolling])
 
