@@ -55,11 +55,28 @@ def run_indexing_job(
             similarity_index = SimilarityIndex(config)
             indexer = LibraryIndexer(config, db, analyzer, similarity_index)
 
+            phase_labels = {
+                "metadata": "Extracting metadata",
+                "features": "Analyzing audio",
+            }
+
+            def progress_callback(phase: str, processed: int, total: int) -> None:
+                label = phase_labels.get(phase, phase)
+                job_manager.update_progress(
+                    job_id,
+                    {
+                        "phase": phase,
+                        "processed": processed,
+                        "total": total,
+                        "message": f"{label} ({processed}/{total})",
+                    },
+                )
+
             job_manager.update_progress(
                 job_id, {"phase": "scanning", "message": "Scanning music library..."}
             )
 
-            indexer.index_library(library_path)
+            indexer.index_library(library_path, progress_callback=progress_callback)
 
             job_manager.update_progress(
                 job_id,
