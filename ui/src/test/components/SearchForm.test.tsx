@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { SearchForm } from './SearchForm'
+import { SearchForm } from '@/components/SearchForm'
 
 describe('SearchForm', () => {
   it('renders all input fields', () => {

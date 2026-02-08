@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import { ChoiceListProvider, useChoiceList } from './ChoiceListContext'
+import { ChoiceListProvider, useChoiceList } from '@/context/ChoiceListContext'
 import type { Song } from '@/types'
 
 const createMockSong = (id: number): Song => ({

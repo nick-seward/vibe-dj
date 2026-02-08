@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import type { ReactNode, HTMLAttributes, ButtonHTMLAttributes } from 'react'
-import { MusicTab } from './MusicTab'
+import { MusicTab } from '@/components/MusicTab'
 import { ToastProvider } from '@/context/ToastContext'
 import type { JobStatusResponse } from '@/types'
 

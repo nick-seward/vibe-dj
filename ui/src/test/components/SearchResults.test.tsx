@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { SearchResults } from './SearchResults'
+import { SearchResults } from '@/components/SearchResults'
 import { ChoiceListProvider } from '@/context/ChoiceListContext'
 import type { PaginatedSearchResult, PageSize } from '@/types'
 
