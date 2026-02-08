@@ -1011,13 +1011,15 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "python-multipart" },
     { name = "requests" },
-    { name = "ruff" },
     { name = "soundfile" },
     { name = "sqlalchemy" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
 [package.dev-dependencies]
+dev = [
+    { name = "ruff" },
+]
 test = [
     { name = "httpx" },
     { name = "pytest" },
@@ -1038,13 +1040,13 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.6.0" },
     { name = "python-multipart", specifier = ">=0.0.9" },
     { name = "requests", specifier = ">=2.31.0" },
-    { name = "ruff", specifier = "==0.12.8" },
     { name = "soundfile", specifier = ">=0.13.1" },
     { name = "sqlalchemy", specifier = ">=2.0.45" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.32.0" },
 ]
 
 [package.metadata.requires-dev]
+dev = [{ name = "ruff", specifier = "==0.12.8" }]
 test = [
     { name = "httpx", specifier = ">=0.28.0" },
     { name = "pytest", specifier = "==9.0.2" },
