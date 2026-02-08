@@ -3,6 +3,7 @@
 ## Corrections
 | Date | Source | What Went Wrong | What To Do Instead |
 |------|--------|----------------|-------------------|
+| 2026-02-07 | user | Pushed code then ran `bd close` + `bd comments add`, leaving `.beads/issues.jsonl` uncommitted | After `bd close`/`bd comments add`/`bd sync`, always run `git status` to check for uncommitted beads files, then commit and push them |
 
 ## User Preferences
 - Uses `bd comments add <id> "text"` not `bd note add` for beads
