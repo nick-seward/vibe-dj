@@ -9,6 +9,7 @@
 ## User Preferences
 - Uses `bd comments add <id> "text"` not `bd note add` for beads
 - Follow AGENTS.md workflow strictly: claim bead, do work, run tests, request review before commit
+- Present review/diff after EACH bead is completed, before moving to the next one
 
 ## Patterns That Work
 - (accumulate here as you learn them)

@@ -2,11 +2,10 @@
 FROM python:3.14.2-slim
 
 # Install system dependencies required by librosa and audio processing
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libsndfile1 \
-    libsndfile1-dev \
-    libmpg123-dev \
+    libmpg123-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
