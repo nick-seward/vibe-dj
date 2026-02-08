@@ -51,6 +51,7 @@ RUN mkdir -p /data /music
 ENV VIBE_DJ_DATA_DIR=/data
 ENV VIBE_DJ_DATABASE_PATH=/data/music.db
 ENV VIBE_DJ_FAISS_INDEX_PATH=/data/faiss_index.bin
+ENV VIBE_DJ_UI_PATH=/app/ui/dist
 
 # Set the working directory to /data so database and index files are created there
 WORKDIR /data
