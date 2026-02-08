@@ -4,6 +4,7 @@
 | Date | Source | What Went Wrong | What To Do Instead |
 |------|--------|----------------|-------------------|
 | 2026-02-07 | user | Pushed code then ran `bd close` + `bd comments add`, leaving `.beads/issues.jsonl` uncommitted | After `bd close`/`bd comments add`/`bd sync`, always run `git status` to check for uncommitted beads files, then commit and push them |
+| 2026-02-07 | user | After creating beads, immediately claimed one and started building Docker image without being asked | Only create the beads when asked to create them. Do NOT auto-claim or start work unless the user explicitly says to |
 
 ## User Preferences
 - Uses `bd comments add <id> "text"` not `bd note add` for beads
