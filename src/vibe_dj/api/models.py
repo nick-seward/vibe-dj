@@ -165,6 +165,21 @@ class JobStatusResponse(BaseModel):
     completed_at: Optional[datetime] = None
 
 
+class ActiveJobResponse(BaseModel):
+    """Response for active indexing job check.
+
+    Returns the currently active job status, or null job_id with idle status
+    if no job is active.
+    """
+
+    job_id: Optional[str] = None
+    status: Literal["queued", "running", "idle"] = "idle"
+    progress: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+
+
 class HealthResponse(BaseModel):
     """Health check response.
 

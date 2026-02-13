@@ -70,3 +70,48 @@ class TestBackgroundJobManager:
         job = manager.get_job("nonexistent-id")
 
         assert job is None
+
+    def test_get_active_job_no_jobs(self):
+        """Test get_active_job returns None when no jobs exist."""
+        manager = JobManager()
+
+        assert manager.get_active_job() is None
+
+    def test_get_active_job_queued(self):
+        """Test get_active_job returns a queued job."""
+        manager = JobManager()
+        job_id = manager.create_job()
+
+        active = manager.get_active_job()
+        assert active is not None
+        assert active.job_id == job_id
+        assert active.status == "queued"
+
+    def test_get_active_job_running(self):
+        """Test get_active_job returns a running job."""
+        manager = JobManager()
+        job_id = manager.create_job()
+        manager.start_job(job_id)
+
+        active = manager.get_active_job()
+        assert active is not None
+        assert active.job_id == job_id
+        assert active.status == "running"
+
+    def test_get_active_job_all_completed(self):
+        """Test get_active_job returns None when all jobs are completed."""
+        manager = JobManager()
+        job_id = manager.create_job()
+        manager.start_job(job_id)
+        manager.complete_job(job_id)
+
+        assert manager.get_active_job() is None
+
+    def test_get_active_job_all_failed(self):
+        """Test get_active_job returns None when all jobs are failed."""
+        manager = JobManager()
+        job_id = manager.create_job()
+        manager.start_job(job_id)
+        manager.fail_job(job_id, "error")
+
+        assert manager.get_active_job() is None

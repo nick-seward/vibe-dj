@@ -21,7 +21,7 @@ from vibe_dj.api.dependencies import (
     get_similarity_index,
     parse_config_file,
 )
-from vibe_dj.api.models import IndexJobResponse, IndexRequest, JobStatusResponse
+from vibe_dj.api.models import ActiveJobResponse, IndexJobResponse, IndexRequest, JobStatusResponse
 from vibe_dj.core import AudioAnalyzer, LibraryIndexer, MusicDatabase, SimilarityIndex
 from vibe_dj.models import Config
 
@@ -192,6 +192,33 @@ def get_job_status(
         raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
 
     return JobStatusResponse(
+        job_id=job.job_id,
+        status=job.status,
+        progress=job.progress,
+        error=job.error,
+        started_at=job.started_at,
+        completed_at=job.completed_at,
+    )
+
+
+@router.get("/index/active", response_model=ActiveJobResponse)
+def get_active_job(
+    job_manager: JobManager = Depends(get_job_manager),
+) -> ActiveJobResponse:
+    """Check for a currently active indexing job.
+
+    Returns the status of any queued or running indexing job. If no job
+    is active, returns an idle response with null job_id.
+
+    :param job_manager: Job manager for tracking
+    :return: Active job status or idle response
+    """
+    job = job_manager.get_active_job()
+
+    if not job:
+        return ActiveJobResponse()
+
+    return ActiveJobResponse(
         job_id=job.job_id,
         status=job.status,
         progress=job.progress,

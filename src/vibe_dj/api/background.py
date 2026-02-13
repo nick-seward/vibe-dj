@@ -115,6 +115,16 @@ class JobManager:
             job.completed_at = datetime.now()
             logger.error(f"Job {job_id} failed: {error}")
 
+    def get_active_job(self) -> Optional[JobStatus]:
+        """Get the currently active (queued or running) job, if any.
+
+        :return: JobStatus if an active job exists, None otherwise
+        """
+        for job in self._jobs.values():
+            if job.status in ("queued", "running"):
+                return job
+        return None
+
     def cleanup_old_jobs(self, max_age_hours: int = 24) -> int:
         """Remove jobs older than specified age.
 

@@ -87,6 +87,86 @@ class TestIndexEndpoints:
             app.dependency_overrides.pop(get_job_manager, None)
 
 
+class TestActiveJobEndpoint:
+    """Test GET /api/index/active endpoint."""
+
+    def test_no_active_job_returns_idle(self, client):
+        """Test that idle response is returned when no job is active."""
+        from vibe_dj.api.dependencies import get_job_manager
+
+        mock_manager = MagicMock()
+        mock_manager.get_active_job.return_value = None
+
+        app.dependency_overrides[get_job_manager] = lambda: mock_manager
+
+        try:
+            response = client.get("/api/index/active")
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["job_id"] is None
+            assert data["status"] == "idle"
+            assert data["progress"] is None
+        finally:
+            app.dependency_overrides.pop(get_job_manager, None)
+
+    def test_active_running_job(self, client):
+        """Test that running job status is returned when a job is active."""
+        from vibe_dj.api.dependencies import get_job_manager
+
+        mock_job = MagicMock()
+        mock_job.job_id = "active-job-123"
+        mock_job.status = "running"
+        mock_job.progress = {"phase": "metadata", "processed": 5, "total": 10}
+        mock_job.error = None
+        mock_job.started_at = None
+        mock_job.completed_at = None
+
+        mock_manager = MagicMock()
+        mock_manager.get_active_job.return_value = mock_job
+
+        app.dependency_overrides[get_job_manager] = lambda: mock_manager
+
+        try:
+            response = client.get("/api/index/active")
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["job_id"] == "active-job-123"
+            assert data["status"] == "running"
+            assert data["progress"]["phase"] == "metadata"
+            assert data["progress"]["processed"] == 5
+        finally:
+            app.dependency_overrides.pop(get_job_manager, None)
+
+    def test_active_queued_job(self, client):
+        """Test that queued job status is returned when a job is queued."""
+        from vibe_dj.api.dependencies import get_job_manager
+
+        mock_job = MagicMock()
+        mock_job.job_id = "queued-job-456"
+        mock_job.status = "queued"
+        mock_job.progress = None
+        mock_job.error = None
+        mock_job.started_at = None
+        mock_job.completed_at = None
+
+        mock_manager = MagicMock()
+        mock_manager.get_active_job.return_value = mock_job
+
+        app.dependency_overrides[get_job_manager] = lambda: mock_manager
+
+        try:
+            response = client.get("/api/index/active")
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["job_id"] == "queued-job-456"
+            assert data["status"] == "queued"
+        finally:
+            app.dependency_overrides.pop(get_job_manager, None)
+
+
 class TestRunIndexingJob:
     """Test the run_indexing_job background function directly."""
 
