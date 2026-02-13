@@ -101,6 +101,20 @@ export interface JobStatusResponse {
   completed_at: string | null
 }
 
+export interface ActiveJobResponse {
+  job_id: string | null
+  status: 'queued' | 'running' | 'idle'
+  progress: {
+    phase?: string
+    message?: string
+    processed?: number
+    total?: number
+  } | null
+  error: string | null
+  started_at: string | null
+  completed_at: string | null
+}
+
 export interface TestNavidromeResponse {
   success: boolean
   message: string

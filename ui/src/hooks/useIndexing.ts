@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import type { IndexJobResponse, JobStatusResponse } from '@/types'
+import type { ActiveJobResponse, IndexJobResponse, JobStatusResponse } from '@/types'
 
 const API_BASE = '/api'
 const POLL_INTERVAL = 5000
@@ -132,6 +132,47 @@ export function useIndexing() {
     })
     onCompleteRef.current = null
   }, [stopPolling])
+
+  // Check for active job on mount
+  useEffect(() => {
+    const checkActiveJob = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/index/active`)
+        if (!response.ok) return
+
+        const data: ActiveJobResponse = await response.json()
+        if (data.status === 'idle' || !data.job_id) return
+
+        // Active job found — resume tracking
+        setState({
+          jobId: data.job_id,
+          status: {
+            job_id: data.job_id,
+            status: data.status,
+            progress: data.progress,
+            error: data.error,
+            started_at: data.started_at,
+            completed_at: data.completed_at,
+          },
+          isIndexing: true,
+          error: null,
+        })
+
+        // Start polling
+        pollIntervalRef.current = window.setInterval(() => {
+          pollStatus(data.job_id!)
+        }, POLL_INTERVAL)
+
+        // Also poll immediately for fresh status
+        pollStatus(data.job_id)
+      } catch {
+        // Silently ignore — no active job or network error
+      }
+    }
+
+    checkActiveJob()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Cleanup on unmount
   useEffect(() => {
