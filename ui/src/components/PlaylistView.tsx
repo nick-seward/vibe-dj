@@ -1,18 +1,12 @@
 import { useState } from 'react'
-import { RefreshCw, Send, ArrowLeft, Loader2, Music, PartyPopper, ChevronDown, ChevronUp } from 'lucide-react'
+import { RefreshCw, Send, ArrowLeft, Loader2, Music, PartyPopper } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { PlaylistResponse } from '@/types'
-
-interface NavidromeCredentials {
-  url?: string
-  username?: string
-  password?: string
-}
 
 interface PlaylistViewProps {
   playlist: PlaylistResponse
   onRegenerate: () => Promise<void>
-  onSyncToNavidrome: (playlistName: string, credentials?: NavidromeCredentials) => Promise<boolean>
+  onSyncToNavidrome: (playlistName: string) => Promise<boolean>
   onStartOver: () => void
   regenerating: boolean
 }
@@ -26,10 +20,6 @@ export function PlaylistView({
 }: PlaylistViewProps) {
   const [showNameModal, setShowNameModal] = useState(false)
   const [playlistName, setPlaylistName] = useState('')
-  const [showCredentials, setShowCredentials] = useState(false)
-  const [navidromeUrl, setNavidromeUrl] = useState('')
-  const [navidromeUsername, setNavidromeUsername] = useState('')
-  const [navidromePassword, setNavidromePassword] = useState('')
   const [syncing, setSyncing] = useState(false)
   const [syncSuccess, setSyncSuccess] = useState(false)
   const [syncError, setSyncError] = useState<string | null>(null)
@@ -41,22 +31,10 @@ export function PlaylistView({
     setSyncError(null)
 
     try {
-      const credentials: NavidromeCredentials | undefined = 
-        (navidromeUrl || navidromeUsername || navidromePassword)
-          ? {
-              url: navidromeUrl || undefined,
-              username: navidromeUsername || undefined,
-              password: navidromePassword || undefined,
-            }
-          : undefined
-
-      await onSyncToNavidrome(playlistName.trim(), credentials)
+      await onSyncToNavidrome(playlistName.trim())
       setSyncSuccess(true)
       setShowNameModal(false)
       setPlaylistName('')
-      setNavidromeUrl('')
-      setNavidromeUsername('')
-      setNavidromePassword('')
     } catch (err) {
       setSyncError(err instanceof Error ? err.message : 'Sync failed')
     } finally {
@@ -212,69 +190,6 @@ export function PlaylistView({
                 className="input-field mb-4"
                 autoFocus
               />
-
-              {/* Collapsible credentials section */}
-              <button
-                type="button"
-                onClick={() => setShowCredentials(!showCredentials)}
-                className="flex items-center gap-2 text-sm text-text-muted hover:text-text mb-2 transition-colors"
-              >
-                {showCredentials ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                Override server credentials (optional)
-              </button>
-
-              <AnimatePresence>
-                {showCredentials && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="space-y-3 mb-4 p-3 bg-background/50 rounded-lg border border-border">
-                      <p className="text-xs text-text-muted">
-                        Leave empty to use server environment variables
-                      </p>
-                      <div>
-                        <label className="block text-xs font-medium text-text-muted mb-1">
-                          Navidrome URL
-                        </label>
-                        <input
-                          type="url"
-                          value={navidromeUrl}
-                          onChange={(e) => setNavidromeUrl(e.target.value)}
-                          placeholder="http://192.168.1.100:4533"
-                          className="input-field text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-text-muted mb-1">
-                          Username
-                        </label>
-                        <input
-                          type="text"
-                          value={navidromeUsername}
-                          onChange={(e) => setNavidromeUsername(e.target.value)}
-                          placeholder="username"
-                          className="input-field text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-text-muted mb-1">
-                          Password
-                        </label>
-                        <input
-                          type="password"
-                          value={navidromePassword}
-                          onChange={(e) => setNavidromePassword(e.target.value)}
-                          placeholder="••••••••"
-                          className="input-field text-sm"
-                        />
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
 
               {syncError && (
                 <p className="text-red-400 text-sm mb-4">{syncError}</p>

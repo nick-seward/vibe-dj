@@ -80,10 +80,9 @@ function AppContent() {
 
   const handleSyncToNavidrome = async (
     playlistName: string,
-    credentials?: { url?: string; username?: string; password?: string }
   ): Promise<boolean> => {
     if (!playlist) return false
-    return await sync(playlist.songs, playlistName, credentials)
+    return await sync(playlist.songs, playlistName)
   }
 
   const handleStartOver = () => {

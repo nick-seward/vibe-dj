@@ -110,7 +110,6 @@ export function useSyncToNavidrome() {
   const sync = useCallback(async (
     playlistSongs: Song[],
     playlistName: string,
-    credentials?: { url?: string; username?: string; password?: string }
   ): Promise<boolean> => {
     setState({ data: null, loading: true, error: null })
 
@@ -119,12 +118,6 @@ export function useSyncToNavidrome() {
         playlist_name: playlistName,
       }
 
-      // Add optional credentials if provided (takes precedence over server ENV vars)
-      if (credentials?.url) navidromeConfig.url = credentials.url
-      if (credentials?.username) navidromeConfig.username = credentials.username
-      if (credentials?.password) navidromeConfig.password = credentials.password
-
-      // Sync the already-generated playlist songs (not regenerate from seeds)
       const request = {
         song_ids: playlistSongs.map((s) => s.id),
         navidrome_config: navidromeConfig,
