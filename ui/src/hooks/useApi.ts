@@ -72,7 +72,6 @@ export function useGeneratePlaylist() {
         })),
         length,
         bpm_jitter: 5.0,
-        format: 'json',
         sync_to_navidrome: false,
       }
 

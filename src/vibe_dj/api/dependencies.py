@@ -7,7 +7,7 @@ from loguru import logger
 from vibe_dj.api.background import JobManager, job_manager
 from vibe_dj.core import AudioAnalyzer, LibraryIndexer, MusicDatabase, SimilarityIndex
 from vibe_dj.models import Config
-from vibe_dj.services import NavidromeSyncService, PlaylistExporter, PlaylistGenerator
+from vibe_dj.services import NavidromeSyncService, PlaylistGenerator
 
 _config_cache: Optional[Config] = None
 
@@ -122,15 +122,6 @@ def get_playlist_generator(
     :return: PlaylistGenerator instance
     """
     return PlaylistGenerator(config, db, similarity_index)
-
-
-def get_playlist_exporter(config: Config = Depends(get_config)) -> PlaylistExporter:
-    """Provide playlist exporter service.
-
-    :param config: Application configuration
-    :return: PlaylistExporter instance
-    """
-    return PlaylistExporter(config)
 
 
 def get_navidrome_sync_service(

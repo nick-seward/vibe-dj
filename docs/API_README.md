@@ -129,7 +129,6 @@ Generate a playlist from seed songs.
   ],
   "length": 20,
   "bpm_jitter": 5.0,
-  "format": "json",
   "sync_to_navidrome": false,
   "navidrome_config": {
     "url": "http://navidrome:4533",
@@ -158,34 +157,6 @@ Generate a playlist from seed songs.
   "seed_songs": [...],
   "created_at": "2026-01-04T12:00:00",
   "length": 20
-}
-```
-
-#### `POST /api/playlist/download`
-Generate a playlist and download as a file.
-
-**Request:** Same as `/api/playlist`
-
-**Response:** File download (M3U, M3U8, or JSON)
-
-#### `POST /api/export`
-Export a list of songs to a playlist file.
-
-**Request:**
-```json
-{
-  "song_ids": [1, 2, 3],
-  "format": "m3u",
-  "output_path": "/data/playlist.m3u"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Playlist exported to /data/playlist.m3u",
-  "song_count": 3
 }
 ```
 
@@ -247,7 +218,6 @@ Configuration is provided via:
 {
   "database_path": "music.db",
   "faiss_index_path": "faiss_index.bin",
-  "playlist_output": "playlist.m3u",
   "sample_rate": 22050,
   "max_duration": 180,
   "n_mfcc": 13,

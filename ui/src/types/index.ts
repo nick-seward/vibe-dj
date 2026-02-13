@@ -47,7 +47,6 @@ export interface PlaylistRequest {
   seeds: SeedSong[]
   length: number
   bpm_jitter: number
-  format: 'json' | 'm3u' | 'm3u8'
   sync_to_navidrome: boolean
   navidrome_config?: NavidromeConfig
 }

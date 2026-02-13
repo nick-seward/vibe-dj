@@ -1,7 +1,6 @@
 {
   "database_path": "music.db",
   "faiss_index_path": "faiss_index.bin",
-  "playlist_output": "playlist.m3u",
   "sample_rate": 22050,
   "max_duration": 180,
   "n_mfcc": 13,

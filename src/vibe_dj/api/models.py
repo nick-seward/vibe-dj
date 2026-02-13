@@ -41,7 +41,6 @@ class PlaylistRequest(BaseModel):
     bpm_jitter: float = Field(
         5.0, ge=0.0, le=100.0, description="BPM jitter percentage for sorting"
     )
-    format: Literal["m3u", "m3u8", "json"] = Field("json", description="Output format")
     sync_to_navidrome: bool = Field(
         False, description="Sync playlist to Navidrome server"
     )
@@ -49,19 +48,6 @@ class PlaylistRequest(BaseModel):
         None,
         description="Navidrome configuration (url, username, password, playlist_name)",
     )
-
-
-class ExportRequest(BaseModel):
-    """Request to export a playlist to a file.
-
-    Exports a list of songs to the specified format.
-    """
-
-    song_ids: List[int] = Field(
-        ..., min_length=1, description="List of song IDs to export"
-    )
-    format: Literal["m3u", "m3u8", "json"] = Field("m3u", description="Export format")
-    output_path: str = Field(..., description="Output file path")
 
 
 class SyncToNavidromeRequest(BaseModel):

@@ -1,11 +1,10 @@
 import json
-from pathlib import Path
 
 import click
 
 from .core import AudioAnalyzer, LibraryIndexer, MusicDatabase, SimilarityIndex
 from .models import Config
-from .services import NavidromeSyncService, PlaylistExporter, PlaylistGenerator
+from .services import NavidromeSyncService, PlaylistGenerator
 
 
 @click.group()
@@ -51,15 +50,6 @@ def index(library_path, config):
     help='JSON file with seeds: {"seeds": [{"title": "...", "artist": "...", "album": "..."}]}',
 )
 @click.option(
-    "--output", type=click.Path(), default=None, help="Output playlist file path"
-)
-@click.option(
-    "--format",
-    type=click.Choice(["m3u", "m3u8", "json"], case_sensitive=False),
-    default="m3u",
-    help="Output format (default: m3u)",
-)
-@click.option(
     "--length", type=int, default=20, help="Number of songs in playlist (default: 20)"
 )
 @click.option(
@@ -87,12 +77,10 @@ def index(library_path, config):
     "--playlist-name",
     type=str,
     default=None,
-    help="Name for the playlist on Navidrome (defaults to output filename)",
+    help="Name for the playlist on Navidrome",
 )
 def playlist(
     seeds_json,
-    output,
-    format,
     length,
     bpm_jitter,
     config,
@@ -109,8 +97,6 @@ def playlist(
     Optionally syncs the generated playlist to a Navidrome server.
 
     :param seeds_json: Path to JSON file containing seed songs
-    :param output: Output file path for the playlist
-    :param format: Export format (m3u, m3u8, or json)
     :param length: Number of songs to generate
     :param bpm_jitter: BPM jitter percentage for sorting
     :param config: Optional path to configuration JSON file
@@ -124,9 +110,6 @@ def playlist(
         cfg = Config.from_file(config)
     else:
         cfg = Config()
-
-    if output is None:
-        output = cfg.playlist_output
 
     with open(seeds_json) as f:
         data = json.load(f)
@@ -156,17 +139,15 @@ def playlist(
             similarity_index.load()
 
             generator = PlaylistGenerator(cfg, db, similarity_index)
-            exporter = PlaylistExporter(cfg)
 
             pl = generator.generate(seeds, length=length, bpm_jitter_percent=bpm_jitter)
 
             if pl:
-                exporter.export(pl, output, output_format=format)
-                click.echo(f"Playlist ({len(pl)} songs) saved to {output}")
+                click.echo(f"Generated playlist with {len(pl)} songs")
 
                 if sync_to_navidrome:
                     sync_service = NavidromeSyncService(cfg)
-                    resolved_playlist_name = playlist_name or Path(output).stem
+                    resolved_playlist_name = playlist_name or "Vibe DJ Playlist"
                     result = sync_service.sync_playlist(
                         pl,
                         resolved_playlist_name,

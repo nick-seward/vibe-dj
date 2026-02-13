@@ -16,7 +16,6 @@ class Config:
     music_library: str = ""
     database_path: str = "music.db"
     faiss_index_path: str = "faiss_index.bin"
-    playlist_output: str = "playlist.m3u"
 
     sample_rate: int = 22050
     max_duration: int = 180

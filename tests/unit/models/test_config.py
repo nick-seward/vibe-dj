@@ -17,7 +17,6 @@ class TestConfig:
         assert config.music_library == ""
         assert config.database_path == "music.db"
         assert config.faiss_index_path == "faiss_index.bin"
-        assert config.playlist_output == "playlist.m3u"
         assert config.sample_rate == 22050
         assert config.max_duration == 180
         assert config.n_mfcc == 13
@@ -36,7 +35,6 @@ class TestConfig:
         assert config.database_path == "/custom/path.db"
         assert config.sample_rate == 44100
         assert config.parallel_workers == 8
-        assert config.playlist_output == "playlist.m3u"
 
     def test_save_and_load(self):
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
