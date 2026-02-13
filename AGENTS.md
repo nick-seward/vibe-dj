@@ -251,8 +251,8 @@ bd ready --json
 Create issues:
 
 ```bash
-bd create "Issue title" -t bug|feature|task -p 0-4 --json
-bd create "Issue title" -p 1 --deps discovered-from:bv-123 --json
+bd create "Issue title" -t bug|feature|task -p 0-4 -d "Description" --json
+bd create "Issue title" -p 1 --deps discovered-from:bv-123 -d "Description" --json
 ```
 
 Update:
