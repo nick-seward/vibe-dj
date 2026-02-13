@@ -110,7 +110,7 @@ export function PlaylistView({
             ) : (
               <>
                 <Send className="w-5 h-5" />
-                Send to Navidrome
+                Send to SubSonic
               </>
             )}
           </motion.button>
@@ -128,7 +128,7 @@ export function PlaylistView({
           >
             <PartyPopper className="w-8 h-8 text-green-400 mx-auto mb-2" />
             <p className="text-green-400 font-medium">
-              Playlist sent to Navidrome successfully!
+              Playlist sent to SubSonic successfully!
             </p>
           </motion.div>
         )}
@@ -198,7 +198,7 @@ export function PlaylistView({
               onClick={(e) => e.stopPropagation()}
             >
               <h3 className="text-xl font-bold text-text mb-4">
-                Send to Navidrome
+                Send to SubSonic
               </h3>
               
               <label className="block text-sm font-medium text-text-muted mb-1">
