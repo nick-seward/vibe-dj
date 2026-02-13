@@ -230,6 +230,75 @@ export function SongCard({ song, onSelect }: SongCardProps) {
 
 ---
 
+## Commit Message Convention
+
+This project follows [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/). Every commit message must use this format:
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+### Types
+
+| Type | Use when… |
+|------|----------|
+| `feat` | Adding a new feature |
+| `fix` | Fixing a bug |
+| `docs` | Documentation only |
+| `style` | Formatting, whitespace — no logic change |
+| `refactor` | Code restructuring — no behavior change |
+| `perf` | Performance improvement |
+| `test` | Adding or updating tests |
+| `build` | Build system or dependencies (Makefile, pyproject.toml, package.json) |
+| `ci` | CI/CD configuration |
+| `chore` | Maintenance (e.g., .gitignore, config files) |
+
+### Scopes (optional but encouraged)
+
+| Scope | Area |
+|-------|------|
+| `api` | FastAPI routes (`src/vibe_dj/api/`) |
+| `core` | Business logic (`src/vibe_dj/core/`) |
+| `models` | Pydantic/SQLAlchemy models |
+| `services` | External integrations (Navidrome, playlist export) |
+| `ui` | React frontend (`ui/`) |
+| `docker` | Docker/containerization |
+| `beads` | Issue tracking changes (`.beads/`) |
+
+Omit the scope for cross-cutting changes.
+
+### Bead References
+
+When work is tied to a bead, include `bd-<id>` in the description or as a footer:
+
+```bash
+# In the description (preferred)
+git commit -m "feat(api): add playlist export endpoint (bd-42)"
+
+# As a footer
+git commit -m "feat(api): add playlist export endpoint
+
+Refs: bd-42"
+```
+
+### Examples
+
+```
+feat(core): add BPM-based playlist sorting
+fix(ui): correct search form validation
+docs: update API_README with new endpoints
+test(api): add playlist generation edge cases
+refactor(services): simplify Navidrome sync logic
+build: bump librosa to 0.10.2
+chore(docker): update base image to python 3.14-slim
+```
+
+---
+
 ## Beads Issue Tracking
 
 This project uses **bd** (beads) for issue tracking.
@@ -291,7 +360,7 @@ Agent workflow:
    ```bash
    bd sync --flush-only    # Export to JSONL (no git ops)
    git add .beads/         # Stage beads changes
-   git commit -m "..."     # Commit with code changes
+   git commit -m "<type>(<scope>): <description> (bd-<id>)"  # Conventional commit with bead ref
    ```
 
 Never:
@@ -337,7 +406,7 @@ Tests, linters, builds, type checks — whatever the project requires. Fix failu
 6. **Commit, PUSH TO REMOTE, and finish** (only after explicit human approval)
 Once approved:
 ```bash
-git commit -m "bd-<id>: [short description of changes]"
+git commit -m "<type>(<scope>): <description> (bd-<id>)"
 git pull --rebase
 bd sync
 git push
