@@ -1,7 +1,7 @@
 import json
+from pathlib import Path
 
 import click
-from loguru import logger
 
 from .core import AudioAnalyzer, LibraryIndexer, MusicDatabase, SimilarityIndex
 from .models import Config
@@ -166,10 +166,10 @@ def playlist(
 
                 if sync_to_navidrome:
                     sync_service = NavidromeSyncService(cfg)
+                    resolved_playlist_name = playlist_name or Path(output).stem
                     result = sync_service.sync_playlist(
                         pl,
-                        output,
-                        playlist_name,
+                        resolved_playlist_name,
                         navidrome_url,
                         navidrome_username,
                         navidrome_password,
@@ -194,7 +194,7 @@ def playlist(
                                     f"    ... and {len(result['skipped_songs']) - 5} more"
                                 )
                     else:
-                        click.echo(f"Error: Failed to sync playlist to Navidrome")
+                        click.echo("Error: Failed to sync playlist to Navidrome")
                         if result["error"]:
                             click.echo(f"  Reason: {result['error']}")
             else:

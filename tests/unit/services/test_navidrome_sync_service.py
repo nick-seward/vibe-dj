@@ -1,5 +1,4 @@
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -81,7 +80,6 @@ class TestNavidromeSyncService:
 
         result = service.sync_playlist(
             playlist=mock_playlist,
-            output_path="/playlists/test.m3u",
             playlist_name="Test Playlist",
         )
 
@@ -115,7 +113,6 @@ class TestNavidromeSyncService:
 
         result = service.sync_playlist(
             playlist=mock_playlist,
-            output_path="/playlists/test.m3u",
             playlist_name="Test Playlist",
         )
 
@@ -146,7 +143,6 @@ class TestNavidromeSyncService:
 
         result = service.sync_playlist(
             playlist=mock_playlist,
-            output_path="/playlists/test.m3u",
             playlist_name="Test Playlist",
         )
 
@@ -170,7 +166,6 @@ class TestNavidromeSyncService:
 
         result = service.sync_playlist(
             playlist=mock_playlist,
-            output_path="/playlists/test.m3u",
             playlist_name="Test Playlist",
         )
 
@@ -188,9 +183,7 @@ class TestNavidromeSyncService:
         service.config.navidrome_username = None
         service.config.navidrome_password = None
 
-        result = service.sync_playlist(
-            playlist=mock_playlist, output_path="/playlists/test.m3u"
-        )
+        result = service.sync_playlist(playlist=mock_playlist)
 
         assert result["success"] is False
         assert result["error"] == "Missing credentials"
@@ -208,9 +201,7 @@ class TestNavidromeSyncService:
         mock_client.get_playlist_by_name.return_value = None
         mock_client.create_playlist.return_value = "playlist_id"
 
-        result = service.sync_playlist(
-            playlist=mock_playlist, output_path="/playlists/test.m3u"
-        )
+        result = service.sync_playlist(playlist=mock_playlist)
 
         assert result["success"] is True
         mock_client_class.assert_called_once_with(
@@ -230,7 +221,6 @@ class TestNavidromeSyncService:
 
         result = service.sync_playlist(
             playlist=mock_playlist,
-            output_path="/playlists/test.m3u",
             navidrome_url="http://param-url:4533",
             navidrome_username="param_user",
             navidrome_password="param_pass",
@@ -242,24 +232,22 @@ class TestNavidromeSyncService:
         )
 
     @patch("vibe_dj.services.navidrome_sync_service.NavidromeClient")
-    def test_playlist_name_defaults_to_filename(
+    def test_playlist_name_defaults_to_default_name(
         self, mock_client_class, service, mock_playlist
     ):
-        """Test that playlist name defaults to output filename stem."""
+        """Test that playlist name defaults to 'Vibe DJ Playlist'."""
         mock_client = Mock(spec=NavidromeClient)
         mock_client_class.return_value = mock_client
         mock_client.search_song.return_value = "song_id"
         mock_client.get_playlist_by_name.return_value = None
         mock_client.create_playlist.return_value = "playlist_id"
 
-        result = service.sync_playlist(
-            playlist=mock_playlist, output_path="/playlists/my_awesome_playlist.m3u"
-        )
+        result = service.sync_playlist(playlist=mock_playlist)
 
         assert result["success"] is True
-        assert result["playlist_name"] == "my_awesome_playlist"
+        assert result["playlist_name"] == "Vibe DJ Playlist"
         mock_client.create_playlist.assert_called_once_with(
-            "my_awesome_playlist", ["song_id", "song_id", "song_id"]
+            "Vibe DJ Playlist", ["song_id", "song_id", "song_id"]
         )
 
     @patch("vibe_dj.services.navidrome_sync_service.NavidromeClient")
@@ -279,7 +267,6 @@ class TestNavidromeSyncService:
 
         result = service.sync_playlist(
             playlist=mock_playlist,
-            output_path="/playlists/test.m3u",
             playlist_name="Test Playlist",
         )
 
@@ -302,7 +289,6 @@ class TestNavidromeSyncService:
 
         result = service.sync_playlist(
             playlist=mock_playlist,
-            output_path="/playlists/test.m3u",
             playlist_name="Test Playlist",
         )
 
@@ -323,7 +309,6 @@ class TestNavidromeSyncService:
 
         result = service.sync_playlist(
             playlist=mock_playlist,
-            output_path="/playlists/test.m3u",
             playlist_name="Test Playlist",
         )
 
@@ -359,7 +344,6 @@ class TestNavidromeSyncService:
 
         result = service.sync_playlist(
             playlist=playlist,
-            output_path="/playlists/test.m3u",
             playlist_name="Test Playlist",
         )
 
@@ -378,7 +362,6 @@ class TestNavidromeSyncService:
 
         result = service.sync_playlist(
             playlist=mock_playlist,
-            output_path="/playlists/test.m3u",
             navidrome_username="param_user",
         )
 

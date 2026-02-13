@@ -1,6 +1,4 @@
-import os
 import tempfile
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
@@ -62,7 +60,6 @@ def playlist_to_response(playlist: Playlist) -> PlaylistResponse:
 def generate_playlist(
     request: PlaylistRequest,
     generator: PlaylistGenerator = Depends(get_playlist_generator),
-    exporter: PlaylistExporter = Depends(get_playlist_exporter),
     sync_service: NavidromeSyncService = Depends(get_navidrome_sync_service),
     config: Config = Depends(get_config),
 ) -> PlaylistResponse:
@@ -73,7 +70,6 @@ def generate_playlist(
 
     :param request: Playlist generation request
     :param generator: Playlist generator service
-    :param exporter: Playlist exporter service
     :param sync_service: Navidrome sync service
     :param config: Application configuration
     :return: Generated playlist with songs
@@ -94,31 +90,18 @@ def generate_playlist(
                 detail="Could not generate playlist. Check that seed songs exist in the database.",
             )
 
-        if request.format in ["m3u", "m3u8"]:
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=f".{request.format}", delete=False
-            ) as tmp:
-                tmp_path = tmp.name
+        if request.sync_to_navidrome:
+            nav_config = request.navidrome_config or {}
+            result = sync_service.sync_playlist(
+                playlist,
+                nav_config.get("playlist_name"),
+                nav_config.get("url"),
+                nav_config.get("username"),
+                nav_config.get("password"),
+            )
 
-            try:
-                exporter.export(playlist, tmp_path, output_format=request.format)
-
-                if request.sync_to_navidrome:
-                    nav_config = request.navidrome_config or {}
-                    result = sync_service.sync_playlist(
-                        playlist,
-                        tmp_path,
-                        nav_config.get("playlist_name"),
-                        nav_config.get("url"),
-                        nav_config.get("username"),
-                        nav_config.get("password"),
-                    )
-
-                    if not result["success"]:
-                        logger.warning(f"Navidrome sync failed: {result.get('error')}")
-            finally:
-                if os.path.exists(tmp_path):
-                    os.unlink(tmp_path)
+            if not result["success"]:
+                logger.warning(f"Navidrome sync failed: {result.get('error')}")
 
         return playlist_to_response(playlist)
 
@@ -268,7 +251,6 @@ def sync_playlist_to_navidrome(
             nav_config = request.navidrome_config or {}
             result = sync_service.sync_playlist(
                 playlist,
-                "/tmp/sync_playlist.m3u",
                 nav_config.get("playlist_name", "Vibe DJ Playlist"),
                 nav_config.get("url"),
                 nav_config.get("username"),

@@ -1,5 +1,4 @@
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from loguru import logger
 
@@ -25,7 +24,6 @@ class NavidromeSyncService:
     def sync_playlist(
         self,
         playlist: Playlist,
-        output_path: str,
         playlist_name: Optional[str] = None,
         navidrome_url: Optional[str] = None,
         navidrome_username: Optional[str] = None,
@@ -38,8 +36,7 @@ class NavidromeSyncService:
         2. Config file values
 
         :param playlist: Generated Playlist object
-        :param output_path: Path to the output M3U file
-        :param playlist_name: Name for the playlist (optional, defaults to output filename)
+        :param playlist_name: Name for the playlist (optional, defaults to 'Vibe DJ Playlist')
         :param navidrome_url: Navidrome server URL (optional)
         :param navidrome_username: Navidrome username (optional)
         :param navidrome_password: Navidrome password (optional)
@@ -50,6 +47,7 @@ class NavidromeSyncService:
         url = navidrome_url or self.config.navidrome_url
         username = navidrome_username or self.config.navidrome_username
         password = navidrome_password or self.config.navidrome_password
+        playlist_name = playlist_name or "Vibe DJ Playlist"
 
         if not all([url, username, password]):
             logger.warning("Navidrome sync requested but credentials not provided")
@@ -57,16 +55,13 @@ class NavidromeSyncService:
             return {
                 "success": False,
                 "playlist_id": None,
-                "playlist_name": playlist_name or Path(output_path).stem,
+                "playlist_name": playlist_name,
                 "matched_count": 0,
                 "total_count": len(playlist.songs),
                 "skipped_songs": [],
                 "error": "Missing credentials",
                 "action": None,
             }
-
-        if not playlist_name:
-            playlist_name = Path(output_path).stem
 
         try:
             logger.info(f"Syncing playlist to Navidrome at {url}...")
