@@ -21,7 +21,12 @@ from vibe_dj.api.dependencies import (
     get_similarity_index,
     parse_config_file,
 )
-from vibe_dj.api.models import ActiveJobResponse, IndexJobResponse, IndexRequest, JobStatusResponse
+from vibe_dj.api.models import (
+    ActiveJobResponse,
+    IndexJobResponse,
+    IndexRequest,
+    JobStatusResponse,
+)
 from vibe_dj.core import AudioAnalyzer, LibraryIndexer, MusicDatabase, SimilarityIndex
 from vibe_dj.models import Config
 

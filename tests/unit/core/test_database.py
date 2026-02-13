@@ -360,6 +360,92 @@ class TestMusicDatabase:
         assert "Song 2" in titles
         assert "Song 3" not in titles
 
+    def test_get_library_stats(self, db_env):
+        """Test comprehensive library statistics."""
+        config, db, test_song, test_features = db_env
+        song1 = create_test_song(
+            file_path="/test/1.mp3",
+            title="Song 1",
+            artist="Artist A",
+            album="Album X",
+            duration=180,
+        )
+        song2 = create_test_song(
+            file_path="/test/2.mp3",
+            title="Song 2",
+            artist="Artist A",
+            album="Album Y",
+            genre="Pop",
+            duration=200,
+        )
+        song3 = create_test_song(
+            file_path="/test/3.mp3",
+            title="Song 3",
+            artist="Artist B",
+            album="Album X",
+            genre="Jazz",
+            duration=210,
+        )
+        features1 = create_test_features(
+            feature_vector=np.array([1.0, 2.0], dtype=np.float32), bpm=120.0
+        )
+        features2 = create_test_features(
+            feature_vector=np.array([3.0, 4.0], dtype=np.float32), bpm=130.0
+        )
+
+        db.add_song(song1, features1)
+        db.add_song(song2, features2)
+        db.add_song(song3)
+
+        stats = db.get_library_stats()
+
+        assert stats["total_songs"] == 3
+        assert stats["artist_count"] == 2  # Artist A, Artist B
+        assert stats["album_count"] == 2  # Album X, Album Y
+        assert stats["total_duration"] == 590  # 180 + 200 + 210
+        assert stats["songs_with_features"] == 2
+        assert stats["last_indexed"] is not None
+
+    def test_get_library_stats_empty(self, db_env):
+        """Test library statistics on empty database."""
+        config, db, test_song, test_features = db_env
+        stats = db.get_library_stats()
+
+        assert stats["total_songs"] == 0
+        assert stats["artist_count"] == 0
+        assert stats["album_count"] == 0
+        assert stats["total_duration"] == 0
+        assert stats["songs_with_features"] == 0
+        assert stats["last_indexed"] is None
+
+    def test_get_library_stats_null_durations(self, db_env):
+        """Test library statistics when some songs have null duration."""
+        config, db, test_song, test_features = db_env
+        song1 = create_test_song(
+            file_path="/test/1.mp3",
+            title="Song 1",
+            artist="Artist A",
+            album="Album X",
+            duration=180,
+        )
+        song2 = Song(
+            file_path="/test/2.mp3",
+            title="Song 2",
+            artist="Artist B",
+            album="Album Y",
+            genre="Pop",
+            last_modified=1234567891.0,
+            duration=None,
+        )
+
+        db.add_song(song1)
+        db.add_song(song2)
+
+        stats = db.get_library_stats()
+
+        assert stats["total_songs"] == 2
+        assert stats["total_duration"] == 180
+
     def test_get_indexing_stats(self, db_env):
         config, db, test_song, test_features = db_env
         song1 = create_test_song(

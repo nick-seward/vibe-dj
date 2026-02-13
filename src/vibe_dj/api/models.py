@@ -180,6 +180,26 @@ class ActiveJobResponse(BaseModel):
     completed_at: Optional[datetime] = None
 
 
+class LibraryStatsResponse(BaseModel):
+    """Library statistics response.
+
+    Contains comprehensive statistics about the indexed music library.
+    """
+
+    total_songs: int = Field(..., description="Total number of songs in the library")
+    artist_count: int = Field(..., description="Number of distinct artists")
+    album_count: int = Field(..., description="Number of distinct albums")
+    total_duration: int = Field(
+        ..., description="Total play time in seconds across all songs"
+    )
+    songs_with_features: int = Field(
+        ..., description="Number of songs with extracted audio features"
+    )
+    last_indexed: Optional[float] = Field(
+        None, description="Timestamp of the most recently indexed song"
+    )
+
+
 class HealthResponse(BaseModel):
     """Health check response.
 

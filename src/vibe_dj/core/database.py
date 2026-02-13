@@ -386,6 +386,53 @@ class MusicDatabase:
             .all()
         )
 
+    def get_library_stats(self) -> Dict[str, object]:
+        """Get comprehensive library statistics.
+
+        :return: Dictionary with keys 'total_songs', 'artist_count',
+                 'album_count', 'total_duration', 'songs_with_features',
+                 and 'last_indexed'
+        """
+        total_songs = (
+            self.session.execute(select(func.count()).select_from(Song)).scalar() or 0
+        )
+
+        artist_count = (
+            self.session.execute(
+                select(func.count(func.distinct(Song.artist)))
+            ).scalar()
+            or 0
+        )
+
+        album_count = (
+            self.session.execute(
+                select(func.count(func.distinct(Song.album)))
+            ).scalar()
+            or 0
+        )
+
+        total_duration = (
+            self.session.execute(select(func.sum(Song.duration))).scalar() or 0
+        )
+
+        songs_with_features = (
+            self.session.execute(select(func.count()).select_from(Features)).scalar()
+            or 0
+        )
+
+        last_indexed = self.session.execute(
+            select(func.max(Song.last_modified))
+        ).scalar()
+
+        return {
+            "total_songs": total_songs,
+            "artist_count": artist_count,
+            "album_count": album_count,
+            "total_duration": total_duration,
+            "songs_with_features": songs_with_features,
+            "last_indexed": last_indexed,
+        }
+
     def count_songs_multi(
         self,
         artist: Optional[str] = None,
