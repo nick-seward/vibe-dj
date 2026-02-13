@@ -115,6 +115,15 @@ export interface ActiveJobResponse {
   completed_at: string | null
 }
 
+export interface LibraryStats {
+  total_songs: number
+  artist_count: number
+  album_count: number
+  total_duration: number
+  songs_with_features: number
+  last_indexed: number | null
+}
+
 export interface TestNavidromeResponse {
   success: boolean
   message: string

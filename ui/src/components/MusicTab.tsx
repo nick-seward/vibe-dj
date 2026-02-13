@@ -1,9 +1,19 @@
 import { useState, useEffect, useCallback } from 'react'
-import { FolderOpen, Loader2, CheckCircle, XCircle, Music, Save } from 'lucide-react'
+import { FolderOpen, Loader2, CheckCircle, XCircle, Music, Save, BarChart3, Clock, Disc3, Users } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useValidatePath, useSaveConfig } from '@/hooks/useConfig'
 import { useIndexing } from '@/hooks/useIndexing'
+import { useLibraryStats } from '@/hooks/useLibraryStats'
 import { useToast } from '@/context/ToastContext'
+
+function formatDuration(totalSeconds: number): string {
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`
+  }
+  return `${minutes}m`
+}
 
 interface MusicTabProps {
   musicLibrary: string
@@ -16,6 +26,7 @@ export function MusicTab({ musicLibrary, originalMusicLibrary, onMusicLibraryCha
   const { validating, validation, validatePath, clearValidation } = useValidatePath()
   const { isIndexing, status, error: indexError, startIndexing } = useIndexing()
   const { saving, saveConfig } = useSaveConfig()
+  const { stats, loading: statsLoading } = useLibraryStats()
   const { showToast } = useToast()
 
   const [hasValidated, setHasValidated] = useState(false)
@@ -249,6 +260,73 @@ export function MusicTab({ musicLibrary, originalMusicLibrary, onMusicLibraryCha
           className="bg-red-500/10 border border-red-500/30 rounded-lg p-4"
         >
           <p className="text-red-400 text-sm">{indexError}</p>
+        </motion.div>
+      )}
+
+      {/* Library Stats */}
+      {!statsLoading && stats && stats.total_songs > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-4"
+        >
+          <div className="flex items-center gap-2 text-text-muted">
+            <BarChart3 className="w-4 h-4" />
+            <span className="text-sm font-medium">Library Statistics</span>
+          </div>
+
+          {/* Indexing completeness */}
+          <div className="bg-surface rounded-lg p-4 border border-border">
+            <div className="flex justify-between text-sm mb-2">
+              <span className="text-text-muted">Indexing Completeness</span>
+              <span className="text-text">
+                {stats.songs_with_features} / {stats.total_songs} songs analyzed
+              </span>
+            </div>
+            <div className="w-full h-2 bg-surface-hover rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-300"
+                style={{ width: `${(stats.songs_with_features / stats.total_songs) * 100}%` }}
+              />
+            </div>
+            {stats.last_indexed && (
+              <p className="text-xs text-text-muted mt-2">
+                Last indexed: {new Date(stats.last_indexed * 1000).toLocaleString()}
+              </p>
+            )}
+          </div>
+
+          {/* Library stats grid */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-surface rounded-lg p-3 border border-border">
+              <div className="flex items-center gap-2 text-text-muted mb-1">
+                <Music className="w-3.5 h-3.5" />
+                <span className="text-xs">Songs</span>
+              </div>
+              <p className="text-lg font-semibold text-text">{stats.total_songs.toLocaleString()}</p>
+            </div>
+            <div className="bg-surface rounded-lg p-3 border border-border">
+              <div className="flex items-center gap-2 text-text-muted mb-1">
+                <Users className="w-3.5 h-3.5" />
+                <span className="text-xs">Artists</span>
+              </div>
+              <p className="text-lg font-semibold text-text">{stats.artist_count.toLocaleString()}</p>
+            </div>
+            <div className="bg-surface rounded-lg p-3 border border-border">
+              <div className="flex items-center gap-2 text-text-muted mb-1">
+                <Disc3 className="w-3.5 h-3.5" />
+                <span className="text-xs">Albums</span>
+              </div>
+              <p className="text-lg font-semibold text-text">{stats.album_count.toLocaleString()}</p>
+            </div>
+            <div className="bg-surface rounded-lg p-3 border border-border">
+              <div className="flex items-center gap-2 text-text-muted mb-1">
+                <Clock className="w-3.5 h-3.5" />
+                <span className="text-xs">Play Time</span>
+              </div>
+              <p className="text-lg font-semibold text-text">{formatDuration(stats.total_duration)}</p>
+            </div>
+          </div>
         </motion.div>
       )}
     </div>

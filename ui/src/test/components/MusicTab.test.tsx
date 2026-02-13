@@ -39,6 +39,17 @@ vi.mock('@/hooks/useIndexing', () => ({
   useIndexing: () => mockIndexingState,
 }))
 
+let mockLibraryStatsState = {
+  stats: null as { total_songs: number; artist_count: number; album_count: number; total_duration: number; songs_with_features: number; last_indexed: number | null } | null,
+  loading: false,
+  error: null as string | null,
+  refetch: vi.fn(),
+}
+
+vi.mock('@/hooks/useLibraryStats', () => ({
+  useLibraryStats: () => mockLibraryStatsState,
+}))
+
 vi.mock('@/hooks/useConfig', () => ({
   useValidatePath: () => ({
     validating: false,
@@ -77,6 +88,12 @@ describe('MusicTab', () => {
       error: null,
       startIndexing: mockStartIndexing,
       cancelIndexing: mockCancelIndexing,
+    }
+    mockLibraryStatsState = {
+      stats: null,
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
     }
   })
 
@@ -261,6 +278,86 @@ describe('MusicTab', () => {
       renderMusicTab()
 
       expect(screen.getByText('Index Music Library')).toBeInTheDocument()
+    })
+  })
+
+  describe('library stats display', () => {
+    it('shows library stats when data is available', () => {
+      mockLibraryStatsState = {
+        stats: {
+          total_songs: 500,
+          artist_count: 50,
+          album_count: 80,
+          total_duration: 108000,
+          songs_with_features: 450,
+          last_indexed: 1707782400.0,
+        },
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      }
+
+      renderMusicTab()
+
+      expect(screen.getByText('Library Statistics')).toBeInTheDocument()
+      expect(screen.getByText('500')).toBeInTheDocument()
+      expect(screen.getByText('50')).toBeInTheDocument()
+      expect(screen.getByText('80')).toBeInTheDocument()
+      expect(screen.getByText('30h 0m')).toBeInTheDocument()
+      expect(screen.getByText('450 / 500 songs analyzed')).toBeInTheDocument()
+    })
+
+    it('does not show stats when total_songs is 0', () => {
+      mockLibraryStatsState = {
+        stats: {
+          total_songs: 0,
+          artist_count: 0,
+          album_count: 0,
+          total_duration: 0,
+          songs_with_features: 0,
+          last_indexed: null,
+        },
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      }
+
+      renderMusicTab()
+
+      expect(screen.queryByText('Library Statistics')).not.toBeInTheDocument()
+    })
+
+    it('does not show stats while loading', () => {
+      mockLibraryStatsState = {
+        stats: null,
+        loading: true,
+        error: null,
+        refetch: vi.fn(),
+      }
+
+      renderMusicTab()
+
+      expect(screen.queryByText('Library Statistics')).not.toBeInTheDocument()
+    })
+
+    it('formats duration as minutes when under an hour', () => {
+      mockLibraryStatsState = {
+        stats: {
+          total_songs: 10,
+          artist_count: 3,
+          album_count: 2,
+          total_duration: 2700,
+          songs_with_features: 10,
+          last_indexed: 1707782400.0,
+        },
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      }
+
+      renderMusicTab()
+
+      expect(screen.getByText('45m')).toBeInTheDocument()
     })
   })
 })
