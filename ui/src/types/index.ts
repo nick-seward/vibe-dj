@@ -36,6 +36,14 @@ export interface SongsListResponse {
   offset: number
 }
 
+export const PLAYLIST_SIZE_OPTIONS = [15, 20, 25, 30, 35, 40] as const
+export type PlaylistSize = typeof PLAYLIST_SIZE_OPTIONS[number]
+export const DEFAULT_PLAYLIST_SIZE: PlaylistSize = 20
+
+export const BPM_JITTER_MIN = 1.0
+export const BPM_JITTER_MAX = 20.0
+export const DEFAULT_BPM_JITTER = 5.0
+
 export interface NavidromeConfig {
   url?: string
   username?: string
@@ -71,6 +79,8 @@ export interface ConfigResponse {
   navidrome_url: string | null
   navidrome_username: string | null
   has_navidrome_password: boolean
+  default_playlist_size: number
+  default_bpm_jitter: number
 }
 
 export interface ValidatePathResponse {
@@ -133,6 +143,8 @@ export interface UpdateConfigRequest {
   navidrome_url?: string
   navidrome_username?: string
   navidrome_password?: string
+  default_playlist_size?: number
+  default_bpm_jitter?: number
 }
 
 export interface UpdateConfigResponse {
