@@ -9,6 +9,8 @@
   "processing_timeout": 30,
   "query_noise_scale": 0.1,
   "candidate_multiplier": 4,
+  "default_playlist_size": 20,
+  "default_bpm_jitter": 5.0,
   "_comment_navidrome": "Optional: Configure Navidrome server for automatic playlist sync",
   "navidrome_url": null,
   "navidrome_username": null,
