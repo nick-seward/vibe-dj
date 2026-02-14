@@ -7,8 +7,9 @@ from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 
-from vibe_dj.api.dependencies import invalidate_config_cache
+from vibe_dj.api.dependencies import get_config, invalidate_config_cache
 from vibe_dj.app import app
+from vibe_dj.models import Config
 from vibe_dj.models.config import ALLOWED_PLAYLIST_SIZES, BPM_JITTER_MAX, BPM_JITTER_MIN
 
 
@@ -53,12 +54,16 @@ class TestConfigRoutes:
 
     def test_get_config_playlist_defaults_have_correct_defaults(self, client):
         """Test that playlist defaults match Config model defaults."""
-        response = client.get("/api/config")
+        app.dependency_overrides[get_config] = lambda: Config()
+        try:
+            response = client.get("/api/config")
 
-        assert response.status_code == 200
-        data = response.json()
-        assert data["default_playlist_size"] == 20
-        assert data["default_bpm_jitter"] == 5.0
+            assert response.status_code == 200
+            data = response.json()
+            assert data["default_playlist_size"] == 20
+            assert data["default_bpm_jitter"] == 5.0
+        finally:
+            app.dependency_overrides.pop(get_config, None)
 
     def test_validate_path_empty_path(self, client):
         """Test validation of empty path."""

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { SearchResults } from '@/components/SearchResults'
 import { ChoiceListProvider } from '@/context/ChoiceListContext'
-import type { PaginatedSearchResult, PageSize } from '@/types'
+import type { PaginatedSearchResult, PageSize, PlaylistSize } from '@/types'
 
 const mockResults: PaginatedSearchResult = {
   songs: [
@@ -40,7 +40,9 @@ describe('SearchResults', () => {
   const defaultProps = {
     results: mockResults,
     pageSize: 50 as PageSize,
+    selectedPlaylistSize: 20 as PlaylistSize,
     onPageSizeChange: vi.fn(),
+    onPlaylistSizeChange: vi.fn(),
     onPageChange: vi.fn(),
     onBack: vi.fn(),
     onGeneratePlaylist: vi.fn(),
@@ -77,6 +79,35 @@ describe('SearchResults', () => {
     fireEvent.change(dropdown, { target: { value: '100' } })
 
     expect(defaultProps.onPageSizeChange).toHaveBeenCalledWith(100)
+  })
+
+  it('renders playlist size dropdown with selected value', () => {
+    renderWithProvider(<SearchResults {...defaultProps} />)
+
+    const playlistSizeDropdown = screen.getByLabelText(/playlist size/i)
+    expect(playlistSizeDropdown).toBeInTheDocument()
+    expect(playlistSizeDropdown).toHaveValue('20')
+  })
+
+  it('calls onPlaylistSizeChange when playlist size changes', () => {
+    renderWithProvider(<SearchResults {...defaultProps} />)
+
+    const playlistSizeDropdown = screen.getByLabelText(/playlist size/i)
+    fireEvent.change(playlistSizeDropdown, { target: { value: '35' } })
+
+    expect(defaultProps.onPlaylistSizeChange).toHaveBeenCalledWith(35)
+  })
+
+  it('calls onGeneratePlaylist with selected playlist size', () => {
+    renderWithProvider(<SearchResults {...defaultProps} />)
+
+    const addButtons = screen.getAllByRole('button', { name: /add to choice list/i })
+    fireEvent.click(addButtons[0])
+
+    const generateButton = screen.getByRole('button', { name: /generate playlist/i })
+    fireEvent.click(generateButton)
+
+    expect(defaultProps.onGeneratePlaylist).toHaveBeenCalledWith(20)
   })
 
   it('renders pagination controls at both top and bottom when there are multiple pages', () => {

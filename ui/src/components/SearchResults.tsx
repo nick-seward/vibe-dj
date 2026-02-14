@@ -2,16 +2,18 @@ import { ArrowLeft, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { SongCard } from './SongCard'
 import { useChoiceList } from '@/context/ChoiceListContext'
-import type { Song, PageSize, PaginatedSearchResult } from '@/types'
-import { PAGE_SIZE_OPTIONS, MAX_SEARCH_DEPTH } from '@/types'
+import type { Song, PageSize, PaginatedSearchResult, PlaylistSize } from '@/types'
+import { PAGE_SIZE_OPTIONS, MAX_SEARCH_DEPTH, PLAYLIST_SIZE_OPTIONS } from '@/types'
 
 interface SearchResultsProps {
   results: PaginatedSearchResult
   pageSize: PageSize
+  selectedPlaylistSize: PlaylistSize
   onPageSizeChange: (size: PageSize) => void
+  onPlaylistSizeChange: (size: PlaylistSize) => void
   onPageChange: (offset: number) => void
   onBack: () => void
-  onGeneratePlaylist: () => void
+  onGeneratePlaylist: (length: number) => void
   loading?: boolean
 }
 
@@ -66,7 +68,9 @@ function PaginationControls({
 export function SearchResults({ 
   results, 
   pageSize, 
+  selectedPlaylistSize,
   onPageSizeChange, 
+  onPlaylistSizeChange,
   onPageChange, 
   onBack, 
   onGeneratePlaylist,
@@ -99,6 +103,10 @@ export function SearchResults({
     onPageSizeChange(Number(e.target.value) as PageSize)
   }
 
+  const handlePlaylistSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    onPlaylistSizeChange(Number(e.target.value) as PlaylistSize)
+  }
+
   const displayedTotal = Math.min(results.total, MAX_SEARCH_DEPTH)
   const startResult = results.offset + 1
   const endResult = Math.min(results.offset + results.songs.length, displayedTotal)
@@ -108,7 +116,7 @@ export function SearchResults({
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between mb-6"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6"
       >
         <button
           onClick={onBack}
@@ -118,16 +126,36 @@ export function SearchResults({
           Back to Search
         </button>
 
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={onGeneratePlaylist}
-          disabled={choiceList.length === 0}
-          className="btn-primary flex items-center gap-2"
-        >
-          <Sparkles className="w-5 h-5" />
-          Generate Playlist ({choiceList.length}/3)
-        </motion.button>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2">
+            <label htmlFor="playlistSize" className="text-sm text-text-muted">
+              Playlist size:
+            </label>
+            <select
+              id="playlistSize"
+              value={selectedPlaylistSize}
+              onChange={handlePlaylistSizeChange}
+              className="bg-surface border border-surface-light rounded-lg px-3 py-1.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              {PLAYLIST_SIZE_OPTIONS.map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => onGeneratePlaylist(selectedPlaylistSize)}
+            disabled={choiceList.length === 0}
+            className="btn-primary flex items-center gap-2"
+          >
+            <Sparkles className="w-5 h-5" />
+            Generate Playlist ({choiceList.length}/3)
+          </motion.button>
+        </div>
       </motion.div>
 
       {results.songs.length === 0 ? (

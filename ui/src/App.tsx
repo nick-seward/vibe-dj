@@ -8,20 +8,37 @@ import { ConfigScreen } from './components/ConfigScreen'
 import { ChoiceListProvider, useChoiceList } from './context/ChoiceListContext'
 import { ToastProvider } from './context/ToastContext'
 import { useSearchSongs, useGeneratePlaylist, useSyncToNavidrome } from './hooks/useApi'
-import type { AppScreen, PlaylistResponse, SearchParams, PaginatedSearchResult, PageSize } from './types'
-import { DEFAULT_PAGE_SIZE } from './types'
+import { useConfig } from './hooks/useConfig'
+import type {
+  AppScreen,
+  PlaylistResponse,
+  SearchParams,
+  PaginatedSearchResult,
+  PageSize,
+  PlaylistSize,
+} from './types'
+import { DEFAULT_PAGE_SIZE, DEFAULT_PLAYLIST_SIZE, PLAYLIST_SIZE_OPTIONS } from './types'
 
 function AppContent() {
   const [screen, setScreen] = useState<AppScreen>('search')
   const [searchResults, setSearchResults] = useState<PaginatedSearchResult | null>(null)
   const [playlist, setPlaylist] = useState<PlaylistResponse | null>(null)
   const [pageSize, setPageSize] = useState<PageSize>(DEFAULT_PAGE_SIZE)
+  const [playlistSizeOverride, setPlaylistSizeOverride] = useState<PlaylistSize | null>(null)
   const currentSearchParams = useRef<SearchParams>({})
 
   const { songs: choiceListSongs, clearAll } = useChoiceList()
   const { search, loading: searching } = useSearchSongs()
   const { generate, loading: generating } = useGeneratePlaylist()
   const { sync } = useSyncToNavidrome()
+  const { config } = useConfig()
+
+  const configuredPlaylistSize =
+    config && PLAYLIST_SIZE_OPTIONS.includes(config.default_playlist_size as PlaylistSize)
+      ? (config.default_playlist_size as PlaylistSize)
+      : DEFAULT_PLAYLIST_SIZE
+
+  const selectedPlaylistSize = playlistSizeOverride ?? configuredPlaylistSize
 
   const handleSearch = async (params: SearchParams) => {
     try {
@@ -55,11 +72,11 @@ function AppContent() {
     }
   }
 
-  const handleGeneratePlaylist = async () => {
+  const handleGeneratePlaylist = async (length: number) => {
     if (choiceListSongs.length === 0) return
 
     try {
-      const result = await generate(choiceListSongs)
+      const result = await generate(choiceListSongs, length)
       setPlaylist(result)
       setScreen('playlist')
     } catch {
@@ -71,11 +88,15 @@ function AppContent() {
     if (choiceListSongs.length === 0) return
 
     try {
-      const result = await generate(choiceListSongs)
+      const result = await generate(choiceListSongs, selectedPlaylistSize)
       setPlaylist(result)
     } catch {
       // Error is handled in the hook
     }
+  }
+
+  const handlePlaylistSizeChange = (newPlaylistSize: PlaylistSize) => {
+    setPlaylistSizeOverride(newPlaylistSize)
   }
 
   const handleSyncToNavidrome = async (
@@ -129,7 +150,9 @@ function AppContent() {
               <SearchResults
                 results={searchResults}
                 pageSize={pageSize}
+                selectedPlaylistSize={selectedPlaylistSize}
                 onPageSizeChange={handlePageSizeChange}
+                onPlaylistSizeChange={handlePlaylistSizeChange}
                 onPageChange={handlePageChange}
                 onBack={handleBackToSearch}
                 onGeneratePlaylist={handleGeneratePlaylist}
