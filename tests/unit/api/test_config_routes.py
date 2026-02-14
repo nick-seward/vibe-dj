@@ -111,7 +111,7 @@ class TestConfigRoutes:
         response = client.post(
             "/api/navidrome/test",
             json={
-                "url": "http://localhost:4533",
+                "url": "http://8.8.8.8:4533",
                 "username": "testuser",
                 "password": "testpass",
             },
@@ -130,7 +130,7 @@ class TestConfigRoutes:
         response = client.post(
             "/api/navidrome/test",
             json={
-                "url": "http://localhost:4533",
+                "url": "http://8.8.8.8:4533",
                 "username": "testuser",
                 "password": "testpass",
             },
@@ -148,7 +148,7 @@ class TestConfigRoutes:
         response = client.post(
             "/api/navidrome/test",
             json={
-                "url": "http://localhost:4533",
+                "url": "http://8.8.8.8:4533",
                 "username": "testuser",
                 "password": "testpass",
             },
@@ -175,7 +175,7 @@ class TestConfigRoutes:
                 json.dump(
                     {
                         "music_library": temp_music_dir,
-                        "navidrome_url": "http://localhost:4533",
+                        "navidrome_url": "http://8.8.8.8:4533",
                         "navidrome_username": "testuser",
                         "navidrome_password": "stored_password",
                     },
@@ -211,7 +211,7 @@ class TestConfigRoutes:
                 response = client.post(
                     "/api/navidrome/test",
                     json={
-                        "url": "http://localhost:4533",
+                        "url": "http://8.8.8.8:4533",
                         "username": "testuser",
                     },
                 )
@@ -223,6 +223,60 @@ class TestConfigRoutes:
             finally:
                 Path(temp_path).unlink(missing_ok=True)
                 invalidate_config_cache()
+
+    @patch("vibe_dj.services.navidrome_client.NavidromeClient.ping")
+    def test_navidrome_test_blocks_localhost_url(self, mock_ping, client):
+        """Test that localhost URLs are blocked before connection attempts."""
+        response = client.post(
+            "/api/navidrome/test",
+            json={
+                "url": "http://localhost:4533",
+                "username": "testuser",
+                "password": "testpass",
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is False
+        assert "not allowed" in data["message"].lower()
+        mock_ping.assert_not_called()
+
+    @patch("vibe_dj.services.navidrome_client.NavidromeClient.ping")
+    def test_navidrome_test_blocks_private_ip_url(self, mock_ping, client):
+        """Test that private-network literal IPs are blocked."""
+        response = client.post(
+            "/api/navidrome/test",
+            json={
+                "url": "http://192.168.1.10:4533",
+                "username": "testuser",
+                "password": "testpass",
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is False
+        assert "not allowed" in data["message"].lower()
+        mock_ping.assert_not_called()
+
+    @patch("vibe_dj.services.navidrome_client.NavidromeClient.ping")
+    def test_navidrome_test_rejects_non_http_scheme(self, mock_ping, client):
+        """Test that non-http/https URL schemes are rejected."""
+        response = client.post(
+            "/api/navidrome/test",
+            json={
+                "url": "ftp://8.8.8.8:21",
+                "username": "testuser",
+                "password": "testpass",
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is False
+        assert "http or https" in data["message"].lower()
+        mock_ping.assert_not_called()
 
     @patch("vibe_dj.services.navidrome_client.NavidromeClient.ping")
     def test_navidrome_test_empty_password_uses_stored(
@@ -274,7 +328,7 @@ class TestConfigRoutes:
                 response = client.post(
                     "/api/navidrome/test",
                     json={
-                        "url": "http://localhost:4533",
+                        "url": "http://8.8.8.8:4533",
                         "username": "testuser",
                         "password": "",
                     },
@@ -331,7 +385,7 @@ class TestConfigRoutes:
                 response = client.post(
                     "/api/navidrome/test",
                     json={
-                        "url": "http://localhost:4533",
+                        "url": "http://8.8.8.8:4533",
                         "username": "testuser",
                     },
                 )

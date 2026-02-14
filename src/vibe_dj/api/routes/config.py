@@ -2,17 +2,16 @@ import json
 import os
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from loguru import logger
 from pydantic import BaseModel
 
 from vibe_dj.api.dependencies import (
     get_config,
-    get_navidrome_sync_service,
     invalidate_config_cache,
 )
 from vibe_dj.models import Config
-from vibe_dj.services import NavidromeSyncService
+from vibe_dj.services.url_security import UnsafeOutboundURLError, validate_outbound_url
 
 router = APIRouter(prefix="/api", tags=["config"])
 
@@ -165,6 +164,11 @@ def test_navidrome_connection(
     """
     from vibe_dj.services.navidrome_client import NavidromeClient
 
+    try:
+        safe_url = validate_outbound_url(request.url)
+    except UnsafeOutboundURLError as e:
+        return TestNavidromeResponse(success=False, message=str(e))
+
     # Use provided password, or fall back to stored password
     password = request.password if request.password else config.navidrome_password
 
@@ -176,7 +180,7 @@ def test_navidrome_connection(
 
     try:
         client = NavidromeClient(
-            base_url=request.url,
+            base_url=safe_url,
             username=request.username,
             password=password,
         )

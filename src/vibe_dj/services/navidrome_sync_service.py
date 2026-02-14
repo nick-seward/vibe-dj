@@ -4,6 +4,7 @@ from loguru import logger
 
 from vibe_dj.models import Config, Playlist
 from vibe_dj.services.navidrome_client import NavidromeClient
+from vibe_dj.services.url_security import UnsafeOutboundURLError, validate_outbound_url
 
 
 class NavidromeSyncService:
@@ -64,9 +65,24 @@ class NavidromeSyncService:
             }
 
         try:
-            logger.info(f"Syncing playlist to Navidrome at {url}...")
+            safe_url = validate_outbound_url(url)
+        except UnsafeOutboundURLError as e:
+            logger.warning(f"Navidrome sync blocked due to unsafe URL: {e}")
+            return {
+                "success": False,
+                "playlist_id": None,
+                "playlist_name": playlist_name,
+                "matched_count": 0,
+                "total_count": len(playlist.songs),
+                "skipped_songs": [],
+                "error": str(e),
+                "action": None,
+            }
 
-            client = NavidromeClient(url, username, password)
+        try:
+            logger.info(f"Syncing playlist to Navidrome at {safe_url}...")
+
+            client = NavidromeClient(safe_url, username, password)
 
             song_ids = []
             matched_count = 0

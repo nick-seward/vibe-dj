@@ -187,6 +187,20 @@ class TestNavidromeSyncService:
 
         assert result["success"] is False
         assert result["error"] == "Missing credentials"
+
+    @patch("vibe_dj.services.navidrome_sync_service.NavidromeClient")
+    def test_sync_playlist_blocks_unsafe_url(
+        self, mock_client_class, service, mock_playlist
+    ):
+        """Test playlist sync blocks unsafe localhost URL before client creation."""
+        result = service.sync_playlist(
+            playlist=mock_playlist,
+            navidrome_url="http://localhost:4533",
+        )
+
+        assert result["success"] is False
+        assert "not allowed" in result["error"].lower()
+        mock_client_class.assert_not_called()
         assert result["matched_count"] == 0
         assert result["action"] is None
 
