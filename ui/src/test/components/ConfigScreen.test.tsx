@@ -12,6 +12,8 @@ vi.mock('@/hooks/useConfig', () => ({
       navidrome_url: 'http://localhost:4533',
       navidrome_username: 'testuser',
       has_navidrome_password: true,
+      default_playlist_size: 20,
+      default_bpm_jitter: 5.0,
     },
     loading: false,
     error: null,
@@ -86,14 +88,16 @@ describe('ConfigScreen', () => {
     expect(mockOnClose).toHaveBeenCalled()
   })
 
-  it('shows Music and SubSonic tabs on desktop', () => {
+  it('shows Music, Playlist, and SubSonic tabs on desktop', () => {
     renderWithProviders(<ConfigScreen onClose={mockOnClose} />)
     
     // Desktop tabs (hidden on mobile via CSS, but still in DOM)
     const musicButtons = screen.getAllByText('Music')
+    const playlistButtons = screen.getAllByText('Playlist')
     const subsonicButtons = screen.getAllByText('SubSonic')
     
     expect(musicButtons.length).toBeGreaterThan(0)
+    expect(playlistButtons.length).toBeGreaterThan(0)
     expect(subsonicButtons.length).toBeGreaterThan(0)
   })
 
@@ -206,6 +210,46 @@ describe('ConfigScreen', () => {
     await waitFor(() => {
       const saveButton = screen.getByRole('button', { name: /^save$/i })
       expect(saveButton).not.toBeDisabled()
+    })
+  })
+
+  it('switches to Playlist tab when tab button is clicked', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<ConfigScreen onClose={mockOnClose} />)
+
+    const playlistButtons = screen.getAllByText('Playlist')
+    const tabButton = playlistButtons.find(el => el.tagName === 'BUTTON')
+
+    if (tabButton) {
+      await user.click(tabButton)
+
+      await waitFor(() => {
+        expect(screen.getByLabelText(/default playlist size/i)).toBeInTheDocument()
+      })
+    }
+  })
+
+  it('shows BPM Jitter slider in Playlist tab', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<ConfigScreen onClose={mockOnClose} />)
+
+    const dropdown = screen.getByLabelText('Select settings tab')
+    await user.selectOptions(dropdown, 'playlist')
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/bpm jitter/i)).toBeInTheDocument()
+    })
+  })
+
+  it('shows Save button in Playlist tab', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<ConfigScreen onClose={mockOnClose} />)
+
+    const dropdown = screen.getByLabelText('Select settings tab')
+    await user.selectOptions(dropdown, 'playlist')
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /^save$/i })).toBeInTheDocument()
     })
   })
 

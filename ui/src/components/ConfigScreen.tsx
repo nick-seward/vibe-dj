@@ -2,10 +2,12 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { XCircle, ChevronDown } from 'lucide-react'
 import { MusicTab } from './MusicTab'
+import { PlaylistTab } from './PlaylistTab'
 import { SubSonicTab } from './SubSonicTab'
 import { useConfig } from '@/hooks/useConfig'
+import { DEFAULT_PLAYLIST_SIZE, DEFAULT_BPM_JITTER } from '@/types'
 
-type ConfigTab = 'music' | 'subsonic'
+type ConfigTab = 'music' | 'playlist' | 'subsonic'
 
 interface ConfigScreenProps {
   onClose: () => void
@@ -13,6 +15,7 @@ interface ConfigScreenProps {
 
 const tabs: { id: ConfigTab; label: string }[] = [
   { id: 'music', label: 'Music' },
+  { id: 'playlist', label: 'Playlist' },
   { id: 'subsonic', label: 'SubSonic' },
 ]
 
@@ -25,11 +28,15 @@ export function ConfigScreen({ onClose }: ConfigScreenProps) {
   const [navidromeUrl, setNavidromeUrl] = useState('')
   const [navidromeUsername, setNavidromeUsername] = useState('')
   const [navidromePassword, setNavidromePassword] = useState('')
+  const [defaultPlaylistSize, setDefaultPlaylistSize] = useState<number>(DEFAULT_PLAYLIST_SIZE)
+  const [defaultBpmJitter, setDefaultBpmJitter] = useState<number>(DEFAULT_BPM_JITTER)
 
   // Track original values from config (for change detection)
   const [originalMusicLibrary, setOriginalMusicLibrary] = useState('')
   const [originalNavidromeUrl, setOriginalNavidromeUrl] = useState('')
   const [originalNavidromeUsername, setOriginalNavidromeUsername] = useState('')
+  const [originalPlaylistSize, setOriginalPlaylistSize] = useState<number>(DEFAULT_PLAYLIST_SIZE)
+  const [originalBpmJitter, setOriginalBpmJitter] = useState<number>(DEFAULT_BPM_JITTER)
 
   // Initialize form values from config when loaded
   useEffect(() => {
@@ -41,6 +48,10 @@ export function ConfigScreen({ onClose }: ConfigScreenProps) {
       setOriginalMusicLibrary(config.music_library || '')
       setOriginalNavidromeUrl(config.navidrome_url || '')
       setOriginalNavidromeUsername(config.navidrome_username || '')
+      setDefaultPlaylistSize(config.default_playlist_size)
+      setDefaultBpmJitter(config.default_bpm_jitter)
+      setOriginalPlaylistSize(config.default_playlist_size)
+      setOriginalBpmJitter(config.default_bpm_jitter)
       // Password is never returned from server, keep local value
     }
   }, [config])
@@ -155,6 +166,25 @@ export function ConfigScreen({ onClose }: ConfigScreenProps) {
                     musicLibrary={musicLibrary}
                     originalMusicLibrary={originalMusicLibrary}
                     onMusicLibraryChange={setMusicLibrary}
+                    onSaveSuccess={handleSaveSuccess}
+                  />
+                </motion.div>
+              )}
+              {activeTab === 'playlist' && (
+                <motion.div
+                  key="playlist"
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <PlaylistTab
+                    defaultPlaylistSize={defaultPlaylistSize}
+                    defaultBpmJitter={defaultBpmJitter}
+                    originalPlaylistSize={originalPlaylistSize}
+                    originalBpmJitter={originalBpmJitter}
+                    onPlaylistSizeChange={setDefaultPlaylistSize}
+                    onBpmJitterChange={setDefaultBpmJitter}
                     onSaveSuccess={handleSaveSuccess}
                   />
                 </motion.div>
