@@ -11,6 +11,7 @@ from vibe_dj.api.dependencies import (
     invalidate_config_cache,
 )
 from vibe_dj.models import Config
+from vibe_dj.models.config import ALLOWED_PLAYLIST_SIZES, BPM_JITTER_MAX, BPM_JITTER_MIN
 from vibe_dj.services.url_security import UnsafeOutboundURLError, validate_outbound_url
 
 router = APIRouter(prefix="/api", tags=["config"])
@@ -29,6 +30,8 @@ class ConfigResponse(BaseModel):
     navidrome_url: Optional[str] = None
     navidrome_username: Optional[str] = None
     has_navidrome_password: bool = False
+    default_playlist_size: int = 20
+    default_bpm_jitter: float = 5.0
 
 
 class ValidatePathRequest(BaseModel):
@@ -74,6 +77,8 @@ class UpdateConfigRequest(BaseModel):
     navidrome_url: Optional[str] = None
     navidrome_username: Optional[str] = None
     navidrome_password: Optional[str] = None
+    default_playlist_size: Optional[int] = None
+    default_bpm_jitter: Optional[float] = None
 
 
 class UpdateConfigResponse(BaseModel):
@@ -99,6 +104,8 @@ def get_current_config(
         navidrome_url=config.navidrome_url,
         navidrome_username=config.navidrome_username,
         has_navidrome_password=bool(config.navidrome_password),
+        default_playlist_size=config.default_playlist_size,
+        default_bpm_jitter=config.default_bpm_jitter,
     )
 
 
@@ -256,6 +263,25 @@ def update_config(
         # This preserves existing password when user doesn't change it
         if request.navidrome_password is not None and request.navidrome_password:
             existing_data["navidrome_password"] = request.navidrome_password
+
+        # Validate and update playlist defaults
+        if request.default_playlist_size is not None:
+            if request.default_playlist_size not in ALLOWED_PLAYLIST_SIZES:
+                return UpdateConfigResponse(
+                    success=False,
+                    message=f"default_playlist_size must be one of {ALLOWED_PLAYLIST_SIZES}, "
+                    f"got {request.default_playlist_size}",
+                )
+            existing_data["default_playlist_size"] = request.default_playlist_size
+
+        if request.default_bpm_jitter is not None:
+            if not (BPM_JITTER_MIN <= request.default_bpm_jitter <= BPM_JITTER_MAX):
+                return UpdateConfigResponse(
+                    success=False,
+                    message=f"default_bpm_jitter must be between {BPM_JITTER_MIN} and "
+                    f"{BPM_JITTER_MAX}, got {request.default_bpm_jitter}",
+                )
+            existing_data["default_bpm_jitter"] = request.default_bpm_jitter
 
         # Write updated config to file
         with open(CONFIG_FILE_PATH, "w") as f:

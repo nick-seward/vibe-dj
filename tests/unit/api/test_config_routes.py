@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 from vibe_dj.api.dependencies import invalidate_config_cache
 from vibe_dj.app import app
+from vibe_dj.models.config import ALLOWED_PLAYLIST_SIZES, BPM_JITTER_MAX, BPM_JITTER_MIN
 
 
 class TestConfigRoutes:
@@ -38,6 +39,26 @@ class TestConfigRoutes:
         data = response.json()
         assert "navidrome_password" not in data
         assert "has_navidrome_password" in data
+
+    def test_get_config_returns_playlist_defaults(self, client):
+        """Test that GET /api/config returns default_playlist_size and default_bpm_jitter."""
+        response = client.get("/api/config")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "default_playlist_size" in data
+        assert "default_bpm_jitter" in data
+        assert isinstance(data["default_playlist_size"], int)
+        assert isinstance(data["default_bpm_jitter"], float)
+
+    def test_get_config_playlist_defaults_have_correct_defaults(self, client):
+        """Test that playlist defaults match Config model defaults."""
+        response = client.get("/api/config")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["default_playlist_size"] == 20
+        assert data["default_bpm_jitter"] == 5.0
 
     def test_validate_path_empty_path(self, client):
         """Test validation of empty path."""
@@ -618,3 +639,148 @@ class TestUpdateConfigRoutes:
         with open(temp_config_file) as f:
             saved_config = json.load(f)
         assert saved_config["navidrome_url"] is None
+
+    def test_update_config_valid_playlist_size(self, client, temp_config_file):
+        """Test updating default_playlist_size with each valid value."""
+        for size in ALLOWED_PLAYLIST_SIZES:
+            response = client.put(
+                "/api/config",
+                json={"default_playlist_size": size},
+            )
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["success"] is True
+
+            with open(temp_config_file) as f:
+                saved_config = json.load(f)
+            assert saved_config["default_playlist_size"] == size
+
+    def test_update_config_invalid_playlist_size(self, client, temp_config_file):
+        """Test that invalid playlist size is rejected."""
+        response = client.put(
+            "/api/config",
+            json={"default_playlist_size": 10},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is False
+        assert "default_playlist_size must be one of" in data["message"]
+
+    def test_update_config_invalid_playlist_size_zero(self, client, temp_config_file):
+        """Test that zero playlist size is rejected."""
+        response = client.put(
+            "/api/config",
+            json={"default_playlist_size": 0},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is False
+        assert "default_playlist_size must be one of" in data["message"]
+
+    def test_update_config_valid_bpm_jitter(self, client, temp_config_file):
+        """Test updating default_bpm_jitter with a valid value."""
+        response = client.put(
+            "/api/config",
+            json={"default_bpm_jitter": 10.0},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+
+        with open(temp_config_file) as f:
+            saved_config = json.load(f)
+        assert saved_config["default_bpm_jitter"] == 10.0
+
+    def test_update_config_bpm_jitter_at_boundaries(self, client, temp_config_file):
+        """Test updating default_bpm_jitter at min and max boundaries."""
+        response = client.put(
+            "/api/config",
+            json={"default_bpm_jitter": BPM_JITTER_MIN},
+        )
+        assert response.status_code == 200
+        assert response.json()["success"] is True
+
+        with open(temp_config_file) as f:
+            saved_config = json.load(f)
+        assert saved_config["default_bpm_jitter"] == BPM_JITTER_MIN
+
+        response = client.put(
+            "/api/config",
+            json={"default_bpm_jitter": BPM_JITTER_MAX},
+        )
+        assert response.status_code == 200
+        assert response.json()["success"] is True
+
+        with open(temp_config_file) as f:
+            saved_config = json.load(f)
+        assert saved_config["default_bpm_jitter"] == BPM_JITTER_MAX
+
+    def test_update_config_bpm_jitter_below_min(self, client, temp_config_file):
+        """Test that bpm_jitter below minimum is rejected."""
+        response = client.put(
+            "/api/config",
+            json={"default_bpm_jitter": 0.5},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is False
+        assert "default_bpm_jitter must be between" in data["message"]
+
+    def test_update_config_bpm_jitter_above_max(self, client, temp_config_file):
+        """Test that bpm_jitter above maximum is rejected."""
+        response = client.put(
+            "/api/config",
+            json={"default_bpm_jitter": 25.0},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is False
+        assert "default_bpm_jitter must be between" in data["message"]
+
+    def test_update_config_playlist_defaults_preserved_on_partial_update(
+        self, client, temp_config_file
+    ):
+        """Test that playlist defaults are preserved when not included in update."""
+        # First set playlist defaults
+        client.put(
+            "/api/config",
+            json={"default_playlist_size": 30, "default_bpm_jitter": 8.0},
+        )
+
+        # Update only navidrome_url
+        response = client.put(
+            "/api/config",
+            json={"navidrome_url": "http://new.url"},
+        )
+
+        assert response.status_code == 200
+        assert response.json()["success"] is True
+
+        with open(temp_config_file) as f:
+            saved_config = json.load(f)
+        assert saved_config["default_playlist_size"] == 30
+        assert saved_config["default_bpm_jitter"] == 8.0
+
+    def test_update_config_both_playlist_defaults_together(
+        self, client, temp_config_file
+    ):
+        """Test updating both playlist defaults in a single request."""
+        response = client.put(
+            "/api/config",
+            json={"default_playlist_size": 35, "default_bpm_jitter": 12.5},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+
+        with open(temp_config_file) as f:
+            saved_config = json.load(f)
+        assert saved_config["default_playlist_size"] == 35
+        assert saved_config["default_bpm_jitter"] == 12.5
