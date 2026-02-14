@@ -1000,7 +1000,6 @@ name = "vibe-dj"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "click" },
     { name = "faiss-cpu" },
     { name = "fastapi" },
     { name = "librosa" },
@@ -1029,7 +1028,6 @@ test = [
 
 [package.metadata]
 requires-dist = [
-    { name = "click", specifier = ">=8.3.1" },
     { name = "faiss-cpu", specifier = ">=1.13.2" },
     { name = "fastapi", specifier = ">=0.115.0" },
     { name = "librosa", specifier = ">=0.11.0" },
