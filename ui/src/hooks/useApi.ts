@@ -60,7 +60,7 @@ export function useGeneratePlaylist() {
     error: null,
   })
 
-  const generate = useCallback(async (seeds: Song[], length: number = 20): Promise<PlaylistResponse> => {
+  const generate = useCallback(async (seeds: Song[], length: number = 20, bpmJitter: number = 5.0): Promise<PlaylistResponse> => {
     setState({ data: null, loading: true, error: null })
 
     try {
@@ -71,7 +71,7 @@ export function useGeneratePlaylist() {
           album: s.album,
         })),
         length,
-        bpm_jitter: 5.0,
+        bpm_jitter: bpmJitter,
         sync_to_navidrome: false,
       }
 

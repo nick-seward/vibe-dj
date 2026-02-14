@@ -17,7 +17,7 @@ import type {
   PageSize,
   PlaylistSize,
 } from './types'
-import { DEFAULT_PAGE_SIZE, DEFAULT_PLAYLIST_SIZE, PLAYLIST_SIZE_OPTIONS } from './types'
+import { DEFAULT_PAGE_SIZE, DEFAULT_PLAYLIST_SIZE, DEFAULT_BPM_JITTER, BPM_JITTER_MIN, BPM_JITTER_MAX, PLAYLIST_SIZE_OPTIONS } from './types'
 
 function AppContent() {
   const [screen, setScreen] = useState<AppScreen>('search')
@@ -37,6 +37,11 @@ function AppContent() {
     config && PLAYLIST_SIZE_OPTIONS.includes(config.default_playlist_size as PlaylistSize)
       ? (config.default_playlist_size as PlaylistSize)
       : DEFAULT_PLAYLIST_SIZE
+
+  const configuredBpmJitter =
+    config && config.default_bpm_jitter >= BPM_JITTER_MIN && config.default_bpm_jitter <= BPM_JITTER_MAX
+      ? config.default_bpm_jitter
+      : DEFAULT_BPM_JITTER
 
   const selectedPlaylistSize = playlistSizeOverride ?? configuredPlaylistSize
 
@@ -76,7 +81,7 @@ function AppContent() {
     if (choiceListSongs.length === 0) return
 
     try {
-      const result = await generate(choiceListSongs, length)
+      const result = await generate(choiceListSongs, length, configuredBpmJitter)
       setPlaylist(result)
       setScreen('playlist')
     } catch {
@@ -88,7 +93,7 @@ function AppContent() {
     if (choiceListSongs.length === 0) return
 
     try {
-      const result = await generate(choiceListSongs, selectedPlaylistSize)
+      const result = await generate(choiceListSongs, selectedPlaylistSize, configuredBpmJitter)
       setPlaylist(result)
     } catch {
       // Error is handled in the hook
