@@ -44,18 +44,9 @@ make ui-server
 
 ## Docker
 
-Two Dockerfiles are provided:
-
-- **`Dockerfile`** — API-only image (no UI)
-- **`Dockerfile-Server`** — Full server with React UI (recommended for production)
-
 ### Building the Docker Image
 
 ```bash
-# Full server with UI (recommended)
-./build-docker.sh Dockerfile-Server vibe-dj-server
-
-# API-only
 ./build-docker.sh Dockerfile vibe-dj
 ```
 
