@@ -44,44 +44,39 @@ make ui-server
 
 ## Docker
 
+Two Dockerfiles are provided:
+
+- **`Dockerfile`** — API-only image (no UI)
+- **`Dockerfile-Server`** — Full server with React UI (recommended for production)
+
 ### Building the Docker Image
 
 ```bash
-./build-docker.sh Dockerfile-server vibe-dj
+# Full server with UI (recommended)
+./build-docker.sh Dockerfile-Server vibe-dj-server
+
+# API-only
+./build-docker.sh Dockerfile vibe-dj
 ```
 
 ## How It Works
 
-When `--sync-to-navidrome` is enabled:
+1. **Index your library** via the web UI settings page — scans audio files and extracts features
+2. **Search for songs** to use as seeds for playlist generation
+3. **Generate a playlist** — the API finds similar songs using FAISS and sorts by BPM
+4. **Optionally sync to Navidrome** — push the generated playlist to a Navidrome/Subsonic server
 
-1. **Local playlist is generated** and saved to M3U file (always happens first)
-2. **Songs are matched** on Navidrome using a three-tier search strategy:
-   - Primary: Search by title + artist + album (most accurate)
-   - Fallback 1: Search by title + artist
-   - Fallback 2: Search by title only
-3. **Playlist is created or updated**:
-   - If a playlist with the same name exists, it's updated with new songs
-   - If not, a new playlist is created
-4. **Results are reported**: Shows matched songs and any that couldn't be found
+### Navidrome Sync
 
-#### Song Matching
+When syncing a playlist to Navidrome, songs are matched using a three-tier search strategy:
 
-The sync process uses intelligent song matching to find your local tracks on Navidrome:
+- **Primary**: Search by title + artist + album (most accurate)
+- **Fallback 1**: Search by title + artist
+- **Fallback 2**: Search by title only
 
-- **Best match**: Uses all available metadata (title, artist, album)
-- **Fallback matching**: Tries progressively simpler searches if exact match fails
-- **Skips gracefully**: Songs that can't be matched are skipped with warnings
-- **Continues on errors**: Local M3U file is always created, even if Navidrome sync fails
+If a playlist with the same name already exists on Navidrome, it is updated with the new song list. Songs that cannot be matched are skipped gracefully.
 
 **Note**: Song matching accuracy depends on metadata consistency between your local library and Navidrome. Ensure your music files have proper ID3 tags for best results.
-
-#### Playlist Updates
-
-If you run the command again with the same `--playlist-name`, the existing playlist on Navidrome will be updated with the new song list. This allows you to:
-
-- Regenerate playlists with the same seeds (getting new variety)
-- Update playlists with different parameters (length, BPM jitter)
-- Keep playlist names consistent across regenerations
 
 ## Contributing
 
