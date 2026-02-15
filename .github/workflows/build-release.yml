@@ -1,0 +1,79 @@
+name: CI and Release
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: "!contains(github.event.head_commit.message, 'ci skip') && !contains(github.event.head_commit.message, 'skip ci')"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for version calculation
+          fetch-tags: true
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Setup Python with uv
+        run: uv python install  # Installs Python based on pyproject.toml or .python-version
+
+      - name: Install dependencies and run Python tests
+        run: |
+          make install
+          make test
+
+      - name: Setup Node.js for frontend
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Run frontend UI tests
+        run: |
+          cd ui
+          npm install
+          npm run test:run
+
+      - name: Calculate next version
+        id: semver
+        uses: ietf-tools/semver-action@v1
+        with:
+          branch: master
+          token: ${{ github.token }}
+          noVersionBumpBehavior: 'warn'
+
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ github.token }}
+          tag: ${{ steps.semver.outputs.next }}
+          commit: ${{ github.event.head_commit.id }}
+          name: Release ${{ steps.semver.outputs.next }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/amd64,linux/arm64
+          context: .
+          push: true
+          tags: |
+            nseward/vibe-dj:${{ steps.semver.outputs.nextStrict }}
+            nseward/vibe-dj:latest
