@@ -8,9 +8,8 @@ Simply search your music library and pick up to three songs. Maybe a fiery Jeff 
 
 It's like whispering to a real DJ: "Blend a little of this, a dash of that, and crank up the spice." No more endless scrolling. Just pure musical alchemy from your own library.
 
-<div align="center">
+
 [![CI and Release](https://github.com/nick-seward/vibe-dj/actions/workflows/build-release.yml/badge.svg)](https://github.com/nick-seward/vibe-dj/actions/workflows/build-release.yml)
-</div>
 
 ---
 
