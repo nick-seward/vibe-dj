@@ -49,6 +49,7 @@ jobs:
           noVersionBumpBehavior: 'warn'
 
       - name: Create GitHub Release
+        if: steps.semver.outputs.bump != 'none'
         uses: ncipollo/release-action@v1
         with:
           token: ${{ github.token }}
@@ -57,18 +58,22 @@ jobs:
           name: Release ${{ steps.semver.outputs.next }}
 
       - name: Log in to Docker Hub
+        if: steps.semver.outputs.bump != 'none'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Set up QEMU
+        if: steps.semver.outputs.bump != 'none'
         uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
+        if: steps.semver.outputs.bump != 'none'
         uses: docker/setup-buildx-action@v3
 
       - name: Build and push Docker image
+        if: steps.semver.outputs.bump != 'none'
         uses: docker/build-push-action@v6
         with:
           platforms: linux/amd64,linux/arm64
