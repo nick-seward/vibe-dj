@@ -56,6 +56,7 @@ export function ChoiceListProvider({ children }: { children: ReactNode }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useChoiceList() {
   const context = useContext(ChoiceListContext)
   if (context === undefined) {

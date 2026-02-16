@@ -59,13 +59,12 @@ export function MusicTab({ musicLibrary, originalMusicLibrary, onMusicLibraryCha
 
   // Debounced validation
   useEffect(() => {
-    if (!musicLibrary.trim()) {
-      clearValidation()
-      setHasValidated(false)
-      return
-    }
-
     const timer = setTimeout(() => {
+      if (!musicLibrary.trim()) {
+        clearValidation()
+        setHasValidated(false)
+        return
+      }
       validatePath(musicLibrary)
       setHasValidated(true)
     }, 500)

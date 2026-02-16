@@ -151,3 +151,27 @@ export interface UpdateConfigResponse {
   success: boolean
   message: string
 }
+
+export interface Profile {
+  id: number
+  display_name: string
+  subsonic_url: string | null
+  subsonic_username: string | null
+  has_subsonic_password: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateProfileRequest {
+  display_name: string
+  subsonic_url?: string
+  subsonic_username?: string
+  subsonic_password?: string
+}
+
+export interface UpdateProfileRequest {
+  display_name?: string
+  subsonic_url?: string
+  subsonic_username?: string
+  subsonic_password?: string
+}

@@ -143,11 +143,13 @@ describe('ConfigScreen', () => {
     })
   })
 
-  it('populates music library from config', () => {
+  it('populates music library from config', async () => {
     renderWithProviders(<ConfigScreen onClose={mockOnClose} />)
     
-    const input = screen.getByLabelText(/music library path/i) as HTMLInputElement
-    expect(input.value).toBe('/test/music')
+    await waitFor(() => {
+      const input = screen.getByLabelText(/music library path/i) as HTMLInputElement
+      expect(input.value).toBe('/test/music')
+    })
   })
 
   it('shows Save button in Music tab', () => {

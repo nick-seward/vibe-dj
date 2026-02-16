@@ -40,7 +40,8 @@ export function ConfigScreen({ onClose }: ConfigScreenProps) {
 
   // Initialize form values from config when loaded
   useEffect(() => {
-    if (config) {
+    if (!config) return
+    const id = setTimeout(() => {
       setMusicLibrary(config.music_library || '')
       setNavidromeUrl(config.navidrome_url || '')
       setNavidromeUsername(config.navidrome_username || '')
@@ -53,7 +54,8 @@ export function ConfigScreen({ onClose }: ConfigScreenProps) {
       setOriginalPlaylistSize(config.default_playlist_size)
       setOriginalBpmJitter(config.default_bpm_jitter)
       // Password is never returned from server, keep local value
-    }
+    }, 0)
+    return () => clearTimeout(id)
   }, [config])
 
   // Callback to refresh config after successful save

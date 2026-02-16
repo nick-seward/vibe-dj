@@ -2,6 +2,19 @@ import { useState, useCallback } from 'react'
 import type { Song, SongsListResponse, PlaylistRequest, PlaylistResponse, SearchParams, NavidromeConfig, PaginatedSearchResult } from '@/types'
 
 const API_BASE = '/api'
+const ACTIVE_PROFILE_KEY = 'vibe-dj-active-profile-id'
+
+function getActiveProfileHeaders(): Record<string, string> {
+  try {
+    const stored = localStorage.getItem(ACTIVE_PROFILE_KEY)
+    if (stored !== null) {
+      return { 'X-Active-Profile': stored }
+    }
+  } catch {
+    // localStorage may be unavailable
+  }
+  return {}
+}
 
 interface UseApiState<T> {
   data: T | null
@@ -28,7 +41,9 @@ export function useSearchSongs() {
       if (params.offset !== undefined) queryParts.push(`offset=${params.offset}`)
 
       const queryString = queryParts.join('&')
-      const response = await fetch(`${API_BASE}/songs/search?${queryString}`)
+      const response = await fetch(`${API_BASE}/songs/search?${queryString}`, {
+        headers: { ...getActiveProfileHeaders() },
+      })
 
       if (!response.ok) {
         throw new Error(`Search failed: ${response.statusText}`)
@@ -77,7 +92,7 @@ export function useGeneratePlaylist() {
 
       const response = await fetch(`${API_BASE}/playlist`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getActiveProfileHeaders() },
         body: JSON.stringify(request),
       })
 
@@ -124,7 +139,7 @@ export function useSyncToNavidrome() {
 
       const response = await fetch(`${API_BASE}/playlist/sync`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getActiveProfileHeaders() },
         body: JSON.stringify(request),
       })
 

@@ -7,6 +7,7 @@ import { ChoiceListDrawer } from './components/ChoiceListDrawer'
 import { ConfigScreen } from './components/ConfigScreen'
 import { ChoiceListProvider, useChoiceList } from './context/ChoiceListContext'
 import { ToastProvider } from './context/ToastContext'
+import { ProfileProvider } from './context/ProfileContext'
 import { useSearchSongs, useGeneratePlaylist, useSyncToNavidrome } from './hooks/useApi'
 import { useConfig } from './hooks/useConfig'
 import type {
@@ -204,9 +205,11 @@ function AppContent() {
 function App() {
   return (
     <ToastProvider>
-      <ChoiceListProvider>
-        <AppContent />
-      </ChoiceListProvider>
+      <ProfileProvider>
+        <ChoiceListProvider>
+          <AppContent />
+        </ChoiceListProvider>
+      </ProfileProvider>
     </ToastProvider>
   )
 }
