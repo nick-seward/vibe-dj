@@ -1,4 +1,6 @@
-# Vibe-DJ
+<p align="center">
+    <img src="./docs/vibe-dj-logo.jpeg" alt="Vibe-DJ logo">
+</p>
 
 A music library indexer and intelligent playlist generator using audio feature analysis and similarity search.
 
