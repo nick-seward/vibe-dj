@@ -14,6 +14,7 @@ from .api.routes import (
     index_router,
     library_router,
     playlist_router,
+    profiles_router,
     songs_router,
 )
 from .core import MusicDatabase
@@ -176,6 +177,7 @@ app.include_router(config_router)
 app.include_router(index_router)
 app.include_router(library_router)
 app.include_router(playlist_router)
+app.include_router(profiles_router)
 app.include_router(songs_router)
 
 # Serve the React UI static files if they exist

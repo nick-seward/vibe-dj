@@ -1,12 +1,14 @@
 import os
 from typing import Generator, Optional
 
-from fastapi import Depends, HTTPException, UploadFile
+from fastapi import Depends, Header, HTTPException, UploadFile
 from loguru import logger
 
 from vibe_dj.api.background import JobManager, job_manager
 from vibe_dj.core import AudioAnalyzer, LibraryIndexer, MusicDatabase, SimilarityIndex
+from vibe_dj.core.profile_database import ProfileDatabase
 from vibe_dj.models import Config
+from vibe_dj.models.profile import Profile
 from vibe_dj.services import NavidromeSyncService, PlaylistGenerator
 
 _config_cache: Optional[Config] = None
@@ -158,6 +160,66 @@ def get_job_manager() -> JobManager:
     :return: JobManager instance
     """
     return job_manager
+
+
+_profile_db_instance: Optional[ProfileDatabase] = None
+
+
+def get_profile_database() -> Generator[ProfileDatabase, None, None]:
+    """Provide profile database connection with context management.
+
+    Uses a singleton ProfileDatabase instance with a separate session
+    per request. The database file is stored alongside the main database.
+
+    :yield: ProfileDatabase instance with active session
+    """
+    global _profile_db_instance
+
+    if _profile_db_instance is None:
+        db_path = os.environ.get("VIBE_DJ_PROFILES_DB", "profiles.db")
+        encryption_key = os.environ.get("VIBE_DJ_ENCRYPTION_KEY")
+        _profile_db_instance = ProfileDatabase(
+            db_path=db_path, encryption_key=encryption_key
+        )
+        _profile_db_instance.connect()
+        _profile_db_instance.init_db()
+
+    yield _profile_db_instance
+
+
+def get_active_profile(
+    profile_db: ProfileDatabase = Depends(get_profile_database),
+    x_active_profile: Optional[str] = Header(None),
+) -> Optional[Profile]:
+    """Get the active profile from the X-Active-Profile header.
+
+    Resolves the profile ID from the request header and returns
+    the corresponding Profile object. Returns None if no header
+    is provided.
+
+    :param profile_db: Profile database instance
+    :param x_active_profile: Profile ID from request header
+    :return: Active Profile object, or None if no header
+    :raises HTTPException: If profile ID is invalid or not found
+    """
+    if not x_active_profile:
+        return None
+
+    try:
+        profile_id = int(x_active_profile)
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid X-Active-Profile header: '{x_active_profile}' is not a valid profile ID",
+        )
+
+    profile = profile_db.get_profile(profile_id)
+    if not profile:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Profile with ID {profile_id} not found",
+        )
+    return profile
 
 
 async def parse_config_file(file: Optional[UploadFile] = None) -> Optional[Config]:
