@@ -47,7 +47,16 @@ def generator_setup():
         feature_vector=np.array([4.0, 5.0, 6.0], dtype=np.float32),
         bpm=130.0,
     )
-    return config, mock_db, mock_similarity, generator, test_song1, test_song2, test_features1, test_features2
+    return (
+        config,
+        mock_db,
+        mock_similarity,
+        generator,
+        test_song1,
+        test_song2,
+        test_features1,
+        test_features2,
+    )
 
 
 def test_find_seed_songs(generator_setup):
@@ -74,7 +83,9 @@ def test_find_seed_songs_no_match(generator_setup):
 
 
 def test_get_seed_vectors(generator_setup):
-    _config, mock_db, _mock_sim, generator, test_song1, _s2, test_features1, _f2 = generator_setup
+    _config, mock_db, _mock_sim, generator, test_song1, _s2, test_features1, _f2 = (
+        generator_setup
+    )
     mock_db.get_features.return_value = test_features1
 
     vectors = generator.get_seed_vectors([test_song1])
@@ -132,7 +143,16 @@ def test_perturb_query_vector_uses_config(generator_setup):
 
 
 def test_find_similar_songs(generator_setup):
-    _config, mock_db, mock_similarity, generator, _s1, test_song2, _f1, test_features2 = generator_setup
+    (
+        _config,
+        mock_db,
+        mock_similarity,
+        generator,
+        _s1,
+        test_song2,
+        _f1,
+        test_features2,
+    ) = generator_setup
     song3 = Song(
         id=3,
         file_path="/test/3.mp3",
@@ -268,7 +288,16 @@ def test_sort_by_bpm(generator_setup):
 
 
 def test_generate_playlist(generator_setup):
-    _config, mock_db, mock_similarity, generator, test_song1, test_song2, test_features1, test_features2 = generator_setup
+    (
+        _config,
+        mock_db,
+        mock_similarity,
+        generator,
+        test_song1,
+        test_song2,
+        test_features1,
+        test_features2,
+    ) = generator_setup
     song3 = Song(
         id=3,
         file_path="/test/3.mp3",
@@ -309,7 +338,16 @@ def test_generate_playlist(generator_setup):
 
 
 def test_generate_playlist_with_custom_noise(generator_setup):
-    _config, mock_db, mock_similarity, generator, test_song1, test_song2, test_features1, test_features2 = generator_setup
+    (
+        _config,
+        mock_db,
+        mock_similarity,
+        generator,
+        test_song1,
+        test_song2,
+        test_features1,
+        test_features2,
+    ) = generator_setup
     song3 = Song(
         id=3,
         file_path="/test/3.mp3",

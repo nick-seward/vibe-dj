@@ -405,9 +405,7 @@ class MusicDatabase:
         )
 
         album_count = (
-            self.session.execute(
-                select(func.count(func.distinct(Song.album)))
-            ).scalar()
+            self.session.execute(select(func.count(func.distinct(Song.album)))).scalar()
             or 0
         )
 

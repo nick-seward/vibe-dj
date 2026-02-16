@@ -104,9 +104,7 @@ class TestLibraryIndexer:
                 f.touch()
                 files.append(str(f))
 
-            count = indexer.extract_metadata_phase(
-                files, progress_callback=callback
-            )
+            count = indexer.extract_metadata_phase(files, progress_callback=callback)
 
             assert count == 3
             assert callback.call_count == 3

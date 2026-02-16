@@ -165,7 +165,9 @@ class TestPlaylistEndpoints:
         try:
             with patch(
                 "tempfile.NamedTemporaryFile",
-                side_effect=AssertionError("Temporary files should not be used for sync"),
+                side_effect=AssertionError(
+                    "Temporary files should not be used for sync"
+                ),
             ):
                 response = client.post("/api/playlist", json=request_data)
 
@@ -261,4 +263,3 @@ class TestPlaylistEndpoints:
         finally:
             app.dependency_overrides.pop(get_config, None)
             app.dependency_overrides.pop(get_navidrome_sync_service, None)
-

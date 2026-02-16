@@ -25,9 +25,7 @@ class TestAudioAnalyzer:
         mock_librosa.feature.chroma_cqt.return_value = np.random.random((12, 100))
         mock_librosa.beat.beat_track.return_value = (120.0, None)
         mock_librosa.feature.rms.return_value = np.array([[0.5] * 100])
-        mock_librosa.feature.spectral_centroid.return_value = np.array(
-            [[1000.0] * 100]
-        )
+        mock_librosa.feature.spectral_centroid.return_value = np.array([[1000.0] * 100])
         mock_librosa.onset.onset_strength.return_value = np.array([0.8] * 100)
 
         features = analyzer.extract_features("/test/song.mp3")

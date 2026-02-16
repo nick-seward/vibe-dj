@@ -101,7 +101,9 @@ async def general_exception_handler(request, exc):
 # When UI is available, the static file mount will serve index.html at "/"
 # Check env var first (Docker non-editable install), then fall back to __file__-relative (local dev)
 _ui_env = os.environ.get("VIBE_DJ_UI_PATH")
-ui_dist_path = Path(_ui_env) if _ui_env else Path(__file__).parent.parent.parent / "ui" / "dist"
+ui_dist_path = (
+    Path(_ui_env) if _ui_env else Path(__file__).parent.parent.parent / "ui" / "dist"
+)
 if not ui_dist_path.exists():
 
     @app.get("/")

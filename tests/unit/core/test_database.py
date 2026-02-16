@@ -350,9 +350,7 @@ class TestMusicDatabase:
         db.add_song(song2)
         db.add_song(song3)
 
-        songs_without = db.get_songs_without_features(
-            ["/test/1.mp3", "/test/2.mp3"]
-        )
+        songs_without = db.get_songs_without_features(["/test/1.mp3", "/test/2.mp3"])
 
         assert len(songs_without) == 2
         titles = [s.title for s in songs_without]
