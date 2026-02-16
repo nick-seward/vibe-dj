@@ -9,6 +9,8 @@
 | 2026-02-12 | user | Read `.beads/issues.jsonl` directly instead of using `bd` commands | NEVER read `.beads/*.jsonl` files directly. Always use `bd ready`, `bd show`, `bd list`, etc. AGENTS.md is explicit about this. |
 | 2026-02-13 | self | `grep_search` query starting with `--output` was parsed as an rg flag and failed | Escape leading hyphens in grep patterns (e.g. `\\-\\-output`) or use fixed-string-safe patterns that don't start with `-`. |
 | 2026-02-13 | self | Passed `file:///...` URI to `code_search` and it rejected the path as non-absolute | Use plain absolute filesystem paths like `/Users/...` for `code_search.search_folder_absolute_uri`. |
+| 2026-02-16 | self | Tried ref-during-render pattern to fix set-state-in-effect lint — blocked by react-hooks/refs rule | This ESLint config also bans ref access during render. Use setTimeout(…, 0) inside useEffect instead. |
+| 2026-02-16 | self | Tried state-during-render pattern to replace useEffect — caused infinite re-renders because config object is new reference each render | Don't use state-during-render with objects that change identity each render. Stick with setTimeout(…, 0) in useEffect. |
 
 ## User Preferences
 - Uses `bd comments add <id> "text"` not `bd note add` for beads
