@@ -2,79 +2,49 @@
     <img src="./docs/vibe-dj-logo.jpeg" alt="Vibe-DJ logo">
 </p>
 
-A music library indexer and intelligent playlist generator using audio feature analysis and similarity search.
+**Vibe-DJ** is your personal AI-powered DJ that turns a few favorite tracks into an entire playlist that feels just right.
 
-## Overview
+Simply search your music library and pick up to three songs. Maybe a fiery Jeff Beck solo, a soulful Coltrane ballad, and a heavy Metallica riff. Then watch Vibe-DJ analyze their sonic DNA (energy, mood, timbre, tempo, and more) to craft a seamless playlist pulling similar vibes from the rest of your collection.
 
-Vibe-DJ analyzes your music library, extracts audio features using librosa, and generates playlists based on similarity to seed songs. It uses FAISS for efficient similarity search and supports BPM-based sorting for smooth transitions.
+It's like whispering to a real DJ: "Blend a little of this, a dash of that, and crank up the spice." No more endless scrolling. Just pure musical alchemy from your own library.
 
+---
 
-## Development
+### Search Your Music Library
+![Search Interface](./docs/screen_caps/searching.png)
 
-### Prerequisites
+### Select Your Inspiration
+![Select Inspiration](./docs/screen_caps/search_results.png)
 
-- Python 3.14
-- [uv](https://docs.astral.sh/uv/getting-started/installation/)
-- [Node v24](https://nodejs.org/en/download)
+### Generate Your Playlist
+![Generate Playlist](./docs/screen_caps/playlist_generator.png)
 
-### Setup
+### Send it to SubSonic
+![Send to SubSonic](./docs/screen_caps/send_to_subsonic.png)
+![SubSonic Sync](./docs/screen_caps/sent_to_subsonic.png)
 
-```bash
-# Clone the repository
-git clone <repository-url>
-cd vibe-dj
-
-# Setup virtual environment
-uv venv
-
-# Install dependencies
-make install
-
-# Run unit tests
-make test
-
-# Start server - Accessible at http://localhost:8000
-make run
-
-# You can run the API and UI servers separately
-# Start API server - Accessible at http://localhost:8000
-make api-server
-
-# Start UI development server - Accessible at http://localhost:5173
-make ui-server
-```
-
-## Docker
-
-### Building the Docker Image
-
-```bash
-./build-docker.sh Dockerfile vibe-dj
-```
+### Enjoy The Vibes
+![Enjoy The Vibes](./docs/screen_caps/navidrome.png)
 
 ## How It Works
 
 1. **Index your library** via the web UI settings page — scans audio files and extracts features
 2. **Search for songs** to use as seeds for playlist generation
 3. **Generate a playlist** — the API finds similar songs using FAISS and sorts by BPM
-4. **Optionally sync to Navidrome** — push the generated playlist to a Navidrome/Subsonic server
+4. **Sync to Subsonic** — push the generated playlist to a Navidrome/Subsonic server
 
-### Navidrome Sync
+### Subsonic Sync
 
-When syncing a playlist to Navidrome, songs are matched using a three-tier search strategy:
+When syncing a playlist to Subsonic, songs are matched using a three-tier search strategy:
 
 - **Primary**: Search by title + artist + album (most accurate)
 - **Fallback 1**: Search by title + artist
 - **Fallback 2**: Search by title only
 
-If a playlist with the same name already exists on Navidrome, it is updated with the new song list. Songs that cannot be matched are skipped gracefully.
+If a playlist with the same name already exists on Subsonic, it is updated with the new song list. Songs that cannot be matched are skipped gracefully.
 
-**Note**: Song matching accuracy depends on metadata consistency between your local library and Navidrome. Ensure your music files have proper ID3 tags for best results.
+**Note**: Song matching accuracy depends on metadata consistency between your local library and Subsonic. Ensure your music files have proper ID3 tags for best results.
 
-## Contributing
+## Development
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes with tests
-4. Run the test suite
-5. Submit a pull request
+More info [here](./docs/development/contributing.md).
