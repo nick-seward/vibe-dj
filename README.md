@@ -46,7 +46,7 @@ If a playlist with the same name already exists on Subsonic, it is updated with 
 **Note**: Song matching accuracy depends on metadata consistency between your local library and Subsonic. Ensure your music files have proper ID3 tags for best results.
 
 ## Docker Compose
-Pull the latest image to run Vibe-DJ locall.
+Pull the latest image to run Vibe-DJ locally.
 
 ```yaml
 ---
