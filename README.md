@@ -1,12 +1,16 @@
-<p align="center">
+<div align="center">
     <img src="./docs/vibe-dj-logo.jpeg" alt="Vibe-DJ logo">
-</p>
+</div>
 
 **Vibe-DJ** is your personal AI-powered DJ that turns a few favorite tracks into an entire playlist that feels just right.
 
 Simply search your music library and pick up to three songs. Maybe a fiery Jeff Beck solo, a soulful Coltrane ballad, and a heavy Metallica riff. Then watch Vibe-DJ analyze their sonic DNA (energy, mood, timbre, tempo, and more) to craft a seamless playlist pulling similar vibes from the rest of your collection.
 
 It's like whispering to a real DJ: "Blend a little of this, a dash of that, and crank up the spice." No more endless scrolling. Just pure musical alchemy from your own library.
+
+<div align="center">
+[![CI and Release](https://github.com/nick-seward/vibe-dj/actions/workflows/build-release.yml/badge.svg)](https://github.com/nick-seward/vibe-dj/actions/workflows/build-release.yml)
+</div>
 
 ---
 
