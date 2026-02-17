@@ -1,7 +1,10 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
 
 from vibe_dj.api.dependencies import (
+    get_active_profile,
     get_config,
     get_navidrome_sync_service,
     get_playlist_generator,
@@ -14,6 +17,7 @@ from vibe_dj.api.models import (
 )
 from vibe_dj.core import MusicDatabase
 from vibe_dj.models import Config, Playlist
+from vibe_dj.models.profile import Profile
 from vibe_dj.services import NavidromeSyncService, PlaylistGenerator
 
 router = APIRouter(prefix="/api", tags=["playlist"])
@@ -57,6 +61,7 @@ def generate_playlist(
     generator: PlaylistGenerator = Depends(get_playlist_generator),
     sync_service: NavidromeSyncService = Depends(get_navidrome_sync_service),
     config: Config = Depends(get_config),
+    active_profile: Optional[Profile] = Depends(get_active_profile),
 ) -> PlaylistResponse:
     """Generate a playlist from seed songs.
 
@@ -67,6 +72,7 @@ def generate_playlist(
     :param generator: Playlist generator service
     :param sync_service: Navidrome sync service
     :param config: Application configuration
+    :param active_profile: Active profile from X-Active-Profile header
     :return: Generated playlist with songs
     :raises HTTPException: If playlist generation fails
     """
@@ -87,12 +93,19 @@ def generate_playlist(
 
         if request.sync_to_navidrome:
             nav_config = request.navidrome_config or {}
+            profile_url = active_profile.subsonic_url if active_profile else None
+            profile_username = (
+                active_profile.subsonic_username if active_profile else None
+            )
+            profile_password = (
+                active_profile.subsonic_password_encrypted if active_profile else None
+            )
             result = sync_service.sync_playlist(
                 playlist,
                 nav_config.get("playlist_name"),
-                nav_config.get("url"),
-                nav_config.get("username"),
-                nav_config.get("password"),
+                nav_config.get("url") or profile_url,
+                nav_config.get("username") or profile_username,
+                nav_config.get("password") or profile_password,
             )
 
             if not result["success"]:
@@ -116,6 +129,7 @@ def sync_playlist_to_navidrome(
     request: SyncToNavidromeRequest,
     sync_service: NavidromeSyncService = Depends(get_navidrome_sync_service),
     config: Config = Depends(get_config),
+    active_profile: Optional[Profile] = Depends(get_active_profile),
 ) -> dict:
     """Sync an existing playlist to Navidrome by song IDs.
 
@@ -125,6 +139,7 @@ def sync_playlist_to_navidrome(
     :param request: Sync request with song IDs and Navidrome config
     :param sync_service: Navidrome sync service
     :param config: Application configuration
+    :param active_profile: Active profile from X-Active-Profile header
     :return: Sync result with success status
     :raises HTTPException: If sync fails
     """
@@ -142,12 +157,19 @@ def sync_playlist_to_navidrome(
             playlist = Playlist(songs=songs)
 
             nav_config = request.navidrome_config or {}
+            profile_url = active_profile.subsonic_url if active_profile else None
+            profile_username = (
+                active_profile.subsonic_username if active_profile else None
+            )
+            profile_password = (
+                active_profile.subsonic_password_encrypted if active_profile else None
+            )
             result = sync_service.sync_playlist(
                 playlist,
                 nav_config.get("playlist_name", "Vibe DJ Playlist"),
-                nav_config.get("url"),
-                nav_config.get("username"),
-                nav_config.get("password"),
+                nav_config.get("url") or profile_url,
+                nav_config.get("username") or profile_username,
+                nav_config.get("password") or profile_password,
             )
 
             if not result["success"]:

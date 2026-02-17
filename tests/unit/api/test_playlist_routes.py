@@ -5,6 +5,15 @@ from vibe_dj.core import MusicDatabase
 from vibe_dj.models import Playlist, Song
 
 
+def _make_mock_profile(url=None, username=None, password=None):
+    """Create a mock Profile object."""
+    profile = MagicMock()
+    profile.subsonic_url = url
+    profile.subsonic_username = username
+    profile.subsonic_password_encrypted = password
+    return profile
+
+
 class TestPlaylistEndpoints:
     """Test playlist generation endpoints."""
 
@@ -263,3 +272,241 @@ class TestPlaylistEndpoints:
         finally:
             app.dependency_overrides.pop(get_config, None)
             app.dependency_overrides.pop(get_navidrome_sync_service, None)
+
+
+class TestPlaylistProfileCredentials:
+    """Test credential resolution order for playlist endpoints."""
+
+    def _make_song(self, song_id=1):
+        return Song(
+            id=song_id,
+            file_path=f"/test/song{song_id}.mp3",
+            title=f"Test Song {song_id}",
+            artist=f"Test Artist {song_id}",
+            album=f"Test Album {song_id}",
+            genre="Rock",
+            last_modified=1234567890.0,
+            duration=180,
+        )
+
+    def test_generate_playlist_uses_profile_credentials_when_no_nav_config(
+        self, client
+    ):
+        """Test that profile credentials are used when no navidrome_config in request."""
+        from vibe_dj.api.dependencies import (
+            get_active_profile,
+            get_navidrome_sync_service,
+            get_playlist_generator,
+        )
+
+        mock_playlist = Playlist(
+            songs=[self._make_song()],
+            seed_songs=[self._make_song()],
+        )
+        mock_generator = MagicMock()
+        mock_generator.generate.return_value = mock_playlist
+
+        mock_sync_service = MagicMock()
+        mock_sync_service.sync_playlist.return_value = {"success": True}
+
+        mock_profile = _make_mock_profile(
+            url="http://8.8.8.8:4533",
+            username="profile_user",
+            password="profile_pass",
+        )
+
+        app.dependency_overrides[get_playlist_generator] = lambda: mock_generator
+        app.dependency_overrides[get_navidrome_sync_service] = lambda: mock_sync_service
+        app.dependency_overrides[get_active_profile] = lambda: mock_profile
+
+        try:
+            response = client.post(
+                "/api/playlist",
+                json={
+                    "seeds": [{"title": "T", "artist": "A", "album": "B"}],
+                    "length": 5,
+                    "sync_to_navidrome": True,
+                },
+            )
+
+            assert response.status_code == 200
+            mock_sync_service.sync_playlist.assert_called_once()
+            _, _, url, username, password = (
+                mock_sync_service.sync_playlist.call_args.args
+            )
+            assert url == "http://8.8.8.8:4533"
+            assert username == "profile_user"
+            assert password == "profile_pass"
+        finally:
+            app.dependency_overrides.pop(get_playlist_generator, None)
+            app.dependency_overrides.pop(get_navidrome_sync_service, None)
+            app.dependency_overrides.pop(get_active_profile, None)
+
+    def test_generate_playlist_request_params_override_profile(self, client):
+        """Test that explicit navidrome_config params override profile credentials."""
+        from vibe_dj.api.dependencies import (
+            get_active_profile,
+            get_navidrome_sync_service,
+            get_playlist_generator,
+        )
+
+        mock_playlist = Playlist(
+            songs=[self._make_song()],
+            seed_songs=[self._make_song()],
+        )
+        mock_generator = MagicMock()
+        mock_generator.generate.return_value = mock_playlist
+
+        mock_sync_service = MagicMock()
+        mock_sync_service.sync_playlist.return_value = {"success": True}
+
+        mock_profile = _make_mock_profile(
+            url="http://profile.url:4533",
+            username="profile_user",
+            password="profile_pass",
+        )
+
+        app.dependency_overrides[get_playlist_generator] = lambda: mock_generator
+        app.dependency_overrides[get_navidrome_sync_service] = lambda: mock_sync_service
+        app.dependency_overrides[get_active_profile] = lambda: mock_profile
+
+        try:
+            response = client.post(
+                "/api/playlist",
+                json={
+                    "seeds": [{"title": "T", "artist": "A", "album": "B"}],
+                    "length": 5,
+                    "sync_to_navidrome": True,
+                    "navidrome_config": {
+                        "url": "http://8.8.8.8:4533",
+                        "username": "request_user",
+                        "password": "request_pass",
+                    },
+                },
+            )
+
+            assert response.status_code == 200
+            mock_sync_service.sync_playlist.assert_called_once()
+            _, _, url, username, password = (
+                mock_sync_service.sync_playlist.call_args.args
+            )
+            assert url == "http://8.8.8.8:4533"
+            assert username == "request_user"
+            assert password == "request_pass"
+        finally:
+            app.dependency_overrides.pop(get_playlist_generator, None)
+            app.dependency_overrides.pop(get_navidrome_sync_service, None)
+            app.dependency_overrides.pop(get_active_profile, None)
+
+    def test_sync_playlist_uses_profile_credentials_when_no_nav_config(
+        self, client, test_config
+    ):
+        """Test /api/playlist/sync uses profile credentials when no nav_config provided."""
+        from vibe_dj.api.dependencies import (
+            get_active_profile,
+            get_config,
+            get_navidrome_sync_service,
+        )
+
+        song = self._make_song(1)
+        with MusicDatabase(test_config) as db:
+            db.init_db()
+            db.add_song(song)
+
+        mock_sync_service = MagicMock()
+        mock_sync_service.sync_playlist.return_value = {
+            "success": True,
+            "playlist_name": "Vibe DJ Playlist",
+            "playlist_id": "pl_1",
+            "matched_count": 1,
+            "total_count": 1,
+            "action": "created",
+        }
+
+        mock_profile = _make_mock_profile(
+            url="http://8.8.8.8:4533",
+            username="profile_user",
+            password="profile_pass",
+        )
+
+        app.dependency_overrides[get_config] = lambda: test_config
+        app.dependency_overrides[get_navidrome_sync_service] = lambda: mock_sync_service
+        app.dependency_overrides[get_active_profile] = lambda: mock_profile
+
+        try:
+            response = client.post(
+                "/api/playlist/sync",
+                json={"song_ids": [1]},
+            )
+
+            assert response.status_code == 200
+            mock_sync_service.sync_playlist.assert_called_once()
+            _, _, url, username, password = (
+                mock_sync_service.sync_playlist.call_args.args
+            )
+            assert url == "http://8.8.8.8:4533"
+            assert username == "profile_user"
+            assert password == "profile_pass"
+        finally:
+            app.dependency_overrides.pop(get_config, None)
+            app.dependency_overrides.pop(get_navidrome_sync_service, None)
+            app.dependency_overrides.pop(get_active_profile, None)
+
+    def test_sync_playlist_request_params_override_profile(self, client, test_config):
+        """Test /api/playlist/sync request params override profile credentials."""
+        from vibe_dj.api.dependencies import (
+            get_active_profile,
+            get_config,
+            get_navidrome_sync_service,
+        )
+
+        song = self._make_song(1)
+        with MusicDatabase(test_config) as db:
+            db.init_db()
+            db.add_song(song)
+
+        mock_sync_service = MagicMock()
+        mock_sync_service.sync_playlist.return_value = {
+            "success": True,
+            "playlist_name": "My Playlist",
+            "playlist_id": "pl_1",
+            "matched_count": 1,
+            "total_count": 1,
+            "action": "created",
+        }
+
+        mock_profile = _make_mock_profile(
+            url="http://profile.url:4533",
+            username="profile_user",
+            password="profile_pass",
+        )
+
+        app.dependency_overrides[get_config] = lambda: test_config
+        app.dependency_overrides[get_navidrome_sync_service] = lambda: mock_sync_service
+        app.dependency_overrides[get_active_profile] = lambda: mock_profile
+
+        try:
+            response = client.post(
+                "/api/playlist/sync",
+                json={
+                    "song_ids": [1],
+                    "navidrome_config": {
+                        "url": "http://8.8.8.8:4533",
+                        "username": "request_user",
+                        "password": "request_pass",
+                    },
+                },
+            )
+
+            assert response.status_code == 200
+            mock_sync_service.sync_playlist.assert_called_once()
+            _, _, url, username, password = (
+                mock_sync_service.sync_playlist.call_args.args
+            )
+            assert url == "http://8.8.8.8:4533"
+            assert username == "request_user"
+            assert password == "request_pass"
+        finally:
+            app.dependency_overrides.pop(get_config, None)
+            app.dependency_overrides.pop(get_navidrome_sync_service, None)
+            app.dependency_overrides.pop(get_active_profile, None)

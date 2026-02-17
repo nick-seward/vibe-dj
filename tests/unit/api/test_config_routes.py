@@ -425,6 +425,174 @@ class TestConfigRoutes:
                 invalidate_config_cache()
 
 
+class TestNavidromeTestProfileCredentials:
+    """Test credential resolution order for /navidrome/test endpoint."""
+
+    @pytest.fixture
+    def client(self):
+        """Create a TestClient instance for testing."""
+        return TestClient(app)
+
+    def _make_mock_profile(self, url=None, username=None, password=None):
+        """Create a mock Profile object."""
+        from unittest.mock import MagicMock
+
+        profile = MagicMock()
+        profile.subsonic_url = url
+        profile.subsonic_username = username
+        profile.subsonic_password_encrypted = password
+        return profile
+
+    @patch("vibe_dj.services.navidrome_client.NavidromeClient.ping")
+    def test_navidrome_test_uses_profile_credentials_when_no_request_params(
+        self, mock_ping, client
+    ):
+        """Test that profile credentials are used when no request params provided."""
+        from vibe_dj.api.dependencies import get_active_profile, get_config
+
+        mock_ping.return_value = True
+        mock_profile = self._make_mock_profile(
+            url="http://8.8.8.8:4533",
+            username="profile_user",
+            password="profile_pass",
+        )
+
+        app.dependency_overrides[get_config] = lambda: Config()
+        app.dependency_overrides[get_active_profile] = lambda: mock_profile
+
+        try:
+            response = client.post("/api/navidrome/test", json={})
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["success"] is True
+        finally:
+            app.dependency_overrides.pop(get_config, None)
+            app.dependency_overrides.pop(get_active_profile, None)
+
+    @patch("vibe_dj.services.navidrome_client.NavidromeClient")
+    def test_navidrome_test_request_params_override_profile(
+        self, mock_client_class, client
+    ):
+        """Test that request params take precedence over profile credentials."""
+        from unittest.mock import MagicMock
+
+        from vibe_dj.api.dependencies import get_active_profile, get_config
+
+        mock_instance = MagicMock()
+        mock_instance.ping.return_value = True
+        mock_client_class.return_value = mock_instance
+
+        mock_profile = self._make_mock_profile(
+            url="http://profile.url:4533",
+            username="profile_user",
+            password="profile_pass",
+        )
+
+        app.dependency_overrides[get_config] = lambda: Config()
+        app.dependency_overrides[get_active_profile] = lambda: mock_profile
+
+        try:
+            response = client.post(
+                "/api/navidrome/test",
+                json={
+                    "url": "http://8.8.8.8:4533",
+                    "username": "request_user",
+                    "password": "request_pass",
+                },
+            )
+
+            assert response.status_code == 200
+            mock_client_class.assert_called_once_with(
+                base_url="http://8.8.8.8:4533",
+                username="request_user",
+                password="request_pass",
+            )
+        finally:
+            app.dependency_overrides.pop(get_config, None)
+            app.dependency_overrides.pop(get_active_profile, None)
+
+    @patch("vibe_dj.services.navidrome_client.NavidromeClient")
+    def test_navidrome_test_profile_overrides_global_config(
+        self, mock_client_class, client
+    ):
+        """Test that profile credentials take precedence over global config."""
+        from unittest.mock import MagicMock
+
+        from vibe_dj.api.dependencies import get_active_profile, get_config
+
+        mock_instance = MagicMock()
+        mock_instance.ping.return_value = True
+        mock_client_class.return_value = mock_instance
+
+        mock_profile = self._make_mock_profile(
+            url="http://8.8.8.8:4533",
+            username="profile_user",
+            password="profile_pass",
+        )
+
+        config_with_creds = Config(
+            navidrome_url="http://config.url:4533",
+            navidrome_username="config_user",
+            navidrome_password="config_pass",
+        )
+
+        app.dependency_overrides[get_config] = lambda: config_with_creds
+        app.dependency_overrides[get_active_profile] = lambda: mock_profile
+
+        try:
+            response = client.post("/api/navidrome/test", json={})
+
+            assert response.status_code == 200
+            mock_client_class.assert_called_once_with(
+                base_url="http://8.8.8.8:4533",
+                username="profile_user",
+                password="profile_pass",
+            )
+        finally:
+            app.dependency_overrides.pop(get_config, None)
+            app.dependency_overrides.pop(get_active_profile, None)
+
+    def test_navidrome_test_fails_when_no_url_anywhere(self, client):
+        """Test that connection test fails when no URL provided anywhere."""
+        from vibe_dj.api.dependencies import get_active_profile, get_config
+
+        app.dependency_overrides[get_config] = lambda: Config()
+        app.dependency_overrides[get_active_profile] = lambda: None
+
+        try:
+            response = client.post("/api/navidrome/test", json={})
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["success"] is False
+            assert "no url" in data["message"].lower()
+        finally:
+            app.dependency_overrides.pop(get_config, None)
+            app.dependency_overrides.pop(get_active_profile, None)
+
+    def test_navidrome_test_fails_when_no_username_anywhere(self, client):
+        """Test that connection test fails when no username provided anywhere."""
+        from vibe_dj.api.dependencies import get_active_profile, get_config
+
+        app.dependency_overrides[get_config] = lambda: Config()
+        app.dependency_overrides[get_active_profile] = lambda: None
+
+        try:
+            response = client.post(
+                "/api/navidrome/test",
+                json={"url": "http://8.8.8.8:4533"},
+            )
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["success"] is False
+            assert "no username" in data["message"].lower()
+        finally:
+            app.dependency_overrides.pop(get_config, None)
+            app.dependency_overrides.pop(get_active_profile, None)
+
+
 class TestUpdateConfigRoutes:
     """Test suite for config update API routes."""
 

@@ -7,10 +7,12 @@ from loguru import logger
 from pydantic import BaseModel
 
 from vibe_dj.api.dependencies import (
+    get_active_profile,
     get_config,
     invalidate_config_cache,
 )
 from vibe_dj.models import Config
+from vibe_dj.models.profile import Profile
 from vibe_dj.models.config import ALLOWED_PLAYLIST_SIZES, BPM_JITTER_MAX, BPM_JITTER_MIN
 from vibe_dj.services.url_security import UnsafeOutboundURLError, validate_outbound_url
 
@@ -52,11 +54,12 @@ class ValidatePathResponse(BaseModel):
 class TestNavidromeRequest(BaseModel):
     """Request to test Navidrome connection.
 
-    Password is optional - if not provided, the stored password from config will be used.
+    Password is optional - if not provided, the active profile or stored config password
+    will be used.
     """
 
-    url: str
-    username: str
+    url: Optional[str] = None
+    username: Optional[str] = None
     password: Optional[str] = None
 
 
@@ -159,25 +162,46 @@ def validate_path(request: ValidatePathRequest) -> ValidatePathResponse:
 def test_navidrome_connection(
     request: TestNavidromeRequest,
     config: Config = Depends(get_config),
+    active_profile: Optional[Profile] = Depends(get_active_profile),
 ) -> TestNavidromeResponse:
     """Test connection to Navidrome server.
 
     Attempts to authenticate with the provided credentials.
-    If password is not provided, uses the stored password from config.
+    Credential resolution order: request params > active profile > global config.
 
     :param request: Navidrome connection test request
-    :param config: Application configuration for fallback password
+    :param config: Application configuration for fallback credentials
+    :param active_profile: Active profile from X-Active-Profile header
     :return: Connection test result
     """
     from vibe_dj.services.navidrome_client import NavidromeClient
 
+    profile_url = active_profile.subsonic_url if active_profile else None
+    profile_username = active_profile.subsonic_username if active_profile else None
+    profile_password = (
+        active_profile.subsonic_password_encrypted if active_profile else None
+    )
+
+    url = request.url or profile_url or config.navidrome_url
+    username = request.username or profile_username or config.navidrome_username
+    password = request.password or profile_password or config.navidrome_password
+
+    if not url:
+        return TestNavidromeResponse(
+            success=False,
+            message="No URL provided and no URL stored in configuration",
+        )
+
+    if not username:
+        return TestNavidromeResponse(
+            success=False,
+            message="No username provided and no username stored in configuration",
+        )
+
     try:
-        safe_url = validate_outbound_url(request.url)
+        safe_url = validate_outbound_url(url)
     except UnsafeOutboundURLError as e:
         return TestNavidromeResponse(success=False, message=str(e))
-
-    # Use provided password, or fall back to stored password
-    password = request.password if request.password else config.navidrome_password
 
     if not password:
         return TestNavidromeResponse(
@@ -188,7 +212,7 @@ def test_navidrome_connection(
     try:
         client = NavidromeClient(
             base_url=safe_url,
-            username=request.username,
+            username=username,
             password=password,
         )
 
