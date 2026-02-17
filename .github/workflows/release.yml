@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    # Only proceed if the CI workflow succeeded
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # Fetch all history for version calculation
+          fetch-tags: true
+  
+      - name: Calculate next version
+        id: semver
+        uses: ietf-tools/semver-action@v1
+        with:
+          branch: master
+          token: ${{ github.token }}
+          noVersionBumpBehavior: 'warn'
+      
+      - name: Generate & Update CHANGELOG.md
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v6 
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          preset: conventionalcommits
+          tag-prefix: v
+          output-file: CHANGELOG.md          
+          skip-version-file: true            
+          skip-tag: true                     
+          skip-commit: true
+          release-count: "10"              
+
+      - name: Commit updated CHANGELOG.md
+        if: steps.semver.outputs.bump != 'none'  # Only commit if we are actually releasing
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: "docs: update CHANGELOG.md for ${{ steps.semver.outputs.next }} [skip ci]"
+          branch: master
+          file_pattern: CHANGELOG.md
+
+      - name: Create GitHub Release
+        if: steps.semver.outputs.bump != 'none'
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ github.token }}
+          tag: ${{ steps.semver.outputs.next }}
+          commit: ${{ github.sha }}
+          name: Release ${{ steps.semver.outputs.next }}
+          body: ${{ steps.changelog.outputs.clean_changelog }}
+          generateReleaseNotes: true
+  

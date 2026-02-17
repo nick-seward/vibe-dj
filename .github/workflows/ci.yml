@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, 'ci skip') && !contains(github.event.head_commit.message, 'skip ci')"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # Fetch all history for version calculation
+          fetch-tags: true
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Setup Python with uv
+        run: uv python install  # Installs Python based on pyproject.toml or .python-version
+
+      - name: Install dependencies and run Python tests
+        run: |
+          uv sync --all-groups
+          uv run pytest -v
+
+      - name: Setup Node.js for frontend
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Run frontend UI tests
+        run: |
+          cd ui
+          npm install
+          npm run test:run
