@@ -61,4 +61,23 @@ jobs:
           name: Release ${{ steps.semver.outputs.next }}
           body: ${{ steps.changelog.outputs.clean_changelog }}
           generateReleaseNotes: true
+      
+      - name: Notify Slack on Release
+        if: always() && steps.semver.outputs.bump != 'none'
+        uses: slackapi/slack-github-action@v2.1.1
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "*Release* ${{ job.status == 'success' && ':rocket: Published' || ':x: Failed' }} — v${{ steps.semver.outputs.next }}",
+              "attachments": [
+                {
+                  "color": "${{ job.status == 'success' && 'good' || 'danger' }}",
+                  "title": "Release Notes",
+                  "title_link": "${{ steps.release.outputs.url }}",  # If ncipollo outputs url
+                  "text": "Changelog: ${{ steps.changelog.outputs.clean_changelog || 'Auto-generated' }}",
+                }
+              ]
+            }
   

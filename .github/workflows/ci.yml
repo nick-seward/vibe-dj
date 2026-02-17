@@ -41,3 +41,27 @@ jobs:
           cd ui
           npm install
           npm run test:run
+      
+      - name: Notify Slack on CI
+        if: always()
+        uses: slackapi/slack-github-action@v2.1.1
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "*CI Tests* ${{ job.status == 'success' && 'passed :white_check_mark:' || 'failed :x:' }} (PR: ${{ github.event.pull_request.number || 'push' }})",
+              "attachments": [
+                {
+                  "color": "${{ job.status == 'success' && 'good' || job.status == 'failure' && 'danger' || 'warning' }}",
+                  "fields": [
+                    { "title": "Repo", "value": "${{ github.repository }}", "short": true },
+                    { "title": "Branch", "value": "${{ github.ref_name }}", "short": true },
+                    { "title": "Commit", "value": "<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>", "short": true },
+                    { "title": "Trigger", "value": "${{ github.event_name }}", "short": true }
+                  ],
+                  "footer": "GitHub Actions • ${{ github.run_id }}",
+                  "ts": ${{ github.event.repository.updated_at }}
+                }
+              ]
+            }

@@ -46,4 +46,29 @@ jobs:
           tags: |
             nseward/vibe-dj:${{ inputs.tag != '' && inputs.tag || steps.get-latest-tag.outputs.tag }}
             nseward/vibe-dj:latest
+      
+      - name: Notify Slack on Docker Build
+        if: always()
+        uses: slackapi/slack-github-action@v2.1.1
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "*Docker Build & Push* ${{ job.status == 'success' && ':docker: Succeeded' || ':x: Failed' }} — Tag: ${{ steps.get-latest-tag.outputs.tag || 'latest' }}",
+              "attachments": [
+                {
+                  "color": "${{ job.status == 'success' && 'good' || job.status == 'failure' && 'danger' || 'warning' }}",
+                  "fields": [
+                    { "title": "Repo", "value": "${{ github.repository }}", "short": true },
+                    { "title": "Branch", "value": "${{ github.ref_name }}", "short": true },
+                    { "title": "Commit", "value": "<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>", "short": true },
+                    { "title": "Trigger", "value": "${{ github.event_name }}", "short": true }
+                  ],
+                  "footer": "GitHub Actions • ${{ github.run_id }}",
+                  "ts": ${{ github.event.repository.updated_at }}
+                }
+              ]
+            }
+
   
