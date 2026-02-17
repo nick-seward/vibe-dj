@@ -1,3 +1,10 @@
+## [0.6.0](https://github.com/nick-seward/vibe-dj/compare/v0.5.0...v0.6.0) (2026-02-17)
+
+
+### Features
+
+* **api:** integrate profile credentials into Navidrome sync flow (bd-vibedj-k8i.3) ([5c0df43](https://github.com/nick-seward/vibe-dj/commit/5c0df435257ea8b7f68c18f93d09d6754c062ea3))
+
 ## [0.5.0](https://github.com/nick-seward/vibe-dj/compare/v0.4.0...v0.5.0) (2026-02-17)
 
 
