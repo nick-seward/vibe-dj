@@ -18,7 +18,45 @@ from .api.routes import (
     songs_router,
 )
 from .core import MusicDatabase
+from .core.profile_database import ProfileDatabase
 from .models import Config
+
+
+def _initialize_profiles(config: Config) -> None:
+    """Initialize the profile database and migrate existing Navidrome credentials.
+
+    Creates the profiles database, ensures the 'Shared' profile exists, and
+    migrates any existing Navidrome credentials from config.json into the
+    'Shared' profile if they have not already been migrated.
+
+    :param config: Application configuration with optional Navidrome credentials
+    """
+    db_path = os.environ.get("VIBE_DJ_PROFILES_DB", "profiles.db")
+    encryption_key = os.environ.get("VIBE_DJ_ENCRYPTION_KEY")
+
+    with ProfileDatabase(db_path=db_path, encryption_key=encryption_key) as profile_db:
+        profile_db.init_db()
+        logger.info("Profile database initialized")
+
+        shared = profile_db.get_profile_by_name(ProfileDatabase.SHARED_PROFILE_NAME)
+        if shared is None:
+            logger.warning("Shared profile not found after init_db — skipping migration")
+            return
+
+        has_credentials = config.navidrome_url or config.navidrome_username or config.navidrome_password
+        already_migrated = shared.subsonic_url or shared.subsonic_username or shared.subsonic_password_encrypted
+
+        if has_credentials and not already_migrated:
+            logger.info("Migrating existing Navidrome credentials to 'Shared' profile")
+            profile_db.update_profile(
+                shared.id,
+                subsonic_url=config.navidrome_url,
+                subsonic_username=config.navidrome_username,
+                subsonic_password=config.navidrome_password,
+            )
+            logger.info("Navidrome credentials migrated to 'Shared' profile")
+        else:
+            logger.info("Profile migration skipped (no credentials or already migrated)")
 
 
 @asynccontextmanager
@@ -41,6 +79,15 @@ async def lifespan(app: FastAPI):
             logger.info("Database initialized")
     except Exception as e:
         logger.error(f"Failed to initialize database: {e}")
+
+    try:
+        config = Config()
+        if os.path.exists("config.json"):
+            config = Config.from_file("config.json")
+
+        _initialize_profiles(config)
+    except Exception as e:
+        logger.error(f"Failed to initialize profile database: {e}")
 
     yield
 
