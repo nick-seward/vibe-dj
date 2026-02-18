@@ -70,7 +70,7 @@ jobs:
           webhook-type: incoming-webhook
           payload: |
             {
-              "text": "*Release* ${{ job.status == 'success' && ':rocket: Published' || ':x: Failed' }} — v${{ steps.semver.outputs.next }}",
+              "text": "*Release* ${{ job.status == 'success' && ':rocket: Published' || ':x: Failed' }} — ${{ steps.semver.outputs.next }}",
               "attachments": [
                 {
                   "color": "${{ job.status == 'success' && 'good' || 'danger' }}",
