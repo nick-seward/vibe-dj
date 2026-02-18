@@ -39,6 +39,24 @@ vi.mock('@/hooks/useConfig', () => ({
   }),
 }))
 
+// Mock the ProfileContext so ProfilesTab renders without errors
+vi.mock('@/context/ProfileContext', () => ({
+  useProfileContext: () => ({
+    profiles: [
+      { id: 1, display_name: 'Shared', subsonic_url: null, subsonic_username: null, has_subsonic_password: false, created_at: '', updated_at: '' },
+    ],
+    activeProfileId: 1,
+    activeProfile: { id: 1, display_name: 'Shared', subsonic_url: null, subsonic_username: null, has_subsonic_password: false, created_at: '', updated_at: '' },
+    loading: false,
+    error: null,
+    setActiveProfileId: vi.fn(),
+    refreshProfiles: vi.fn(),
+    createProfile: vi.fn(),
+    updateProfile: vi.fn(),
+    deleteProfile: vi.fn(),
+  }),
+}))
+
 // Mock the useIndexing hook
 vi.mock('@/hooks/useIndexing', () => ({
   useIndexing: () => ({
@@ -88,17 +106,19 @@ describe('ConfigScreen', () => {
     expect(mockOnClose).toHaveBeenCalled()
   })
 
-  it('shows Music, Playlist, and SubSonic tabs on desktop', () => {
+  it('shows Music, Playlist, SubSonic, and Profiles tabs on desktop', () => {
     renderWithProviders(<ConfigScreen onClose={mockOnClose} />)
     
     // Desktop tabs (hidden on mobile via CSS, but still in DOM)
     const musicButtons = screen.getAllByText('Music')
     const playlistButtons = screen.getAllByText('Playlist')
     const subsonicButtons = screen.getAllByText('SubSonic')
+    const profilesButtons = screen.getAllByText('Profiles')
     
     expect(musicButtons.length).toBeGreaterThan(0)
     expect(playlistButtons.length).toBeGreaterThan(0)
     expect(subsonicButtons.length).toBeGreaterThan(0)
+    expect(profilesButtons.length).toBeGreaterThan(0)
   })
 
   it('shows dropdown select for mobile', () => {
@@ -253,6 +273,34 @@ describe('ConfigScreen', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /^save$/i })).toBeInTheDocument()
     })
+  })
+
+  it('switches to Profiles tab when dropdown is changed', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<ConfigScreen onClose={mockOnClose} />)
+
+    const dropdown = screen.getByLabelText('Select settings tab')
+    await user.selectOptions(dropdown, 'profiles')
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /add profile/i })).toBeInTheDocument()
+    })
+  })
+
+  it('shows Profiles tab content when Profiles tab button is clicked', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<ConfigScreen onClose={mockOnClose} />)
+
+    const profilesButtons = screen.getAllByText('Profiles')
+    const tabButton = profilesButtons.find(el => el.tagName === 'BUTTON')
+
+    if (tabButton) {
+      await user.click(tabButton)
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /add profile/i })).toBeInTheDocument()
+      })
+    }
   })
 
   it('SubSonic Test Connection button is enabled when password is stored on server', async () => {

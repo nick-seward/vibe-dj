@@ -4,10 +4,11 @@ import { XCircle, ChevronDown } from 'lucide-react'
 import { MusicTab } from './MusicTab'
 import { PlaylistTab } from './PlaylistTab'
 import { SubSonicTab } from './SubSonicTab'
+import { ProfilesTab } from './ProfilesTab'
 import { useConfig } from '@/hooks/useConfig'
 import { DEFAULT_PLAYLIST_SIZE, DEFAULT_BPM_JITTER } from '@/types'
 
-type ConfigTab = 'music' | 'playlist' | 'subsonic'
+type ConfigTab = 'music' | 'playlist' | 'subsonic' | 'profiles'
 
 interface ConfigScreenProps {
   onClose: () => void
@@ -17,6 +18,7 @@ const tabs: { id: ConfigTab; label: string }[] = [
   { id: 'music', label: 'Music' },
   { id: 'playlist', label: 'Playlist' },
   { id: 'subsonic', label: 'SubSonic' },
+  { id: 'profiles', label: 'Profiles' },
 ]
 
 export function ConfigScreen({ onClose }: ConfigScreenProps) {
@@ -211,6 +213,17 @@ export function ConfigScreen({ onClose }: ConfigScreenProps) {
                     onPasswordChange={setNavidromePassword}
                     onSaveSuccess={handleSaveSuccess}
                   />
+                </motion.div>
+              )}
+              {activeTab === 'profiles' && (
+                <motion.div
+                  key="profiles"
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <ProfilesTab />
                 </motion.div>
               )}
             </AnimatePresence>
