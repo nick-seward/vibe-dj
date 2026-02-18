@@ -165,6 +165,37 @@ def get_job_manager() -> JobManager:
 _profile_db_instance: Optional[ProfileDatabase] = None
 
 
+def _load_or_create_encryption_key(db_path: str) -> str:
+    """Load encryption key from file or generate and persist a new one.
+
+    Resolution order:
+    1. VIBE_DJ_ENCRYPTION_KEY environment variable
+    2. <db_dir>/encryption.key file (loaded if exists, created if not)
+
+    :param db_path: Path to the profiles database file, used to derive key file location
+    :return: Base64-encoded Fernet encryption key string
+    """
+    from cryptography.fernet import Fernet
+
+    env_key = os.environ.get("VIBE_DJ_ENCRYPTION_KEY")
+    if env_key:
+        return env_key
+
+    key_path = os.path.join(os.path.dirname(os.path.abspath(db_path)), "encryption.key")
+
+    if os.path.exists(key_path):
+        with open(key_path, "r") as f:
+            key = f.read().strip()
+        logger.info(f"Loaded encryption key from {key_path}")
+        return key
+
+    key = Fernet.generate_key().decode()
+    with open(key_path, "w") as f:
+        f.write(key)
+    logger.info(f"Generated new encryption key and saved to {key_path}")
+    return key
+
+
 def get_profile_database() -> Generator[ProfileDatabase, None, None]:
     """Provide profile database connection with context management.
 
@@ -177,7 +208,7 @@ def get_profile_database() -> Generator[ProfileDatabase, None, None]:
 
     if _profile_db_instance is None:
         db_path = os.environ.get("VIBE_DJ_PROFILES_DB", "profiles.db")
-        encryption_key = os.environ.get("VIBE_DJ_ENCRYPTION_KEY")
+        encryption_key = _load_or_create_encryption_key(db_path)
         _profile_db_instance = ProfileDatabase(
             db_path=db_path, encryption_key=encryption_key
         )
