@@ -43,7 +43,7 @@ jobs:
           npm run test:run
       
       - name: Notify Slack on CI
-        if: always()
+        if: failure()
         uses: slackapi/slack-github-action@v2.1.1
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
