@@ -6,5 +6,5 @@
 
 ## 2. Validation
 
-- [ ] 2.1 Verify spec matches current implementation
-- [ ] 2.2 Confirm no code changes required
+- [x] 2.1 Verify spec matches current implementation
+- [x] 2.2 Confirm no code changes required
