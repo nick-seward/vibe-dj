@@ -1,10 +1,10 @@
 ## 1. Update CSS Variables and Design Tokens
 
-- [ ] 1.1 Add semantic color variables to index.css @theme block (--color-error, --color-success, --color-warning, --color-info)
-- [ ] 1.2 Add spacing scale variables (--spacing-xs: 0.25rem, --spacing-sm: 0.5rem, --spacing-md: 0.75rem, --spacing-lg: 1rem, --spacing-xl: 1.25rem, --spacing-2xl: 1.5rem)
-- [ ] 1.3 Add border radius scale variables (--border-radius-sm: 0.25rem, --border-radius-md: 0.5rem, --border-radius-lg: 0.75rem, --border-radius-xl: 1rem)
-- [ ] 1.4 Add shadow scale variables (--shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05), --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1))
-- [ ] 1.5 Ensure all existing theme colors are defined as CSS variables (--color-primary, etc.)
+- [x] 1.1 Add semantic color variables to index.css @theme block (--color-error, --color-success, --color-warning, --color-info) (bead vibedj-m1x)
+- [x] 1.2 Add spacing scale variables (--spacing-xs: 0.25rem, --spacing-sm: 0.5rem, --spacing-md: 0.75rem, --spacing-lg: 1rem, --spacing-xl: 1.25rem, --spacing-2xl: 1.5rem) (bead vibedj-m1x)
+- [x] 1.3 Add border radius scale variables (--border-radius-sm: 0.25rem, --border-radius-md: 0.5rem, --border-radius-lg: 0.75rem, --border-radius-xl: 1rem) (bead vibedj-m1x)
+- [x] 1.4 Add shadow scale variables (--shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05), --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1)) (bead vibedj-m1x)
+- [x] 1.5 Ensure all existing theme colors are defined as CSS variables (--color-primary, etc.) (bead vibedj-m1x)
 
 ## 2. Update Tailwind Configuration
 
