@@ -248,7 +248,7 @@ This project follows [Conventional Commits 1.0.0](https://www.conventionalcommit
 |------|----------|
 | `feat` | Adding a new feature |
 | `fix` | Fixing a bug |
-| `docs` | Documentation only |
+| `docs` | Documentation only. This includes the files in the `openspec` directory. |
 | `style` | Formatting, whitespace — no logic change |
 | `refactor` | Code restructuring — no behavior change |
 | `perf` | Performance improvement |
@@ -268,6 +268,7 @@ This project follows [Conventional Commits 1.0.0](https://www.conventionalcommit
 | `ui` | React frontend (`ui/`) |
 | `docker` | Docker/containerization |
 | `beads` | Issue tracking changes (`.beads/`) |
+| `openspec` | OpenSpec changes (`openspec/`) |
 
 Omit the scope for cross-cutting changes.
 

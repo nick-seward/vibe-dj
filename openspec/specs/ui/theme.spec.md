@@ -1,8 +1,8 @@
-# UI Theme Baseline Design-System Spec
+# UI Theme v1.1 Design-System Spec (Semantic Consistency)
 
 ## Purpose
 
-This spec defines the baseline design-system for the Vibe-DJ user interface, establishing a consistent visual language for colors, typography, spacing, and interactive components. It serves as the foundation for all UI elements across the application, ensuring a cohesive user experience with a dark theme aesthetic focused on music discovery and playlist generation.
+This spec defines the v1.1 design-system for the Vibe-DJ user interface, establishing a semantically consistent visual language for colors, typography, spacing, and interactive components. It builds on the baseline foundation to eliminate hardcoded values, introduce semantic design tokens, and ensure strict consistency rules across all UI elements, supporting scalable and maintainable development with a dark theme aesthetic focused on music discovery and playlist generation.
 
 ## Requirements
 
@@ -18,6 +18,45 @@ This spec defines the baseline design-system for the Vibe-DJ user interface, est
 - **Text Muted**: #94a3b8 - Secondary and muted text
 - **Border**: #334155 - Border and divider color
 
+### Semantic Color Tokens
+- **Error**: #ef4444 - Used for error states, danger buttons, validation messages
+- **Success**: #22c55e - Used for success states, confirmation messages
+- **Warning**: #f59e0b - Used for warning states, caution messages
+- **Info**: #06b6d4 - Used for informational messages
+
+### Design Tokens (CSS Variables)
+- **Colors**:
+  - --color-primary: #8b5cf6
+  - --color-primary-hover: #7c3aed
+  - --color-secondary: #ec4899
+  - --color-accent: #06b6d4
+  - --color-background: #0f0f1a
+  - --color-surface: #1a1a2e
+  - --color-surface-hover: #252540
+  - --color-text: #f8fafc
+  - --color-text-muted: #94a3b8
+  - --color-border: #334155
+  - --color-error: #ef4444
+  - --color-success: #22c55e
+  - --color-warning: #f59e0b
+  - --color-info: #06b6d4
+- **Spacing**:
+  - --spacing-xs: 0.25rem
+  - --spacing-sm: 0.5rem
+  - --spacing-md: 0.75rem
+  - --spacing-lg: 1rem
+  - --spacing-xl: 1.25rem
+  - --spacing-2xl: 1.5rem
+- **Border Radius**:
+  - --border-radius-sm: 0.25rem
+  - --border-radius-md: 0.5rem
+  - --border-radius-lg: 0.75rem
+  - --border-radius-xl: 1rem
+- **Shadows**:
+  - --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05)
+  - --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1)
+  - --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1)
+
 ### Typography
 - **Font Family**: system-ui, -apple-system, sans-serif
 - **Scale**: Uses Tailwind default scale (text-xs, text-sm, text-base, text-lg, text-xl, text-2xl, text-3xl, text-4xl, text-5xl)
@@ -25,8 +64,6 @@ This spec defines the baseline design-system for the Vibe-DJ user interface, est
 - **Line Heights**: Tailwind defaults (leading-none, leading-tight, leading-snug, leading-normal, leading-relaxed, leading-loose)
 
 ### Interactive Components
-
-#### Button Variants
 - **Primary Button**:
   - Background: primary
   - Text: white
@@ -40,6 +77,34 @@ This spec defines the baseline design-system for the Vibe-DJ user interface, est
   - Background: surface (hover: surface-hover)
   - Text: text
   - Border: border
+  - Padding: px-6 py-2.5
+  - Border radius: rounded-lg
+  - Font: font-medium
+
+- **Outline Button**:
+  - Background: transparent
+  - Text: primary
+  - Border: primary
+  - Hover: primary background, white text
+  - Disabled: 50% opacity, cursor not-allowed
+  - Padding: px-6 py-2.5
+  - Border radius: rounded-lg
+  - Font: font-medium
+
+- **Ghost Button**:
+  - Background: transparent
+  - Text: text
+  - Hover: surface-hover
+  - Disabled: 50% opacity, cursor not-allowed
+  - Padding: px-6 py-2.5
+  - Border radius: rounded-lg
+  - Font: font-medium
+
+- **Danger Button**:
+  - Background: error
+  - Text: white
+  - Hover: error-600 background
+  - Disabled: 50% opacity, cursor not-allowed
   - Padding: px-6 py-2.5
   - Border radius: rounded-lg
   - Font: font-medium
@@ -70,6 +135,21 @@ Uses Tailwind default spacing scale (0.25rem increments from 0 to 96, plus fract
 ### Transitions
 - Duration: duration-200
 - Easing: Tailwind default (ease-out for most, ease-in-out for some)
+
+### Shadows
+- shadow-sm: Small elevation for subtle depth (--shadow-sm)
+- shadow-md: Medium elevation for cards (--shadow-md)
+- shadow-lg: Large elevation for modals and overlays (--shadow-lg)
+
+### Consistency Rules
+- All colors must use semantic tokens (--color-*) or defined theme variables; no hardcoded hex values
+- Button variants must implement all defined states (default, hover, active, disabled, loading) consistently
+- Spacing must use the design token scale (--spacing-*); avoid arbitrary Tailwind values
+- Border radius must use the design token scale (--border-radius-*)
+- Shadows must use the design token scale (--shadow-*)
+- Typography must adhere to defined font family, weights, and line heights
+- Dark-mode is the default; ensure all elements are optimized for dark backgrounds
+- Interactive elements must follow accessibility standards for focus, contrast, and keyboard navigation
 
 ## Scenarios
 
