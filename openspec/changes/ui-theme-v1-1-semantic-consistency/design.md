@@ -22,9 +22,11 @@ This design document provides the technical rationale for evolving the UI theme 
 
 **Issue Addressed**: Scattered design values, no centralized scales for spacing, border radius, shadows.
 
-**Rationale**: Centralized all design tokens in CSS variables for single source of truth. Spacing scale (--spacing-xs to --spacing-2xl) ensures consistent rhythm. Border radius scale (--border-radius-sm to --border-radius-xl) provides predictable corner styling. Shadow scale (--shadow-sm to --shadow-lg) enables consistent elevation hierarchy.
+**Rationale**: Centralized all design tokens in CSS variables for single source of truth. Spacing scale (--space-xs to --space-2xl) ensures consistent rhythm. Border radius scale (--radius-sm to --radius-xl) provides predictable corner styling. Shadow scale (--elevation-sm to --elevation-lg) enables consistent elevation hierarchy.
 
-**Implementation**: Extend CSS @theme with token definitions, update component styles to reference variables instead of Tailwind utilities where possible.
+**Tailwind v4 Constraint**: In Tailwind v4, the `@theme` block is the design token namespace. Prefixes like `--spacing-*`, `--shadow-*`, and `--border-radius-*` are reserved by Tailwind for utility generation (e.g., `max-w-xl` resolves to `var(--spacing-xl)`). Custom tokens MUST use non-colliding prefixes: `--space-*`, `--radius-*`, `--elevation-*`.
+
+**Implementation**: Extend CSS @theme with token definitions using non-colliding prefixes, prefer Tailwind utility classes for standard values, use custom tokens for non-standard values.
 
 ### Extended Button Variants
 

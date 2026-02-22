@@ -23,7 +23,7 @@
 - For API tests that assert defaults, override `get_config` to return `Config()` in the test so assertions are deterministic and don't depend on repo-local `config.json`.
 
 ## Patterns That Don't Work
-- (approaches that failed and why)
+- Defining `--spacing-*`, `--shadow-*`, or `--border-radius-*` in Tailwind v4's `@theme` block — these prefixes are reserved by TW4 for utility generation (e.g. `max-w-xl` → `var(--spacing-xl)`). Use non-colliding prefixes: `--space-*`, `--elevation-*`, `--radius-*`.
 
 ## Domain Notes
 - Project uses uv for Python deps, npm for UI deps

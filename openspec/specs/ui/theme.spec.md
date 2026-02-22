@@ -40,22 +40,22 @@ This spec defines the v1.1 design-system for the Vibe-DJ user interface, establi
   - --color-success: #22c55e
   - --color-warning: #f59e0b
   - --color-info: #06b6d4
-- **Spacing**:
-  - --spacing-xs: 0.25rem
-  - --spacing-sm: 0.5rem
-  - --spacing-md: 0.75rem
-  - --spacing-lg: 1rem
-  - --spacing-xl: 1.25rem
-  - --spacing-2xl: 1.5rem
-- **Border Radius**:
-  - --border-radius-sm: 0.25rem
-  - --border-radius-md: 0.5rem
-  - --border-radius-lg: 0.75rem
-  - --border-radius-xl: 1rem
-- **Shadows**:
-  - --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05)
-  - --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1)
-  - --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1)
+- **Spacing** (prefixed `--space-*` to avoid colliding with Tailwind v4's `--spacing-*` namespace):
+  - --space-xs: 0.25rem
+  - --space-sm: 0.5rem
+  - --space-md: 0.75rem
+  - --space-lg: 1rem
+  - --space-xl: 1.25rem
+  - --space-2xl: 1.5rem
+- **Border Radius** (prefixed `--radius-*` to avoid colliding with Tailwind v4's `--border-radius-*` namespace):
+  - --radius-sm: 0.25rem
+  - --radius-md: 0.5rem
+  - --radius-lg: 0.75rem
+  - --radius-xl: 1rem
+- **Shadows** (prefixed `--elevation-*` to avoid colliding with Tailwind v4's `--shadow-*` namespace):
+  - --elevation-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05)
+  - --elevation-md: 0 4px 6px -1px rgb(0 0 0 / 0.1)
+  - --elevation-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1)
 
 ### Typography
 - **Font Family**: system-ui, -apple-system, sans-serif
@@ -137,16 +137,25 @@ Uses Tailwind default spacing scale (0.25rem increments from 0 to 96, plus fract
 - Easing: Tailwind default (ease-out for most, ease-in-out for some)
 
 ### Shadows
-- shadow-sm: Small elevation for subtle depth (--shadow-sm)
-- shadow-md: Medium elevation for cards (--shadow-md)
-- shadow-lg: Large elevation for modals and overlays (--shadow-lg)
+- shadow-sm: Small elevation for subtle depth (--elevation-sm)
+- shadow-md: Medium elevation for cards (--elevation-md)
+- shadow-lg: Large elevation for modals and overlays (--elevation-lg)
+
+### Tailwind v4 Compatibility
+
+Tailwind v4 uses the `@theme` block as its design token namespace. Variable prefixes like `--spacing-*`, `--shadow-*`, and `--border-radius-*` are **reserved** by Tailwind for utility generation (e.g., `max-w-xl` resolves to `var(--spacing-xl)`). Custom design tokens MUST use non-colliding prefixes:
+- Spacing: `--space-*` (not `--spacing-*`)
+- Border radius: `--radius-*` (not `--border-radius-*`)
+- Shadows: `--elevation-*` (not `--shadow-*`)
+
+Color tokens using `--color-*` are safe because Tailwind v4 uses the same prefix convention for custom colors.
 
 ### Consistency Rules
 - All colors must use semantic tokens (--color-*) or defined theme variables; no hardcoded hex values
 - Button variants must implement all defined states (default, hover, active, disabled, loading) consistently
-- Spacing must use the design token scale (--spacing-*); avoid arbitrary Tailwind values
-- Border radius must use the design token scale (--border-radius-*)
-- Shadows must use the design token scale (--shadow-*)
+- Spacing should prefer Tailwind utility classes (p-4, gap-2, etc.); use custom tokens (--space-*) for values outside the standard scale
+- Border radius should prefer Tailwind utility classes (rounded-lg, rounded-xl); use custom tokens (--radius-*) for non-standard values
+- Shadows should prefer Tailwind utility classes (shadow-sm, shadow-md); use custom tokens (--elevation-*) for non-standard values
 - Typography must adhere to defined font family, weights, and line heights
 - Dark-mode is the default; ensure all elements are optimized for dark backgrounds
 - Interactive elements must follow accessibility standards for focus, contrast, and keyboard navigation

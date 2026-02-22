@@ -1,17 +1,17 @@
 ## 1. Update CSS Variables and Design Tokens
 
 - [x] 1.1 Add semantic color variables to index.css @theme block (--color-error, --color-success, --color-warning, --color-info) (bead vibedj-m1x)
-- [x] 1.2 Add spacing scale variables (--spacing-xs: 0.25rem, --spacing-sm: 0.5rem, --spacing-md: 0.75rem, --spacing-lg: 1rem, --spacing-xl: 1.25rem, --spacing-2xl: 1.5rem) (bead vibedj-m1x)
-- [x] 1.3 Add border radius scale variables (--border-radius-sm: 0.25rem, --border-radius-md: 0.5rem, --border-radius-lg: 0.75rem, --border-radius-xl: 1rem) (bead vibedj-m1x)
-- [x] 1.4 Add shadow scale variables (--shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05), --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1)) (bead vibedj-m1x)
+- [x] 1.2 Add spacing scale variables (--space-xs: 0.25rem, --space-sm: 0.5rem, --space-md: 0.75rem, --space-lg: 1rem, --space-xl: 1.25rem, --space-2xl: 1.5rem) (bead vibedj-m1x)
+- [x] 1.3 Add border radius scale variables (--radius-sm: 0.25rem, --radius-md: 0.5rem, --radius-lg: 0.75rem, --radius-xl: 1rem) (bead vibedj-m1x)
+- [x] 1.4 Add shadow scale variables (--elevation-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05), --elevation-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), --elevation-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1)) (bead vibedj-m1x)
 - [x] 1.5 Ensure all existing theme colors are defined as CSS variables (--color-primary, etc.) (bead vibedj-m1x)
 
 ## 2. Update Tailwind Configuration
 
-- [ ] 2.1 Create tailwind.config.js in ui/ directory if not exists
-- [ ] 2.2 Configure Tailwind theme to reference CSS variables for colors, spacing, border radius, and shadows
-- [ ] 2.3 Ensure Tailwind builds correctly with new configuration
-- [ ] 2.4 Test that CSS variables are accessible in component classes
+- [x] 2.1 Create tailwind.config.js in ui/ directory if not exists (bead vibedj-d8b)
+- [x] 2.2 Configure Tailwind theme to reference CSS variables for colors, spacing, border radius, and shadows (bead vibedj-d8b)
+- [x] 2.3 Ensure Tailwind builds correctly with new configuration (bead vibedj-d8b)
+- [x] 2.4 Test that CSS variables are accessible in component classes (bead vibedj-d8b)
 
 ## 3. Implement Button Variants in CSS
 
@@ -25,7 +25,7 @@
 
 - [ ] 4.1 Update all button usages in components to use appropriate variants (primary, secondary, outline, ghost, danger)
 - [ ] 4.2 Replace all hardcoded colors (red-400, red-500, etc.) with semantic tokens in component classes
-- [ ] 4.3 Update spacing classes to use design token equivalents (e.g., p-4 to use --spacing-lg where applicable)
+- [ ] 4.3 Update spacing classes to use design token equivalents where applicable (prefer Tailwind utilities; use --space-* for non-standard values)
 - [ ] 4.4 Add loading states to buttons in async operations across all components
 - [ ] 4.5 Update error and success messages to use --color-error and --color-success classes
 - [ ] 4.6 Ensure input focus rings use semantic primary color consistently

@@ -33,17 +33,17 @@ The design system SHALL define CSS variables for all colors, spacing, border rad
 
 #### Scenario: Spacing token usage
 - **WHEN** setting margins or padding
-- **THEN** use --spacing-* variables
+- **THEN** prefer Tailwind utility classes (p-4, gap-2, etc.) or use --space-* variables for non-standard values
 - **AND** maintain consistent spacing rhythm
 
 #### Scenario: Border radius token usage
 - **WHEN** styling corners
-- **THEN** use --border-radius-* variables
+- **THEN** prefer Tailwind utility classes (rounded-lg, rounded-xl) or use --radius-* variables for non-standard values
 - **AND** ensure predictable corner appearances
 
 #### Scenario: Shadow token usage
 - **WHEN** adding elevation
-- **THEN** use --shadow-* variables
+- **THEN** prefer Tailwind utility classes (shadow-sm, shadow-md) or use --elevation-* variables for non-standard values
 - **AND** maintain elevation hierarchy
 
 ### Requirement: Button Variants
