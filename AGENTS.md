@@ -315,7 +315,7 @@ Key invariants:
 Check ready work:
 
 ```bash
-bv --robot-triage
+bd ready --json
 ```
 
 Create issues:
