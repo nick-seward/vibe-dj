@@ -315,7 +315,7 @@ Key invariants:
 Check ready work:
 
 ```bash
-bd ready --json
+bv --robot-triage
 ```
 
 Create issues:
@@ -352,7 +352,7 @@ Priorities:
 
 Agent workflow:
 
-1. `bd ready --json` to find unblocked work.
+1. `bv --robot-triage` to find unblocked work.
 2. Claim: `bd update <id> --status in_progress`.
 3. Implement + test.
 4. If you discover new work, create a new bead with `discovered-from:<parent-id>`.
