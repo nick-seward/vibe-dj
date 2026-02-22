@@ -352,16 +352,16 @@ Priorities:
 
 Agent workflow:
 
-1. `bv --robot-triage` to find unblocked work.
+1. `bd ready --json` to find unblocked work.
 2. Claim: `bd update <id> --status in_progress`.
 3. Implement + test.
 4. If you discover new work, create a new bead with `discovered-from:<parent-id>`.
-5. Close when done.
-6. Sync and commit:
+5. Close bead, sync, and commit all changes together:
    ```bash
+   bd close <id> --reason "<completion summary>"
    bd sync --flush-only    # Export to JSONL (no git ops)
-   git add .beads/         # Stage beads changes
-   git commit -m "<type>(<scope>): <description> (bd-<id>)"  # Conventional commit with bead ref
+   git add .beads/ <other-changed-files>
+   git commit -m "<type>(<scope>): <description> (bd-<id>)"  # Single commit with code + bead state
    ```
 
 Never:
@@ -407,9 +407,11 @@ Tests, linters, builds, type checks — whatever the project requires. Fix failu
 6. **Commit, PUSH TO REMOTE, and finish** (only after explicit human approval)
 Once approved:
 ```bash
-git commit -m "<type>(<scope>): <description> (bd-<id>)"
+bd close <id> --reason "<completion summary>"  # Close bead first
+bd sync --flush-only                            # Sync to JSONL
+git add .beads/ <other-changed-files>           # Stage all changes including bead state
+git commit -m "<type>(<scope>): <description> (bd-<id>)"  # Single commit
 git pull --rebase
-bd sync
 git push
 git status     # MUST show "up to date with origin"
 ```
