@@ -39,7 +39,7 @@ jobs:
       - name: Run frontend UI tests
         run: |
           cd ui
-          npm install
+          npm ci
           npm run test:run
       
       - name: Notify Slack on CI
