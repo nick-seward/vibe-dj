@@ -47,10 +47,10 @@
 
 ## 6. Update Global Styles and Gradients
 
-- [ ] 6.1 Update .gradient-bg to use semantic colors if needed
-- [ ] 6.2 Update .gradient-text to use semantic primary and secondary
-- [ ] 6.3 Ensure card hover effects use semantic surface-hover
-- [ ] 6.4 Update any hardcoded colors in global CSS classes
+- [x] 6.1 Update .gradient-bg to use semantic colors if needed (bead vibedj-3nn)
+- [x] 6.2 Update .gradient-text to use semantic primary and secondary (bead vibedj-3nn)
+- [x] 6.3 Ensure card hover effects use semantic surface-hover (bead vibedj-3nn)
+- [x] 6.4 Update any hardcoded colors in global CSS classes (bead vibedj-3nn)
 
 ## 7. Accessibility and Dark Mode Validation
 
