@@ -15,11 +15,11 @@
 
 ## 3. Implement Button Variants in CSS
 
-- [ ] 3.1 Define .btn-outline class with transparent background, primary border, hover to primary background
-- [ ] 3.2 Define .btn-ghost class with transparent background, text color, hover to surface-hover
-- [ ] 3.3 Define .btn-danger class with error background, white text, hover to darker error
-- [ ] 3.4 Add loading state styles for all button variants (spinner icon, disabled appearance)
-- [ ] 3.5 Ensure all button variants have consistent padding, border radius, and transitions
+- [x] 3.1 Define .btn-outline class with transparent background, primary border, hover to primary background (bead vibedj-f7y)
+- [x] 3.2 Define .btn-ghost class with transparent background, text color, hover to surface-hover (bead vibedj-f7y)
+- [x] 3.3 Define .btn-danger class with error background, white text, hover to darker error (bead vibedj-f7y)
+- [x] 3.4 Add loading state styles for all button variants (spinner icon, disabled appearance) (bead vibedj-f7y)
+- [x] 3.5 Ensure all button variants have consistent padding, border radius, and transitions (bead vibedj-f7y)
 
 ## 4. Refactor Components for Semantic Tokens
 
