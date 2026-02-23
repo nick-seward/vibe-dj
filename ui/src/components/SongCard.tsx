@@ -38,7 +38,7 @@ export function SongCard({
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={onRemove}
-          className="p-2 rounded-full bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+          className="p-2 rounded-full bg-error/20 text-error hover:bg-error/30 transition-colors"
           aria-label="Remove from choice list"
         >
           <X className="w-4 h-4" />

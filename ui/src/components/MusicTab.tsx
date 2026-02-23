@@ -98,9 +98,9 @@ export function MusicTab({ musicLibrary, originalMusicLibrary, onMusicLibraryCha
       return null
     }
     if (validation?.valid) {
-      return <CheckCircle className="w-5 h-5 text-green-400" />
+      return <CheckCircle className="w-5 h-5 text-success" />
     }
-    return <XCircle className="w-5 h-5 text-red-400" />
+    return <XCircle className="w-5 h-5 text-error" />
   }
 
   const getProgressMessage = () => {
@@ -132,7 +132,7 @@ export function MusicTab({ musicLibrary, originalMusicLibrary, onMusicLibraryCha
           whileTap={!isSaveDisabled ? { scale: 0.98 } : {}}
           className={`flex items-center gap-2 font-medium px-4 py-2 rounded-lg transition-all duration-200 ${
             showSaveSuccess
-              ? 'bg-green-600 text-white cursor-default'
+              ? 'bg-success text-white cursor-default'
               : 'btn-primary'
           }`}
         >
@@ -180,7 +180,7 @@ export function MusicTab({ musicLibrary, originalMusicLibrary, onMusicLibraryCha
           <motion.p
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-red-400 text-sm mt-2"
+            className="text-error text-sm mt-2"
           >
             {validation.message}
           </motion.p>
@@ -189,7 +189,7 @@ export function MusicTab({ musicLibrary, originalMusicLibrary, onMusicLibraryCha
           <motion.p
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-green-400 text-sm mt-2"
+            className="text-success text-sm mt-2"
           >
             Path is valid and accessible
           </motion.p>
@@ -256,9 +256,9 @@ export function MusicTab({ musicLibrary, originalMusicLibrary, onMusicLibraryCha
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-red-500/10 border border-red-500/30 rounded-lg p-4"
+          className="bg-error/10 border border-error/30 rounded-lg p-4"
         >
-          <p className="text-red-400 text-sm">{indexError}</p>
+          <p className="text-error text-sm">{indexError}</p>
         </motion.div>
       )}
 

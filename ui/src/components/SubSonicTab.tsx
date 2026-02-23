@@ -98,9 +98,9 @@ export function SubSonicTab({
   const getResultIcon = () => {
     if (!result) return null
     if (result.success) {
-      return <CheckCircle className="w-5 h-5 text-green-400" />
+      return <CheckCircle className="w-5 h-5 text-success" />
     }
-    return <XCircle className="w-5 h-5 text-red-400" />
+    return <XCircle className="w-5 h-5 text-error" />
   }
 
   return (
@@ -114,7 +114,7 @@ export function SubSonicTab({
           whileTap={!isSaveDisabled ? { scale: 0.98 } : {}}
           className={`flex items-center gap-2 font-medium px-4 py-2 rounded-lg transition-all duration-200 ${
             showSaveSuccess
-              ? 'bg-green-600 text-white cursor-default'
+              ? 'bg-success text-white cursor-default'
               : 'btn-primary'
           }`}
         >
@@ -241,17 +241,17 @@ export function SubSonicTab({
           animate={{ opacity: 1, y: 0 }}
           className={`rounded-lg p-4 border ${
             result.success
-              ? 'bg-green-500/10 border-green-500/30'
-              : 'bg-red-500/10 border-red-500/30'
+              ? 'bg-success/10 border-success/30'
+              : 'bg-error/10 border-error/30'
           }`}
         >
           <div className="flex items-center gap-2">
             {result.success ? (
-              <CheckCircle className="w-5 h-5 text-green-400" />
+              <CheckCircle className="w-5 h-5 text-success" />
             ) : (
-              <XCircle className="w-5 h-5 text-red-400" />
+              <XCircle className="w-5 h-5 text-error" />
             )}
-            <p className={`text-sm ${result.success ? 'text-green-400' : 'text-red-400'}`}>
+            <p className={`text-sm ${result.success ? 'text-success' : 'text-error'}`}>
               {result.message}
             </p>
           </div>

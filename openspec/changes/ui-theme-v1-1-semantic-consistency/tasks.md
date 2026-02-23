@@ -23,27 +23,27 @@
 
 ## 4. Refactor Components for Semantic Tokens
 
-- [ ] 4.1 Update all button usages in components to use appropriate variants (primary, secondary, outline, ghost, danger)
-- [ ] 4.2 Replace all hardcoded colors (red-400, red-500, etc.) with semantic tokens in component classes
-- [ ] 4.3 Update spacing classes to use design token equivalents where applicable (prefer Tailwind utilities; use --space-* for non-standard values)
-- [ ] 4.4 Add loading states to buttons in async operations across all components
-- [ ] 4.5 Update error and success messages to use --color-error and --color-success classes
-- [ ] 4.6 Ensure input focus rings use semantic primary color consistently
+- [x] 4.1 Update all button usages in components to use appropriate variants (primary, secondary, outline, ghost, danger) (bead vibedj-2ta)
+- [x] 4.2 Replace all hardcoded colors (red-400, red-500, etc.) with semantic tokens in component classes (bead vibedj-2ta)
+- [x] 4.3 Update spacing classes to use design token equivalents where applicable (prefer Tailwind utilities; use --space-* for non-standard values) (bead vibedj-2ta)
+- [x] 4.4 Add loading states to buttons in async operations across all components (bead vibedj-2ta)
+- [x] 4.5 Update error and success messages to use --color-error and --color-success classes (bead vibedj-2ta)
+- [x] 4.6 Ensure input focus rings use semantic primary color consistently (bead vibedj-2ta)
 
 ## 5. Component-Specific Updates
 
-- [ ] 5.1 SongCard: Replace hardcoded red in remove button with .btn-danger variant and semantic colors
-- [ ] 5.2 ChoiceListDrawer: Update any hardcoded colors to semantic tokens
-- [ ] 5.3 ProfilesTab: Standardize button variants and color usage across profile management
-- [ ] 5.4 MusicTab: Update playlist status indicators and control buttons to use semantic colors
-- [ ] 5.5 PlaylistView: Ensure regenerate and sync buttons use appropriate variants with loading states
-- [ ] 5.6 SubSonicTab: Update connection status colors and form validation to semantic tokens
-- [ ] 5.7 ConfigScreen: Standardize validation error colors and button styling
-- [ ] 5.8 SearchResults: Ensure card hover effects and action buttons use semantic tokens
-- [ ] 5.9 SearchForm: Update submit button to include loading state, standardize error colors
-- [ ] 5.10 ProfileSelector: Update any color usage to semantic tokens
-- [ ] 5.11 PlaylistTab: Ensure consistent button and card styling
-- [ ] 5.12 ToastContext: Update notification colors to use semantic error/success/warning/info tokens
+- [x] 5.1 SongCard: Replace hardcoded red in remove button with .btn-danger variant and semantic colors (bead vibedj-2ta)
+- [x] 5.2 ChoiceListDrawer: Update any hardcoded colors to semantic tokens (bead vibedj-2ta)
+- [x] 5.3 ProfilesTab: Standardize button variants and color usage across profile management (bead vibedj-2ta)
+- [x] 5.4 MusicTab: Update playlist status indicators and control buttons to use semantic colors (bead vibedj-2ta)
+- [x] 5.5 PlaylistView: Ensure regenerate and sync buttons use appropriate variants with loading states (bead vibedj-2ta)
+- [x] 5.6 SubSonicTab: Update connection status colors and form validation to semantic tokens (bead vibedj-2ta)
+- [x] 5.7 ConfigScreen: Standardize validation error colors and button styling (bead vibedj-2ta)
+- [x] 5.8 SearchResults: Ensure card hover effects and action buttons use semantic tokens (bead vibedj-2ta)
+- [x] 5.9 SearchForm: Update submit button to include loading state, standardize error colors (bead vibedj-2ta)
+- [x] 5.10 ProfileSelector: Update any color usage to semantic tokens (bead vibedj-2ta)
+- [x] 5.11 PlaylistTab: Ensure consistent button and card styling (bead vibedj-2ta)
+- [x] 5.12 ToastContext: Update notification colors to use semantic error/success/warning/info tokens (bead vibedj-2ta)
 
 ## 6. Update Global Styles and Gradients
 

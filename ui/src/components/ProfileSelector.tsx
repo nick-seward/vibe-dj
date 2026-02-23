@@ -71,7 +71,7 @@ function AddProfileModal({ onClose, onAdd }: AddProfileModalProps) {
             />
           </div>
           {error && (
-            <p className="text-red-400 text-sm">{error}</p>
+            <p className="text-error text-sm">{error}</p>
           )}
           <div className="flex gap-3 justify-end">
             <button

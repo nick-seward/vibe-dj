@@ -79,7 +79,7 @@ export function PlaylistTab({
           whileTap={!isSaveDisabled ? { scale: 0.98 } : {}}
           className={`flex items-center gap-2 font-medium px-4 py-2 rounded-lg transition-all duration-200 ${
             showSaveSuccess
-              ? 'bg-green-600 text-white cursor-default'
+              ? 'bg-success text-white cursor-default'
               : 'btn-primary'
           }`}
         >

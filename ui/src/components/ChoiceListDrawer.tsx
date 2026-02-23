@@ -26,7 +26,7 @@ export function ChoiceListDrawer() {
               <h3 className="font-medium text-text">Choice List ({songs.length}/3)</h3>
               <button
                 onClick={clearAll}
-                className="text-text-muted hover:text-red-400 transition-colors"
+                className="text-text-muted hover:text-error transition-colors"
                 aria-label="Clear all"
               >
                 <Trash2 className="w-4 h-4" />

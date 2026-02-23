@@ -102,10 +102,10 @@ export function PlaylistView({
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="mb-6 p-4 bg-green-500/20 border border-green-500/50 rounded-xl text-center"
+            className="mb-6 p-4 bg-success/20 border border-success/50 rounded-xl text-center"
           >
-            <PartyPopper className="w-8 h-8 text-green-400 mx-auto mb-2" />
-            <p className="text-green-400 font-medium">
+            <PartyPopper className="w-8 h-8 text-success mx-auto mb-2" />
+            <p className="text-success font-medium">
               Playlist sent to SubSonic successfully!
             </p>
           </motion.div>
@@ -192,7 +192,7 @@ export function PlaylistView({
               />
 
               {syncError && (
-                <p className="text-red-400 text-sm mb-4">{syncError}</p>
+                <p className="text-error text-sm mb-4">{syncError}</p>
               )}
               <div className="flex gap-3 justify-end">
                 <button

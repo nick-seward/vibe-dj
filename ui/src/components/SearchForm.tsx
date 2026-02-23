@@ -105,7 +105,7 @@ export function SearchForm({ onSearch, loading, onSettingsClick }: SearchFormPro
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-red-400 text-sm text-center"
+            className="text-error text-sm text-center"
           >
             {error}
           </motion.p>
