@@ -1,3 +1,30 @@
+## [0.8.0](https://github.com/nick-seward/vibe-dj/compare/v0.7.0...v0.8.0) (2026-02-23)
+
+
+### Features
+
+* **ui:** add button variants and loading states (bd-vibedj-f7y) ([e5ebd98](https://github.com/nick-seward/vibe-dj/commit/e5ebd98de71624ae3d4b64dff24ff1aeea1c7c39))
+* **ui:** add ProfileSelector dropdown component (bd-vibedj-k8i.5) ([db3a879](https://github.com/nick-seward/vibe-dj/commit/db3a879340e39dbef221bea989152f388dc6295e))
+* **ui:** add ProfilesTab settings component for profile management (bd-vibedj-k8i.6) ([2abb75c](https://github.com/nick-seward/vibe-dj/commit/2abb75ca9f9000a013054ddbe6add7766bb73314))
+* **ui:** add semantic color and design token CSS variables (bd-vibedj-m1x) ([4acd2c6](https://github.com/nick-seward/vibe-dj/commit/4acd2c6dc2bf97abbfd0825ea63e4ffa4fb16661))
+* **ui:** complete testing and validation, fix ToastContext colors (bd-vibedj-6dt) ([a42c533](https://github.com/nick-seward/vibe-dj/commit/a42c5333fc39dd821d082fb0b6fa06c0ed9a4520))
+* **ui:** evolve theme spec to v1.1 with semantic consistency ([cc39d12](https://github.com/nick-seward/vibe-dj/commit/cc39d125a64fbd134d375b3cda5187d9bd688f8d))
+* **ui:** formalize baseline design-system spec ([563cae2](https://github.com/nick-seward/vibe-dj/commit/563cae21d79647484ed77bc832fa3fbefb3e55ae))
+* **ui:** replace hardcoded colors with semantic tokens (bd-vibedj-2ta) ([5dcb07d](https://github.com/nick-seward/vibe-dj/commit/5dcb07d05887e3c7070a5a6632ff07090a547a85))
+* **ui:** replace hardcoded gradient color with semantic token (bd-vibedj-3nn) ([324480f](https://github.com/nick-seward/vibe-dj/commit/324480f75500603f2812011ec47cfe47f8c69644)), closes [#16213](https://github.com/nick-seward/vibe-dj/issues/16213)
+
+
+### Bug Fixes
+
+* Avoid collision with tailwind reserved styling variables. Updating specs accordingly. ([b26ab51](https://github.com/nick-seward/vibe-dj/commit/b26ab512f339cd6c5f7e611e13a474e1067f034c))
+
+## [0.7.0](https://github.com/nick-seward/vibe-dj/compare/v0.6.0...v0.7.0) (2026-02-18)
+
+
+### Features
+
+* **api:** auto-generate and persist encryption key alongside profiles.db ([c70ca91](https://github.com/nick-seward/vibe-dj/commit/c70ca9136ac16c844b3b54a5302f34818551780e))
+
 ## [0.6.0](https://github.com/nick-seward/vibe-dj/compare/v0.5.0...v0.6.0) (2026-02-17)
 
 
