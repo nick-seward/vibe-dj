@@ -52,22 +52,22 @@ export function ToastProvider({ children }: ToastProviderProps) {
   const getIcon = (type: ToastType) => {
     switch (type) {
       case 'success':
-        return <CheckCircle className="w-5 h-5 text-green-400" />
+        return <CheckCircle className="w-5 h-5 text-success" />
       case 'error':
-        return <AlertCircle className="w-5 h-5 text-red-400" />
+        return <AlertCircle className="w-5 h-5 text-error" />
       case 'info':
-        return <Info className="w-5 h-5 text-blue-400" />
+        return <Info className="w-5 h-5 text-info" />
     }
   }
 
   const getBorderColor = (type: ToastType) => {
     switch (type) {
       case 'success':
-        return 'border-green-500/50'
+        return 'border-success/50'
       case 'error':
-        return 'border-red-500/50'
+        return 'border-error/50'
       case 'info':
-        return 'border-blue-500/50'
+        return 'border-info/50'
     }
   }
 
