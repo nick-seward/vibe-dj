@@ -70,7 +70,7 @@
 
 ## 9. Documentation Updates
 
-- [ ] 9.1 Update component documentation to reference semantic tokens
-- [ ] 9.2 Create usage guidelines for button variants
-- [ ] 9.3 Document design token reference for developers
-- [ ] 9.4 Update any style guides to reflect v1.1 changes
+- [x] 9.1 Update component documentation to reference semantic tokens (bead vibedj-9xk)
+- [x] 9.2 Create usage guidelines for button variants (bead vibedj-9xk)
+- [x] 9.3 Document design token reference for developers (bead vibedj-9xk)
+- [x] 9.4 Update any style guides to reflect v1.1 changes (bead vibedj-9xk)
