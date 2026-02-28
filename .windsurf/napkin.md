@@ -25,6 +25,9 @@
 ## Patterns That Don't Work
 - Defining `--spacing-*`, `--shadow-*`, or `--border-radius-*` in Tailwind v4's `@theme` block — these prefixes are reserved by TW4 for utility generation (e.g. `max-w-xl` → `var(--spacing-xl)`). Use non-colliding prefixes: `--space-*`, `--elevation-*`, `--radius-*`.
 
+## Patterns That Work
+- When a route handler needs to decrypt a profile password, inject `get_profile_database` as a FastAPI dependency and call `profile_db.decrypt_password(profile.subsonic_password_encrypted)`. Tests must also override `get_profile_database` with a mock whose `decrypt_password` is an identity function (`side_effect = lambda p: p`).
+
 ## Domain Notes
 - Project uses uv for Python deps, npm for UI deps
 - Tests: pytest (Python), Vitest (UI)
