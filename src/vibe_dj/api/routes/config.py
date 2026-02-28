@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from vibe_dj.api.dependencies import (
     get_active_profile,
     get_config,
+    get_profile_database,
     invalidate_config_cache,
 )
 from vibe_dj.models import Config
@@ -163,6 +164,7 @@ def test_navidrome_connection(
     request: TestNavidromeRequest,
     config: Config = Depends(get_config),
     active_profile: Optional[Profile] = Depends(get_active_profile),
+    profile_db=Depends(get_profile_database),
 ) -> TestNavidromeResponse:
     """Test connection to Navidrome server.
 
@@ -178,8 +180,13 @@ def test_navidrome_connection(
 
     profile_url = active_profile.subsonic_url if active_profile else None
     profile_username = active_profile.subsonic_username if active_profile else None
-    profile_password = (
+    profile_password_encrypted = (
         active_profile.subsonic_password_encrypted if active_profile else None
+    )
+    profile_password = (
+        profile_db.decrypt_password(profile_password_encrypted)
+        if profile_password_encrypted
+        else None
     )
 
     url = request.url or profile_url or config.navidrome_url

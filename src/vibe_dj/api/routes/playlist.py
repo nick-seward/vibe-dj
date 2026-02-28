@@ -8,6 +8,7 @@ from vibe_dj.api.dependencies import (
     get_config,
     get_navidrome_sync_service,
     get_playlist_generator,
+    get_profile_database,
 )
 from vibe_dj.api.models import (
     PlaylistRequest,
@@ -62,6 +63,7 @@ def generate_playlist(
     sync_service: NavidromeSyncService = Depends(get_navidrome_sync_service),
     config: Config = Depends(get_config),
     active_profile: Optional[Profile] = Depends(get_active_profile),
+    profile_db=Depends(get_profile_database),
 ) -> PlaylistResponse:
     """Generate a playlist from seed songs.
 
@@ -97,8 +99,13 @@ def generate_playlist(
             profile_username = (
                 active_profile.subsonic_username if active_profile else None
             )
-            profile_password = (
+            profile_password_encrypted = (
                 active_profile.subsonic_password_encrypted if active_profile else None
+            )
+            profile_password = (
+                profile_db.decrypt_password(profile_password_encrypted)
+                if profile_password_encrypted
+                else None
             )
             result = sync_service.sync_playlist(
                 playlist,
@@ -130,6 +137,7 @@ def sync_playlist_to_navidrome(
     sync_service: NavidromeSyncService = Depends(get_navidrome_sync_service),
     config: Config = Depends(get_config),
     active_profile: Optional[Profile] = Depends(get_active_profile),
+    profile_db=Depends(get_profile_database),
 ) -> dict:
     """Sync an existing playlist to Navidrome by song IDs.
 
@@ -161,8 +169,13 @@ def sync_playlist_to_navidrome(
             profile_username = (
                 active_profile.subsonic_username if active_profile else None
             )
-            profile_password = (
+            profile_password_encrypted = (
                 active_profile.subsonic_password_encrypted if active_profile else None
+            )
+            profile_password = (
+                profile_db.decrypt_password(profile_password_encrypted)
+                if profile_password_encrypted
+                else None
             )
             result = sync_service.sync_playlist(
                 playlist,

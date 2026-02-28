@@ -297,6 +297,7 @@ class TestPlaylistProfileCredentials:
             get_active_profile,
             get_navidrome_sync_service,
             get_playlist_generator,
+            get_profile_database,
         )
 
         mock_playlist = Playlist(
@@ -314,10 +315,13 @@ class TestPlaylistProfileCredentials:
             username="profile_user",
             password="profile_pass",
         )
+        mock_profile_db = MagicMock()
+        mock_profile_db.decrypt_password.side_effect = lambda p: p
 
         app.dependency_overrides[get_playlist_generator] = lambda: mock_generator
         app.dependency_overrides[get_navidrome_sync_service] = lambda: mock_sync_service
         app.dependency_overrides[get_active_profile] = lambda: mock_profile
+        app.dependency_overrides[get_profile_database] = lambda: mock_profile_db
 
         try:
             response = client.post(
@@ -341,6 +345,7 @@ class TestPlaylistProfileCredentials:
             app.dependency_overrides.pop(get_playlist_generator, None)
             app.dependency_overrides.pop(get_navidrome_sync_service, None)
             app.dependency_overrides.pop(get_active_profile, None)
+            app.dependency_overrides.pop(get_profile_database, None)
 
     def test_generate_playlist_request_params_override_profile(self, client):
         """Test that explicit navidrome_config params override profile credentials."""
@@ -348,6 +353,7 @@ class TestPlaylistProfileCredentials:
             get_active_profile,
             get_navidrome_sync_service,
             get_playlist_generator,
+            get_profile_database,
         )
 
         mock_playlist = Playlist(
@@ -365,10 +371,13 @@ class TestPlaylistProfileCredentials:
             username="profile_user",
             password="profile_pass",
         )
+        mock_profile_db = MagicMock()
+        mock_profile_db.decrypt_password.side_effect = lambda p: p
 
         app.dependency_overrides[get_playlist_generator] = lambda: mock_generator
         app.dependency_overrides[get_navidrome_sync_service] = lambda: mock_sync_service
         app.dependency_overrides[get_active_profile] = lambda: mock_profile
+        app.dependency_overrides[get_profile_database] = lambda: mock_profile_db
 
         try:
             response = client.post(
@@ -397,6 +406,7 @@ class TestPlaylistProfileCredentials:
             app.dependency_overrides.pop(get_playlist_generator, None)
             app.dependency_overrides.pop(get_navidrome_sync_service, None)
             app.dependency_overrides.pop(get_active_profile, None)
+            app.dependency_overrides.pop(get_profile_database, None)
 
     def test_sync_playlist_uses_profile_credentials_when_no_nav_config(
         self, client, test_config
@@ -406,6 +416,7 @@ class TestPlaylistProfileCredentials:
             get_active_profile,
             get_config,
             get_navidrome_sync_service,
+            get_profile_database,
         )
 
         song = self._make_song(1)
@@ -428,10 +439,13 @@ class TestPlaylistProfileCredentials:
             username="profile_user",
             password="profile_pass",
         )
+        mock_profile_db = MagicMock()
+        mock_profile_db.decrypt_password.side_effect = lambda p: p
 
         app.dependency_overrides[get_config] = lambda: test_config
         app.dependency_overrides[get_navidrome_sync_service] = lambda: mock_sync_service
         app.dependency_overrides[get_active_profile] = lambda: mock_profile
+        app.dependency_overrides[get_profile_database] = lambda: mock_profile_db
 
         try:
             response = client.post(
@@ -451,6 +465,7 @@ class TestPlaylistProfileCredentials:
             app.dependency_overrides.pop(get_config, None)
             app.dependency_overrides.pop(get_navidrome_sync_service, None)
             app.dependency_overrides.pop(get_active_profile, None)
+            app.dependency_overrides.pop(get_profile_database, None)
 
     def test_sync_playlist_request_params_override_profile(self, client, test_config):
         """Test /api/playlist/sync request params override profile credentials."""
@@ -458,6 +473,7 @@ class TestPlaylistProfileCredentials:
             get_active_profile,
             get_config,
             get_navidrome_sync_service,
+            get_profile_database,
         )
 
         song = self._make_song(1)
@@ -480,10 +496,13 @@ class TestPlaylistProfileCredentials:
             username="profile_user",
             password="profile_pass",
         )
+        mock_profile_db = MagicMock()
+        mock_profile_db.decrypt_password.side_effect = lambda p: p
 
         app.dependency_overrides[get_config] = lambda: test_config
         app.dependency_overrides[get_navidrome_sync_service] = lambda: mock_sync_service
         app.dependency_overrides[get_active_profile] = lambda: mock_profile
+        app.dependency_overrides[get_profile_database] = lambda: mock_profile_db
 
         try:
             response = client.post(
@@ -510,3 +529,4 @@ class TestPlaylistProfileCredentials:
             app.dependency_overrides.pop(get_config, None)
             app.dependency_overrides.pop(get_navidrome_sync_service, None)
             app.dependency_overrides.pop(get_active_profile, None)
+            app.dependency_overrides.pop(get_profile_database, None)

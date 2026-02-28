@@ -448,7 +448,13 @@ class TestNavidromeTestProfileCredentials:
         self, mock_ping, client
     ):
         """Test that profile credentials are used when no request params provided."""
-        from vibe_dj.api.dependencies import get_active_profile, get_config
+        from unittest.mock import MagicMock
+
+        from vibe_dj.api.dependencies import (
+            get_active_profile,
+            get_config,
+            get_profile_database,
+        )
 
         mock_ping.return_value = True
         mock_profile = self._make_mock_profile(
@@ -456,9 +462,12 @@ class TestNavidromeTestProfileCredentials:
             username="profile_user",
             password="profile_pass",
         )
+        mock_profile_db = MagicMock()
+        mock_profile_db.decrypt_password.side_effect = lambda p: p
 
         app.dependency_overrides[get_config] = lambda: Config()
         app.dependency_overrides[get_active_profile] = lambda: mock_profile
+        app.dependency_overrides[get_profile_database] = lambda: mock_profile_db
 
         try:
             response = client.post("/api/navidrome/test", json={})
@@ -469,6 +478,7 @@ class TestNavidromeTestProfileCredentials:
         finally:
             app.dependency_overrides.pop(get_config, None)
             app.dependency_overrides.pop(get_active_profile, None)
+            app.dependency_overrides.pop(get_profile_database, None)
 
     @patch("vibe_dj.services.navidrome_client.NavidromeClient")
     def test_navidrome_test_request_params_override_profile(
@@ -477,7 +487,11 @@ class TestNavidromeTestProfileCredentials:
         """Test that request params take precedence over profile credentials."""
         from unittest.mock import MagicMock
 
-        from vibe_dj.api.dependencies import get_active_profile, get_config
+        from vibe_dj.api.dependencies import (
+            get_active_profile,
+            get_config,
+            get_profile_database,
+        )
 
         mock_instance = MagicMock()
         mock_instance.ping.return_value = True
@@ -488,9 +502,12 @@ class TestNavidromeTestProfileCredentials:
             username="profile_user",
             password="profile_pass",
         )
+        mock_profile_db = MagicMock()
+        mock_profile_db.decrypt_password.side_effect = lambda p: p
 
         app.dependency_overrides[get_config] = lambda: Config()
         app.dependency_overrides[get_active_profile] = lambda: mock_profile
+        app.dependency_overrides[get_profile_database] = lambda: mock_profile_db
 
         try:
             response = client.post(
@@ -511,6 +528,7 @@ class TestNavidromeTestProfileCredentials:
         finally:
             app.dependency_overrides.pop(get_config, None)
             app.dependency_overrides.pop(get_active_profile, None)
+            app.dependency_overrides.pop(get_profile_database, None)
 
     @patch("vibe_dj.services.navidrome_client.NavidromeClient")
     def test_navidrome_test_profile_overrides_global_config(
@@ -519,7 +537,11 @@ class TestNavidromeTestProfileCredentials:
         """Test that profile credentials take precedence over global config."""
         from unittest.mock import MagicMock
 
-        from vibe_dj.api.dependencies import get_active_profile, get_config
+        from vibe_dj.api.dependencies import (
+            get_active_profile,
+            get_config,
+            get_profile_database,
+        )
 
         mock_instance = MagicMock()
         mock_instance.ping.return_value = True
@@ -530,6 +552,8 @@ class TestNavidromeTestProfileCredentials:
             username="profile_user",
             password="profile_pass",
         )
+        mock_profile_db = MagicMock()
+        mock_profile_db.decrypt_password.side_effect = lambda p: p
 
         config_with_creds = Config(
             navidrome_url="http://config.url:4533",
@@ -539,6 +563,7 @@ class TestNavidromeTestProfileCredentials:
 
         app.dependency_overrides[get_config] = lambda: config_with_creds
         app.dependency_overrides[get_active_profile] = lambda: mock_profile
+        app.dependency_overrides[get_profile_database] = lambda: mock_profile_db
 
         try:
             response = client.post("/api/navidrome/test", json={})
@@ -552,6 +577,7 @@ class TestNavidromeTestProfileCredentials:
         finally:
             app.dependency_overrides.pop(get_config, None)
             app.dependency_overrides.pop(get_active_profile, None)
+            app.dependency_overrides.pop(get_profile_database, None)
 
     def test_navidrome_test_fails_when_no_url_anywhere(self, client):
         """Test that connection test fails when no URL provided anywhere."""
