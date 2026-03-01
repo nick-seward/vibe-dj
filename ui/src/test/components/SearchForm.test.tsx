@@ -3,6 +3,21 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { SearchForm } from '@/components/SearchForm'
 
+vi.mock('@/context/ProfileContext', () => ({
+  useProfileContext: () => ({
+    profiles: [],
+    activeProfileId: null,
+    activeProfile: null,
+    loading: false,
+    error: null,
+    setActiveProfileId: vi.fn(),
+    refreshProfiles: vi.fn(),
+    createProfile: vi.fn(),
+    updateProfile: vi.fn(),
+    deleteProfile: vi.fn(),
+  }),
+}))
+
 describe('SearchForm', () => {
   it('renders all input fields', () => {
     const onSearch = vi.fn()

@@ -5,7 +5,6 @@ import { SearchResults } from './components/SearchResults'
 import { PlaylistView } from './components/PlaylistView'
 import { ChoiceListDrawer } from './components/ChoiceListDrawer'
 import { ConfigScreen } from './components/ConfigScreen'
-import { ProfileSelector } from './components/ProfileSelector'
 import { ChoiceListProvider, useChoiceList } from './context/ChoiceListContext'
 import { ToastProvider } from './context/ToastContext'
 import { ProfileProvider } from './context/ProfileContext'
@@ -134,9 +133,6 @@ function AppContent() {
 
   return (
     <div className="min-h-screen gradient-bg">
-      <div className="fixed top-4 right-4 z-30">
-        <ProfileSelector />
-      </div>
       <div className="container mx-auto px-4 py-8 md:py-16">
         <AnimatePresence mode="wait">
           {screen === 'search' && (

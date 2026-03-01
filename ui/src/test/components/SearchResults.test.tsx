@@ -4,6 +4,21 @@ import { SearchResults } from '@/components/SearchResults'
 import { ChoiceListProvider } from '@/context/ChoiceListContext'
 import type { PaginatedSearchResult, PageSize, PlaylistSize } from '@/types'
 
+vi.mock('@/context/ProfileContext', () => ({
+  useProfileContext: () => ({
+    profiles: [],
+    activeProfileId: null,
+    activeProfile: null,
+    loading: false,
+    error: null,
+    setActiveProfileId: vi.fn(),
+    refreshProfiles: vi.fn(),
+    createProfile: vi.fn(),
+    updateProfile: vi.fn(),
+    deleteProfile: vi.fn(),
+  }),
+}))
+
 const mockResults: PaginatedSearchResult = {
   songs: [
     {

@@ -5,6 +5,21 @@ import type { ReactNode, HTMLAttributes, ButtonHTMLAttributes } from 'react'
 import { PlaylistView } from '@/components/PlaylistView'
 import type { PlaylistResponse } from '@/types'
 
+vi.mock('@/context/ProfileContext', () => ({
+  useProfileContext: () => ({
+    profiles: [],
+    activeProfileId: null,
+    activeProfile: null,
+    loading: false,
+    error: null,
+    setActiveProfileId: vi.fn(),
+    refreshProfiles: vi.fn(),
+    createProfile: vi.fn(),
+    updateProfile: vi.fn(),
+    deleteProfile: vi.fn(),
+  }),
+}))
+
 interface MotionDivProps extends HTMLAttributes<HTMLDivElement> { children?: ReactNode }
 interface MotionButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> { children?: ReactNode }
 

@@ -1,6 +1,7 @@
 import { ArrowLeft, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { SongCard } from './SongCard'
+import { ProfileSelector } from './ProfileSelector'
 import { useChoiceList } from '@/context/ChoiceListContext'
 import type { Song, PageSize, PaginatedSearchResult, PlaylistSize } from '@/types'
 import { PAGE_SIZE_OPTIONS, MAX_SEARCH_DEPTH, PLAYLIST_SIZE_OPTIONS } from '@/types'
@@ -155,6 +156,8 @@ export function SearchResults({
             <Sparkles className="w-5 h-5" />
             Generate Playlist ({choiceList.length}/3)
           </motion.button>
+
+          <ProfileSelector />
         </div>
       </motion.div>
 

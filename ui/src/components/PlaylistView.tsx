@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { RefreshCw, Send, ArrowLeft, Loader2, Music, PartyPopper } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ProfileSelector } from './ProfileSelector'
 import type { PlaylistResponse } from '@/types'
 
 interface PlaylistViewProps {
@@ -93,6 +94,8 @@ export function PlaylistView({
             )}
           </motion.button>
         </div>
+
+        <ProfileSelector />
       </motion.div>
 
       {/* Success celebration */}
