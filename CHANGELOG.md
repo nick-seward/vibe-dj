@@ -1,3 +1,18 @@
+## [0.8.2](https://github.com/nick-seward/vibe-dj/compare/v0.8.1...v0.8.2) (2026-03-08)
+
+
+### Bug Fixes
+
+* **ui:** Adjusting settings icon beside the profile selector ([f039d25](https://github.com/nick-seward/vibe-dj/commit/f039d251094f322132c6996a0fa46ef0043ac122))
+
+## [0.8.1](https://github.com/nick-seward/vibe-dj/compare/v0.8.0...v0.8.1) (2026-02-28)
+
+
+### Bug Fixes
+
+* **api:** decrypt profile password before passing to NavidromeClient ([9a89b66](https://github.com/nick-seward/vibe-dj/commit/9a89b66a10eaccf741f9e8845d5fa3e14c061224))
+* **ui:** correct --color-info value and btn-danger semantic hover token (vibedj-uk1, vibedj-bt8) ([77583b9](https://github.com/nick-seward/vibe-dj/commit/77583b9e5e6c7e17a4e476ac7328335536d742c8))
+
 ## [0.8.0](https://github.com/nick-seward/vibe-dj/compare/v0.7.0...v0.8.0) (2026-02-23)
 
 
@@ -61,23 +76,4 @@
 * **core:** add Profile model and ProfileDatabase with Fernet encryption (vibedj-k8i.1) ([4d965c4](https://github.com/nick-seward/vibe-dj/commit/4d965c422bf01fdb0d2afbd585b31bca4c22e9d5))
 
 ## [0.1.1](https://github.com/nick-seward/vibe-dj/compare/v0.1.0...v0.1.1) (2026-02-15)
-
-## [0.1.0](https://github.com/nick-seward/vibe-dj/compare/2755307b4a895213ec7333de1a9e5e27e4fef235...v0.1.0) (2026-02-14)
-
-
-### Features
-
-* **api:** expose playlist defaults in config API GET/PUT (bd-vibedj-2k3.2) ([bd1a8c6](https://github.com/nick-seward/vibe-dj/commit/bd1a8c6f186bf9414aeec55b4a2acaf6561c72ce))
-* **models:** add playlist default fields to Config (bd-vibedj-2k3.1) ([ab65d69](https://github.com/nick-seward/vibe-dj/commit/ab65d69522ad4db7351bb12069c6269da0d24244))
-* **ui:** add frontend config types/constants for playlist defaults (bd-vibedj-2k3.3) ([6e60fbf](https://github.com/nick-seward/vibe-dj/commit/6e60fbf32d1214b5ec5220c79a39e5be028995d5))
-* **ui:** add Playlist settings tab with BPM slider and size dropdown (bd-vibedj-2k3.4) ([6019dbc](https://github.com/nick-seward/vibe-dj/commit/6019dbc94267dd6162a381586dce23a661cb4208))
-* **ui:** add playlist size selector and stabilize config defaults test (bd-vibedj-2k3.5) ([8bf7ff3](https://github.com/nick-seward/vibe-dj/commit/8bf7ff3d49ab9196828edc8698710ee99eea33cc))
-* **ui:** use configured BPM jitter in playlist generation payload (bd-vibedj-2k3.6) ([1722922](https://github.com/nick-seward/vibe-dj/commit/17229222891c3e1dd4678d83cc3954cb2acb2e18))
-
-
-### Bug Fixes
-
-* Clear stale poll errors on successful indexing completion ([2755307](https://github.com/nick-seward/vibe-dj/commit/2755307b4a895213ec7333de1a9e5e27e4fef235))
-* remove playlist file-export surfaces across API and CLI (bd-vibedj-8on.2) ([b35fcc0](https://github.com/nick-seward/vibe-dj/commit/b35fcc02d61d2e383541ae310608fc473a682b58))
-* **services:** enforce outbound URL SSRF validation for Navidrome paths (bd-vibedj-8on.3) ([237bec0](https://github.com/nick-seward/vibe-dj/commit/237bec0f8b37946fd065d099cbf3d6e65e2c5fb6))
 
