@@ -39,14 +39,14 @@
     "globals": "^16.5.0",
     "jsdom": "^27.4.0",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.56.0",
+    "typescript-eslint": "^8.56.1",
     "vite": "^7.3.1",
     "vitest": "^4.0.18"
   },
   "overrides": {
-  "minimatch": "^10.2.1",
-  "eslint-plugin-react-hooks": {
-    "eslint": "$eslint"
+    "minimatch": "^10.2.4",
+    "eslint-plugin-react-hooks": {
+      "eslint": "$eslint"
+    }
   }
-}
 }
