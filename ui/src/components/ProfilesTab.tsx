@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react'
-import { User, Globe, Lock, Eye, EyeOff, Pencil, Trash2, Plus, X, Loader2, CheckCircle, Save } from 'lucide-react'
+import { User, Globe, Lock, Eye, EyeOff, Pencil, Trash2, Plus, X, Loader2, CheckCircle, XCircle, Save } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useProfileContext } from '@/context/ProfileContext'
 import { useToast } from '@/context/ToastContext'
+import { useTestNavidrome } from '@/hooks/useConfig'
 import type { Profile, CreateProfileRequest, UpdateProfileRequest } from '@/types'
 
 const SHARED_PROFILE_NAME = 'Shared'
@@ -23,6 +24,7 @@ const emptyForm = (): ProfileFormData => ({
 
 interface ProfileFormProps {
   initial?: ProfileFormData
+  profileId?: number
   isShared?: boolean
   saving: boolean
   onSave: (data: ProfileFormData) => Promise<void>
@@ -30,13 +32,17 @@ interface ProfileFormProps {
   hasServerPassword?: boolean
 }
 
-function ProfileForm({ initial, isShared, saving, onSave, onCancel, hasServerPassword }: ProfileFormProps) {
+function ProfileForm({ initial, profileId, isShared, saving, onSave, onCancel, hasServerPassword }: ProfileFormProps) {
   const [form, setForm] = useState<ProfileFormData>(initial ?? emptyForm())
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { testing, result: testResult, testConnection, clearResult } = useTestNavidrome()
+  const { showToast } = useToast()
 
-  const set = (field: keyof ProfileFormData) => (e: React.ChangeEvent<HTMLInputElement>) =>
+  const set = (field: keyof ProfileFormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }))
+    clearResult()
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -51,6 +57,20 @@ function ProfileForm({ initial, isShared, saving, onSave, onCancel, hasServerPas
       setError(err instanceof Error ? err.message : 'Failed to save profile')
     }
   }
+
+  const handleTestConnection = async () => {
+    const hasUsablePassword = form.subsonic_password.trim() || hasServerPassword
+    if (!form.subsonic_url.trim() || !form.subsonic_username.trim() || !hasUsablePassword) return
+    clearResult()
+    const result = await testConnection(form.subsonic_url, form.subsonic_username, form.subsonic_password.trim() || '', profileId)
+    if (result.success) {
+      showToast('success', result.message)
+    } else {
+      showToast('error', result.message)
+    }
+  }
+
+  const isTestDisabled = !form.subsonic_url.trim() || !form.subsonic_username.trim() || (!form.subsonic_password.trim() && !hasServerPassword) || testing || saving
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -77,76 +97,133 @@ function ProfileForm({ initial, isShared, saving, onSave, onCancel, hasServerPas
         )}
       </div>
 
-      <div>
-        <label htmlFor="profileUrl" className="block text-sm font-medium text-text-muted mb-2">
-          Subsonic URL
-        </label>
-        <div className="relative">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
-            <Globe className="w-5 h-5" />
-          </div>
-          <input
-            type="url"
-            id="profileUrl"
-            value={form.subsonic_url}
-            onChange={set('subsonic_url')}
-            placeholder="http://192.168.1.100:4533"
-            className="input-field !pl-14"
-            disabled={saving}
-          />
+      {/* SubSonic Connection card */}
+      <div className="bg-surface border border-border rounded-xl p-4 space-y-4 transition-all duration-200">
+        <div className="border-b border-border pb-2">
+          <p className="text-sm font-semibold text-text">SubSonic Connection</p>
         </div>
-      </div>
 
-      <div>
-        <label htmlFor="profileUsername" className="block text-sm font-medium text-text-muted mb-2">
-          Username
-        </label>
-        <div className="relative">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
-            <User className="w-5 h-5" />
+        <div>
+          <label htmlFor="profileUrl" className="block text-sm font-medium text-text-muted mb-2">
+            Subsonic URL
+          </label>
+          <div className="relative">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
+              <Globe className="w-5 h-5" />
+            </div>
+            <input
+              type="url"
+              id="profileUrl"
+              value={form.subsonic_url}
+              onChange={set('subsonic_url')}
+              placeholder="http://192.168.1.100:4533"
+              className="input-field !pl-14"
+              disabled={saving || testing}
+            />
           </div>
-          <input
-            type="text"
-            id="profileUsername"
-            value={form.subsonic_username}
-            onChange={set('subsonic_username')}
-            placeholder="Enter username"
-            className="input-field !pl-14"
-            disabled={saving}
-          />
         </div>
-      </div>
 
-      <div>
-        <label htmlFor="profilePassword" className="block text-sm font-medium text-text-muted mb-2">
-          Password
-          {hasServerPassword && !form.subsonic_password && (
-            <span className="ml-2 text-xs text-text-muted/70">(configured on server)</span>
+        <div>
+          <label htmlFor="profileUsername" className="block text-sm font-medium text-text-muted mb-2">
+            Username
+          </label>
+          <div className="relative">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
+              <User className="w-5 h-5" />
+            </div>
+            <input
+              type="text"
+              id="profileUsername"
+              value={form.subsonic_username}
+              onChange={set('subsonic_username')}
+              placeholder="Enter username"
+              className="input-field !pl-14"
+              disabled={saving || testing}
+            />
+          </div>
+        </div>
+
+        <div>
+          <label htmlFor="profilePassword" className="block text-sm font-medium text-text-muted mb-2">
+            Password
+            {hasServerPassword && !form.subsonic_password && (
+              <span className="ml-2 text-xs text-text-muted/70">(configured on server)</span>
+            )}
+          </label>
+          <div className="relative">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
+              <Lock className="w-5 h-5" />
+            </div>
+            <input
+              type={showPassword ? 'text' : 'password'}
+              id="profilePassword"
+              value={form.subsonic_password}
+              onChange={set('subsonic_password')}
+              placeholder={hasServerPassword ? '••••••••' : 'Enter password'}
+              className="input-field !pl-14 pr-11"
+              disabled={saving || testing}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text transition-colors"
+              tabIndex={-1}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+            >
+              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Test Connection */}
+        <motion.button
+          type="button"
+          onClick={handleTestConnection}
+          disabled={isTestDisabled}
+          whileHover={!isTestDisabled ? { scale: 1.02 } : {}}
+          whileTap={!isTestDisabled ? { scale: 0.98 } : {}}
+          className="btn-secondary w-full flex items-center justify-center gap-2"
+        >
+          {testing ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Testing Connection...
+            </>
+          ) : (
+            <>
+              {testResult ? (
+                testResult.success ? <CheckCircle className="w-4 h-4 text-success" /> : <XCircle className="w-4 h-4 text-error" />
+              ) : (
+                <Globe className="w-4 h-4" />
+              )}
+              Test SubSonic Connection
+            </>
           )}
-        </label>
-        <div className="relative">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
-            <Lock className="w-5 h-5" />
-          </div>
-          <input
-            type={showPassword ? 'text' : 'password'}
-            id="profilePassword"
-            value={form.subsonic_password}
-            onChange={set('subsonic_password')}
-            placeholder={hasServerPassword ? '••••••••' : 'Enter password'}
-            className="input-field !pl-14 pr-11"
-            disabled={saving}
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword((v) => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text transition-colors"
-            tabIndex={-1}
-            aria-label={showPassword ? 'Hide password' : 'Show password'}
+        </motion.button>
+
+        {/* Test result banner */}
+        {testResult && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`rounded-lg p-3 border ${
+              testResult.success
+                ? 'bg-success/10 border-success/30'
+                : 'bg-error/10 border-error/30'
+            }`}
           >
-            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-          </button>
-        </div>
+            <div className="flex items-center gap-2">
+              {testResult.success ? (
+                <CheckCircle className="w-4 h-4 text-success shrink-0" />
+              ) : (
+                <XCircle className="w-4 h-4 text-error shrink-0" />
+              )}
+              <p className={`text-sm ${testResult.success ? 'text-success' : 'text-error'}`}>
+                {testResult.message}
+              </p>
+            </div>
+          </motion.div>
+        )}
       </div>
 
       {error && (
@@ -332,6 +409,7 @@ export function ProfilesTab() {
         <h3 className="text-base font-semibold text-text">Edit Profile</h3>
         <ProfileForm
           initial={initial}
+          profileId={profile.id}
           isShared={isShared}
           saving={saving}
           hasServerPassword={profile.has_subsonic_password}

@@ -106,19 +106,18 @@ describe('ConfigScreen', () => {
     expect(mockOnClose).toHaveBeenCalled()
   })
 
-  it('shows Music, Playlist, SubSonic, and Profiles tabs on desktop', () => {
+  it('shows Music, Playlist, and Profiles tabs on desktop', () => {
     renderWithProviders(<ConfigScreen onClose={mockOnClose} />)
     
     // Desktop tabs (hidden on mobile via CSS, but still in DOM)
     const musicButtons = screen.getAllByText('Music')
     const playlistButtons = screen.getAllByText('Playlist')
-    const subsonicButtons = screen.getAllByText('SubSonic')
     const profilesButtons = screen.getAllByText('Profiles')
     
     expect(musicButtons.length).toBeGreaterThan(0)
     expect(playlistButtons.length).toBeGreaterThan(0)
-    expect(subsonicButtons.length).toBeGreaterThan(0)
     expect(profilesButtons.length).toBeGreaterThan(0)
+    expect(screen.queryByText('SubSonic')).not.toBeInTheDocument()
   })
 
   it('shows dropdown select for mobile', () => {
@@ -132,35 +131,6 @@ describe('ConfigScreen', () => {
   it('shows Music tab content by default', () => {
     renderWithProviders(<ConfigScreen onClose={mockOnClose} />)
     expect(screen.getByLabelText(/music library path/i)).toBeInTheDocument()
-  })
-
-  it('switches to SubSonic tab when tab button is clicked', async () => {
-    const user = userEvent.setup()
-    renderWithProviders(<ConfigScreen onClose={mockOnClose} />)
-
-    // Click the SubSonic tab button (get all and click the button, not the option)
-    const subsonicButtons = screen.getAllByText('SubSonic')
-    const tabButton = subsonicButtons.find(el => el.tagName === 'BUTTON')
-    
-    if (tabButton) {
-      await user.click(tabButton)
-
-      await waitFor(() => {
-        expect(screen.getByLabelText(/subsonic server url/i)).toBeInTheDocument()
-      })
-    }
-  })
-
-  it('switches to SubSonic tab when dropdown is changed', async () => {
-    const user = userEvent.setup()
-    renderWithProviders(<ConfigScreen onClose={mockOnClose} />)
-
-    const dropdown = screen.getByLabelText('Select settings tab')
-    await user.selectOptions(dropdown, 'subsonic')
-
-    await waitFor(() => {
-      expect(screen.getByLabelText(/subsonic server url/i)).toBeInTheDocument()
-    })
   })
 
   it('populates music library from config', async () => {
@@ -189,50 +159,6 @@ describe('ConfigScreen', () => {
     renderWithProviders(<ConfigScreen onClose={mockOnClose} />)
     
     expect(screen.getByRole('button', { name: /index music library/i })).toBeInTheDocument()
-  })
-
-  it('shows Save button in SubSonic tab', async () => {
-    const user = userEvent.setup()
-    renderWithProviders(<ConfigScreen onClose={mockOnClose} />)
-
-    const dropdown = screen.getByLabelText('Select settings tab')
-    await user.selectOptions(dropdown, 'subsonic')
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /^save$/i })).toBeInTheDocument()
-    })
-  })
-
-  it('shows Test SubSonic Connection button in SubSonic tab', async () => {
-    const user = userEvent.setup()
-    renderWithProviders(<ConfigScreen onClose={mockOnClose} />)
-
-    const dropdown = screen.getByLabelText('Select settings tab')
-    await user.selectOptions(dropdown, 'subsonic')
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /test subsonic connection/i })).toBeInTheDocument()
-    })
-  })
-
-  it('SubSonic Save button is enabled when password is entered', async () => {
-    const user = userEvent.setup()
-    renderWithProviders(<ConfigScreen onClose={mockOnClose} />)
-
-    const dropdown = screen.getByLabelText('Select settings tab')
-    await user.selectOptions(dropdown, 'subsonic')
-
-    await waitFor(() => {
-      expect(screen.getByLabelText(/password/i)).toBeInTheDocument()
-    })
-
-    const passwordInput = screen.getByLabelText(/password/i)
-    await user.type(passwordInput, 'newpassword')
-
-    await waitFor(() => {
-      const saveButton = screen.getByRole('button', { name: /^save$/i })
-      expect(saveButton).not.toBeDisabled()
-    })
   })
 
   it('switches to Playlist tab when tab button is clicked', async () => {
@@ -303,20 +229,4 @@ describe('ConfigScreen', () => {
     }
   })
 
-  it('SubSonic Test Connection button is enabled when password is stored on server', async () => {
-    const user = userEvent.setup()
-    renderWithProviders(<ConfigScreen onClose={mockOnClose} />)
-
-    const dropdown = screen.getByLabelText('Select settings tab')
-    await user.selectOptions(dropdown, 'subsonic')
-
-    await waitFor(() => {
-      // The test button should be enabled because:
-      // - url is set (http://localhost:4533)
-      // - username is set (testuser)
-      // - has_navidrome_password is true (from mock)
-      const testButton = screen.getByRole('button', { name: /test subsonic connection/i })
-      expect(testButton).not.toBeDisabled()
-    })
-  })
 })

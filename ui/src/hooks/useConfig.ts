@@ -94,15 +94,21 @@ export function useTestNavidrome() {
   const testConnection = useCallback(async (
     url: string,
     username: string,
-    password: string
+    password: string,
+    profileId?: number
   ): Promise<TestNavidromeResponse> => {
     setTesting(true)
     setResult(null)
 
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (profileId !== undefined) {
+      headers['X-Active-Profile'] = String(profileId)
+    }
+
     try {
       const response = await fetch(`${API_BASE}/navidrome/test`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ url, username, password }),
       })
 

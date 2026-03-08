@@ -3,12 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { XCircle, ChevronDown } from 'lucide-react'
 import { MusicTab } from './MusicTab'
 import { PlaylistTab } from './PlaylistTab'
-import { SubSonicTab } from './SubSonicTab'
 import { ProfilesTab } from './ProfilesTab'
 import { useConfig } from '@/hooks/useConfig'
 import { DEFAULT_PLAYLIST_SIZE, DEFAULT_BPM_JITTER } from '@/types'
 
-type ConfigTab = 'music' | 'playlist' | 'subsonic' | 'profiles'
+type ConfigTab = 'music' | 'playlist' | 'profiles'
 
 interface ConfigScreenProps {
   onClose: () => void
@@ -17,7 +16,6 @@ interface ConfigScreenProps {
 const tabs: { id: ConfigTab; label: string }[] = [
   { id: 'music', label: 'Music' },
   { id: 'playlist', label: 'Playlist' },
-  { id: 'subsonic', label: 'SubSonic' },
   { id: 'profiles', label: 'Profiles' },
 ]
 
@@ -27,16 +25,11 @@ export function ConfigScreen({ onClose }: ConfigScreenProps) {
 
   // Local state for form values
   const [musicLibrary, setMusicLibrary] = useState('')
-  const [navidromeUrl, setNavidromeUrl] = useState('')
-  const [navidromeUsername, setNavidromeUsername] = useState('')
-  const [navidromePassword, setNavidromePassword] = useState('')
   const [defaultPlaylistSize, setDefaultPlaylistSize] = useState<number>(DEFAULT_PLAYLIST_SIZE)
   const [defaultBpmJitter, setDefaultBpmJitter] = useState<number>(DEFAULT_BPM_JITTER)
 
   // Track original values from config (for change detection)
   const [originalMusicLibrary, setOriginalMusicLibrary] = useState('')
-  const [originalNavidromeUrl, setOriginalNavidromeUrl] = useState('')
-  const [originalNavidromeUsername, setOriginalNavidromeUsername] = useState('')
   const [originalPlaylistSize, setOriginalPlaylistSize] = useState<number>(DEFAULT_PLAYLIST_SIZE)
   const [originalBpmJitter, setOriginalBpmJitter] = useState<number>(DEFAULT_BPM_JITTER)
 
@@ -45,17 +38,12 @@ export function ConfigScreen({ onClose }: ConfigScreenProps) {
     if (!config) return
     const id = setTimeout(() => {
       setMusicLibrary(config.music_library || '')
-      setNavidromeUrl(config.navidrome_url || '')
-      setNavidromeUsername(config.navidrome_username || '')
       // Update original values
       setOriginalMusicLibrary(config.music_library || '')
-      setOriginalNavidromeUrl(config.navidrome_url || '')
-      setOriginalNavidromeUsername(config.navidrome_username || '')
       setDefaultPlaylistSize(config.default_playlist_size)
       setDefaultBpmJitter(config.default_bpm_jitter)
       setOriginalPlaylistSize(config.default_playlist_size)
       setOriginalBpmJitter(config.default_bpm_jitter)
-      // Password is never returned from server, keep local value
     }, 0)
     return () => clearTimeout(id)
   }, [config])
@@ -189,28 +177,6 @@ export function ConfigScreen({ onClose }: ConfigScreenProps) {
                     originalBpmJitter={originalBpmJitter}
                     onPlaylistSizeChange={setDefaultPlaylistSize}
                     onBpmJitterChange={setDefaultBpmJitter}
-                    onSaveSuccess={handleSaveSuccess}
-                  />
-                </motion.div>
-              )}
-              {activeTab === 'subsonic' && (
-                <motion.div
-                  key="subsonic"
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  <SubSonicTab
-                    url={navidromeUrl}
-                    username={navidromeUsername}
-                    password={navidromePassword}
-                    originalUrl={originalNavidromeUrl}
-                    originalUsername={originalNavidromeUsername}
-                    hasServerPassword={config?.has_navidrome_password || false}
-                    onUrlChange={setNavidromeUrl}
-                    onUsernameChange={setNavidromeUsername}
-                    onPasswordChange={setNavidromePassword}
                     onSaveSuccess={handleSaveSuccess}
                   />
                 </motion.div>

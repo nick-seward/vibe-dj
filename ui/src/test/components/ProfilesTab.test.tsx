@@ -9,6 +9,15 @@ import type { Profile } from '@/types'
 interface MotionDivProps extends HTMLAttributes<HTMLDivElement> { children?: ReactNode }
 interface MotionButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> { children?: ReactNode }
 
+vi.mock('@/hooks/useConfig', () => ({
+  useTestNavidrome: () => ({
+    testing: false,
+    result: null,
+    testConnection: vi.fn().mockResolvedValue({ success: true, message: 'Connected' }),
+    clearResult: vi.fn(),
+  }),
+}))
+
 vi.mock('framer-motion', () => ({
   motion: {
     div: ({ children, ...props }: MotionDivProps) => <div {...props}>{children}</div>,
@@ -241,5 +250,75 @@ describe('ProfilesTab', () => {
       expect(screen.queryByText('Delete Profile')).not.toBeInTheDocument()
     })
     expect(mockDeleteProfile).not.toHaveBeenCalled()
+  })
+
+  describe('SubSonic connection in profile form', () => {
+    it('shows Test SubSonic Connection button in edit form', async () => {
+      const user = userEvent.setup()
+      renderWithProviders(<ProfilesTab />)
+
+      await user.click(screen.getByRole('button', { name: /edit nick/i }))
+
+      expect(screen.getByRole('button', { name: /test subsonic connection/i })).toBeInTheDocument()
+    })
+
+    it('Test Connection button is disabled when URL is missing', async () => {
+      const user = userEvent.setup()
+      renderWithProviders(<ProfilesTab />)
+
+      await user.click(screen.getByRole('button', { name: /add profile/i }))
+
+      // Fill in username and password but not URL
+      await user.type(screen.getByLabelText(/username/i), 'testuser')
+      await user.type(screen.getByLabelText(/^password$/i), 'testpass')
+
+      expect(screen.getByRole('button', { name: /test subsonic connection/i })).toBeDisabled()
+    })
+
+    it('Test Connection button is disabled when username is missing', async () => {
+      const user = userEvent.setup()
+      renderWithProviders(<ProfilesTab />)
+
+      await user.click(screen.getByRole('button', { name: /add profile/i }))
+
+      // Fill in URL and password but not username
+      await user.type(screen.getByLabelText(/subsonic url/i), 'http://localhost:4533')
+      await user.type(screen.getByLabelText(/^password$/i), 'testpass')
+
+      expect(screen.getByRole('button', { name: /test subsonic connection/i })).toBeDisabled()
+    })
+
+    it('Test Connection button is enabled when password is stored on server', async () => {
+      const user = userEvent.setup()
+      mockProfiles = [
+        makeProfile(1, 'Shared'),
+        makeProfile(2, 'Nick', {
+          subsonic_url: 'http://localhost:4533',
+          subsonic_username: 'nick',
+          has_subsonic_password: true,
+        }),
+      ]
+      renderWithProviders(<ProfilesTab />)
+
+      await user.click(screen.getByRole('button', { name: /edit nick/i }))
+
+      // URL and username are pre-filled; password is stored on server — button should be enabled
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /test subsonic connection/i })).not.toBeDisabled()
+      })
+    })
+
+    it('Test Connection button is enabled when URL, username, and password are all filled', async () => {
+      const user = userEvent.setup()
+      renderWithProviders(<ProfilesTab />)
+
+      await user.click(screen.getByRole('button', { name: /add profile/i }))
+
+      await user.type(screen.getByLabelText(/subsonic url/i), 'http://localhost:4533')
+      await user.type(screen.getByLabelText(/username/i), 'testuser')
+      await user.type(screen.getByLabelText(/^password$/i), 'testpass')
+
+      expect(screen.getByRole('button', { name: /test subsonic connection/i })).not.toBeDisabled()
+    })
   })
 })
