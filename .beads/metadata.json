@@ -1,6 +1,6 @@
 {
   "database": "dolt",
-  "jsonl_export": "issues.jsonl",
   "backend": "dolt",
-  "dolt_database": "beads_vibedj"
+  "dolt_database": "beads_vibedj",
+  "project_id": "a4b05bd5-21b6-4dc4-841c-47644bb1a148"
 }
