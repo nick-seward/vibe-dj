@@ -303,7 +303,7 @@ describe('MusicTab', () => {
       expect(screen.getByText('500')).toBeInTheDocument()
       expect(screen.getByText('50')).toBeInTheDocument()
       expect(screen.getByText('80')).toBeInTheDocument()
-      expect(screen.getByText('30h 0m')).toBeInTheDocument()
+      expect(screen.getByText('1d 6h 0m')).toBeInTheDocument()
       expect(screen.getByText('450 / 500 songs analyzed')).toBeInTheDocument()
     })
 
@@ -338,6 +338,26 @@ describe('MusicTab', () => {
       renderMusicTab()
 
       expect(screen.queryByText('Library Statistics')).not.toBeInTheDocument()
+    })
+
+    it('formats duration as hours and minutes when under 24 hours', () => {
+      mockLibraryStatsState = {
+        stats: {
+          total_songs: 10,
+          artist_count: 3,
+          album_count: 2,
+          total_duration: 5400,
+          songs_with_features: 10,
+          last_indexed: 1707782400.0,
+        },
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      }
+
+      renderMusicTab()
+
+      expect(screen.getByText('1h 30m')).toBeInTheDocument()
     })
 
     it('formats duration as minutes when under an hour', () => {
